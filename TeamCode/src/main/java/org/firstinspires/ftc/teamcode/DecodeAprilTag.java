@@ -1,0 +1,262 @@
+/* Copyright (c) 2023 FIRST. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted (subject to the limitations in the disclaimer below) provided that
+ * the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list
+ * of conditions and the following disclaimer.
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
+ * list of conditions and the following disclaimer in the documentation and/or
+ * other materials provided with the distribution.
+ *
+ * Neither the name of FIRST nor the names of its contributors may be used to endorse or
+ * promote products derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS
+ * LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+
+import java.util.ArrayList;
+import java.util.List;
+import android.util.Size;
+
+/*
+ * This OpMode illustrates the basics of AprilTag recognition and pose estimation,
+ * including Java Builder structures for specifying Vision parameters.
+ *
+ * For an introduction to AprilTags, see the FTC-DOCS link below:
+ * https://ftc-docs.firstinspires.org/en/latest/apriltag/vision_portal/apriltag_intro/apriltag-intro.html
+ *
+ * In this sample, any visible tag ID will be detected and displayed, but only tags that are included in the default
+ * "TagLibrary" will have their position and orientation information displayed.  This default TagLibrary contains
+ * the current Season's AprilTags and a small set of "test Tags" in the high number range.
+ *
+ * When an AprilTag in the TagLibrary is detected, the SDK provides location and orientation of the tag, relative to the camera.
+ * This information is provided in the "ftcPose" member of the returned "detection", and is explained in the ftc-docs page linked below.
+ * https://ftc-docs.firstinspires.org/apriltag-detection-values
+ *
+ * To experiment with using AprilTags to navigate, try out these two driving samples:
+ * RobotAutoDriveToAprilTagOmni and RobotAutoDriveToAprilTagTank
+ *
+ * There are many "default" VisionPortal and AprilTag configuration parameters that may be overridden if desired.
+ * These default parameters are shown as comments in the code below.
+ *
+ * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
+ * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
+ */
+
+public class DecodeAprilTag {
+
+    private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
+
+    /**
+     * Variables to store the position and orientation of the camera on the robot. Setting these
+     * values requires a definition of the axes of the camera and robot:
+     *
+     * Camera axes:
+     * Origin location: Center of the lens
+     * Axes orientation: +x right, +y down, +z forward (from camera's perspective)
+     *
+     * Robot axes (this is typical, but you can define this however you want):
+     * Origin location: Center of the robot at field height
+     * Axes orientation: +x right, +y forward, +z upward
+     *
+     * Position:
+     * If all values are zero (no translation), that implies the camera is at the center of the
+     * robot. Suppose your camera is positioned 5 inches to the left, 7 inches forward, and 12
+     * inches above the ground - you would need to set the position to (-5, 7, 12).
+     *
+     * Orientation:
+     * If all values are zero (no rotation), that implies the camera is pointing straight up. In
+     * most cases, you'll need to set the pitch to -90 degrees (rotation about the x-axis), meaning
+     * the camera is horizontal. Use a yaw of 0 if the camera is pointing forwards, +90 degrees if
+     * it's pointing straight left, -90 degrees for straight right, etc. You can also set the roll
+     * to +/-90 degrees if it's vertical, or 180 degrees if it's upside-down.
+     */
+    private Position cameraPosition = new Position(DistanceUnit.INCH,
+            0, 0, 0, 0);
+    private YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
+            0, -90, 0, 0);
+
+
+    /**
+     * The variable to store our instance of the AprilTag processor.
+     */
+    private AprilTagProcessor aprilTag;
+
+    /**
+     * The variable to store our instance of the vision portal.
+     */
+    private VisionPortal visionPortal;
+
+    private ArrayList<String> telemetryMsgList = new ArrayList<>();
+    private boolean printMsg = false;
+
+    private LinearOpMode opChassis;
+    //construct class
+    public DecodeAprilTag(LinearOpMode chassis) {
+        //could use camera type, turn on/off telemetry line, eg
+        opChassis = chassis;
+    }
+
+    public void initCamera() {
+        initAprilTag();
+        telemetryMsgList.clear();
+    }
+
+    public void stopCamera() {
+        visionPortal.close();
+    }
+    public boolean findAprilTag(String name) {
+
+        boolean bFound = false;
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        for (AprilTagDetection detection : currentDetections) {
+            if ( (detection.metadata != null) &&
+                (detection.metadata.name.compareToIgnoreCase(name) == 0) ) {
+                bFound = true;
+            }
+        }
+
+        return bFound;
+    }
+
+    public AprilTagPoseFtc getCoordinate(String name) {
+
+        AprilTagPoseFtc retPose = null;
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+
+        // Step through the list of detections and display info for each one.
+        for (AprilTagDetection detection : currentDetections) {
+            if ( (detection.metadata != null) &&
+                (detection.metadata.name.compareToIgnoreCase(name) == 0) ) {
+                /*
+                 * Under "Drive To Target" mode, the robot has three goals:
+                 * 1) Turn the robot to always keep the Tag centered on the camera frame. (Use the Target Bearing to turn the robot.)
+                 * 2) Strafe the robot towards the centerline of the Tag, so it approaches directly in front  of the tag.  (Use the Target Yaw to strafe the robot)
+                 * 3) Drive towards the Tag to get to the desired distance.  (Use Tag Range to drive the robot forward/backward)
+                 *
+                 */
+                telemetryMsgList.add(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                telemetryMsgList.add(String.format("Range, %5.1f inches", detection.ftcPose.range));
+                telemetryMsgList.add(String.format("Bearing,%3.0f degrees", detection.ftcPose.bearing));
+                telemetryMsgList.add(String.format("Yaw, %3.0f degrees", detection.ftcPose.yaw));
+                telemetryMsgList.add(String.format("Elevation, %3.0f degrees", detection.ftcPose.elevation));
+                outTelemetry();
+
+                retPose = detection.ftcPose;
+            }
+        }
+
+        return retPose;
+    }
+
+    private void outTelemetry() {
+        for (String msg : telemetryMsgList) {
+            opChassis.telemetry.addLine(msg);
+        }
+        opChassis.telemetry.update();
+        telemetryMsgList.clear();
+    }
+
+    /**
+     * Initialize the AprilTag processor.
+     */
+    private void initAprilTag() {
+
+        // Create the AprilTag processor.
+        aprilTag = new AprilTagProcessor.Builder()
+
+            // The following default settings are available to un-comment and edit as needed.
+            .setDrawAxes(false)
+            .setDrawCubeProjection(false)
+            .setDrawTagOutline(true)
+            .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+            .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+            .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+                .setCameraPose(cameraPosition, cameraOrientation)
+            // == CAMERA CALIBRATION ==
+            // If you do not manually specify calibration parameters, the SDK will attempt
+            // to load a predefined calibration for your camera.
+            //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
+            // ... these parameters are fx, fy, cx, cy.
+
+            .build();
+
+        // Adjust Image Decimation to trade-off detection-range for detection-rate.
+        // eg: Some typical detection data using a Logitech C920 WebCam
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second (default)
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second (default)
+        // Note: Decimation can be changed on-the-fly to adapt during a match.
+        //aprilTag.setDecimation(3);
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+
+        // Set the camera (webcam vs. built-in RC phone camera).
+        if (USE_WEBCAM) {
+            builder.setCamera(opChassis.hardwareMap.get(WebcamName.class, "Webcam 1"));
+        } else {
+            builder.setCamera(BuiltinCameraDirection.BACK);
+        }
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        builder.setCameraResolution(new Size(640, 480));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableLiveView(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(aprilTag);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Disable or re-enable the aprilTag processor at any time.
+        visionPortal.setProcessorEnabled(aprilTag, true);
+
+    }   // end method initAprilTag()
+
+
+}   // end class
