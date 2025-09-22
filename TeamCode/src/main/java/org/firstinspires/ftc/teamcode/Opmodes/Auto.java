@@ -18,7 +18,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import java.util.Arrays;
 import java.util.List;
 
-@Autonomous(name = "Alaqmar Auto;")
+@Autonomous(name = "Alaqmar Auto2;")
 public class Auto extends LinearOpMode {
 
     Chassis chassis = null;
@@ -57,8 +57,9 @@ public class Auto extends LinearOpMode {
 
         if (opModeIsActive()) {
 
-        chassis.moveRobot(0,0,180);
-
+        chassis.turnToHeading(180,0.7,10000);
+        sleep(1000);
+        chassis.turnToHeading(-180,0.7,10000);
 
         }
     }
