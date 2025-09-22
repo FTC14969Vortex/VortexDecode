@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.helper.Chassis;
 import org.firstinspires.ftc.teamcode.helper.FlyWheel;
 import org.firstinspires.ftc.teamcode.helper.Gate;
@@ -28,6 +29,9 @@ public class Teleop extends LinearOpMode {
         waitForStart();
         // Run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+
+            telemetry.addData("Odo x", chassis.getPoseEstimate().getX(DistanceUnit.INCH));
+            telemetry.addData("Odo y", chassis.getPoseEstimate().getY(DistanceUnit.INCH));
             if (gamepad1.a) {
                 chassis.resetIMU();
 

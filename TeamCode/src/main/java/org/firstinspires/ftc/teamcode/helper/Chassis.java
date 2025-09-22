@@ -49,13 +49,18 @@ public class Chassis {
         backRightDrive = opMode.hardwareMap.get(DcMotor.class, "rightBack");
         odo = opMode.hardwareMap.get(GoBildaPinpointDriver.class, "odo");
 
+        //Make these values more accurate to make our heading more accurate
+        odo.setOffsets(-4.5, 8, DistanceUnit.INCH);
+
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        odo.recalibrateIMU();
         odo.resetPosAndIMU();
     }
 
@@ -239,79 +244,15 @@ public class Chassis {
         backRightDrive.setPower(backRightPower);
     }
 
-    // Turn robot in place to desired heading using proportional control
-    public void turnToHeading(double targetHeadingDeg, double maxTurnSpeed, int timeoutMillis) {
-
-        double currentHeading = odo.getHeading(AngleUnit.RADIANS);
-
-        opMode.telemetry.addData("Current Heading in Radian 1 = ", currentHeading);
-
-        odo.recalibrateIMU();
-        odo.resetPosAndIMU();
-        //odo.setHeading(0, AngleUnit.RADIANS);
-        odo.update();
-
-        currentHeading = odo.getHeading(AngleUnit.RADIANS);
-        opMode.telemetry.addData("Current Heading in Radian 2 = ", currentHeading);
-        opMode.telemetry.update();
-
-        putThreadToSleep(3000);
-
-        double targetHeadingRad = Math.toRadians(targetHeadingDeg);
-
-
-        final double ANGLE_TOLERANCE_RAD = Math.toRadians(4);
-        ElapsedTime timer = new ElapsedTime();
-
-
-        while (((LinearOpMode)opMode).opModeIsActive() && timer.milliseconds() < timeoutMillis) {
-            currentHeading = odo.getHeading(AngleUnit.RADIANS);
-            //opMode.telemetry.addData("Current Heading in Radian=",currentHeading);
-            //opMode.telemetry.update();
-
-            double error = angleWrap(targetHeadingRad - currentHeading);
-            //opMode.telemetry.addData("Error value=",error);
-            //opMode.telemetry.update();
-
-            if (Math.abs(error) < ANGLE_TOLERANCE_RAD){
-                break;
-            }else {
-                opMode.telemetry.addData("Current Heading in Radian=",currentHeading);
-                opMode.telemetry.addData("Absolute Error value=", Math.abs(error));
-                opMode.telemetry.update();
-                putThreadToSleep(3000);
-            }
-
-
-            double turnPower = clip(error * 0.8, -maxTurnSpeed, maxTurnSpeed);
-
-            drive(0, 0, turnPower, 0.5);
-        }
-
-       setPowerToWheels(0,0,0,0);
-    }
     // Returns the current pose from odometry in mm and radians
     public Pose2D getPoseEstimate() {
+        odo.update();
         double x = odo.getPosX(DistanceUnit.MM);
         double y = odo.getPosY(DistanceUnit.MM);
         double heading = odo.getHeading(AngleUnit.RADIANS);
         return new Pose2D(DistanceUnit.MM, x, y, AngleUnit.RADIANS, heading);
     }
 
-
-    // Utility method to constrain values
-    private double clip(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-
-    private void putThreadToSleep(int millis){
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ignored) {
-
-        }
-    }
 
     // Wrap angle between -PI and +PI
     private double angleWrap(double radians) {
@@ -321,11 +262,11 @@ public class Chassis {
     }
 
     public void turnToAngle(double targetAngle) {
-        targetAngle = normalizeAngle(targetAngle);
 
         while(((LinearOpMode)opMode).opModeIsActive()) {
+            odo.update();
             double currentAngle = odo.getHeading(AngleUnit.DEGREES);
-            double error = normalizeAngle(targetAngle - currentAngle);
+            double error = (targetAngle - currentAngle);
 
             opMode.telemetry.addData("Current Angle", currentAngle);
             opMode.telemetry.addData("Error", error);
@@ -342,56 +283,5 @@ public class Chassis {
             drive(0,0,turnPower);
         }
     }
-    double normalizeAngle(double angle) {
-        while(angle > 180) angle -=360;
-        while(angle < 180) angle += 360;
-        return angle;
-    }
-
-
-    public void drive(double axial, double lateral, double yaw, double speed) {
-        // If field-centric, adjust input based on robot heading
-        double botHeading = 0;
-        if(driveMode == DriveMode.FIELD_CENTRIC) {
-            odo.update();
-            botHeading = -odo.getHeading(AngleUnit.RADIANS);
-            // This will likely change if the odometry unit is mounted differently.
-        }
-
-
-        // Apply heading rotation to axial/lateral values
-        double lateral_1 = lateral * Math.cos(botHeading) - axial * Math.sin(botHeading);
-        double axial_1 = lateral * Math.sin(botHeading) + axial * Math.cos(botHeading);
-
-
-        // Calculate raw motor powers
-        leftFrontPower = speed*(axial_1 + lateral_1 + yaw);
-        rightFrontPower = speed*(axial_1 - lateral_1 - yaw);
-        leftBackPower = speed*(axial_1 - lateral_1 + yaw);
-        rightBackPower = speed*(axial_1 + lateral_1 - yaw);
-
-
-        // Normalize powers to stay within [-1, 1]
-//        double max = JavaUtil.maxOfList(JavaUtil.createListWith(Math.abs(leftFrontPower), Math.abs(rightFrontPower), Math.abs(leftBackPower), Math.abs(rightBackPower)));
-//        if (max > 1) {
-//            leftFrontPower /= max;
-//            rightFrontPower /= max;
-//            leftBackPower /= max;
-//            rightBackPower /= max;
-//        }
-
-
-        // Apply final power values to motors
-        frontLeftDrive.setPower(leftFrontPower);
-        frontRightDrive.setPower(rightFrontPower);
-        backLeftDrive.setPower(leftBackPower);
-        backRightDrive.setPower(rightBackPower);
-    }
-
-
-    public void setPowerToWheels(double power) {
-        setPowerToWheels(power, power, power, power);
-    }
-
 }
 
