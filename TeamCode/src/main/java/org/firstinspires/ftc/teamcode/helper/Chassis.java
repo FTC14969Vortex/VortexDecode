@@ -381,14 +381,14 @@ public class Chassis {
 
         imu.resetYaw();
 
-        while (((LinearOpMode) opMode).opModeIsActive()) {
+        while (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)<targetHeading) {
 
 
              if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)<=targetHeading-2)){
-                setPowerToWheels(0.5, -0.5, 0.5, -0.5);
+                setPowerToWheels(0.2, -0.2, 0.2, -0.2);
             }
              else if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)>=targetHeading+2)){
-                setPowerToWheels(-0.5, 0.5, -0.5, 0.5);
+                setPowerToWheels(-0.2, 0.2, -0.2, 0.2);
     }
              else {
                  setPowerToWheels(0,0,0,0);
