@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.helper;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -9,6 +10,10 @@ import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.helper.Util;
 
 public class Chassis {
     double leftFrontPower;
@@ -16,22 +21,24 @@ public class Chassis {
     double rightFrontPower;
     double rightBackPower;
     private GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
+    RevHubOrientationOnRobot hubOrientation;
 
     private DcMotor frontLeftDrive;
     private DcMotor backLeftDrive;
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
+    private IMU imu;
 
     private OpMode opMode;
     private DriveMode driveMode;
 
-    final double SPEED_GAIN  =  0.02  ;   //  Forward Speed Control "Gain". e.g. Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
-    final double STRAFE_GAIN =  0.015 ;   //  Strafe Speed Control "Gain".  e.g. Ramp up to 37% power at a 25 degree Yaw error.   (0.375 / 25.0)
-    final double TURN_GAIN   =  0.01  ;   //  Turn Control "Gain".  e.g. Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
+    final double SPEED_GAIN = 0.02;   //  Forward Speed Control "Gain". e.g. Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
+    final double STRAFE_GAIN = 0.015;   //  Strafe Speed Control "Gain".  e.g. Ramp up to 37% power at a 25 degree Yaw error.   (0.375 / 25.0)
+    final double TURN_GAIN = 0.01;   //  Turn Control "Gain".  e.g. Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
 
     final double MAX_AUTO_SPEED = 0.5;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_STRAFE= 0.5;   //  Clip the strafing speed to this max value (adjust for your robot)
-    final double MAX_AUTO_TURN  = 0.3;   //  Clip the turn speed to this max value (adjust for your robot)
+    final double MAX_AUTO_STRAFE = 0.5;   //  Clip the strafing speed to this max value (adjust for your robot)
+    final double MAX_AUTO_TURN = 0.3;   //  Clip the turn speed to this max value (adjust for your robot)
 
 
     public enum DriveMode {
@@ -48,20 +55,27 @@ public class Chassis {
         frontRightDrive = opMode.hardwareMap.get(DcMotor.class, "rightFront");
         backRightDrive = opMode.hardwareMap.get(DcMotor.class, "rightBack");
         odo = opMode.hardwareMap.get(GoBildaPinpointDriver.class, "odo");
+        imu = opMode.hardwareMap.get(IMU.class, "imu");
+
+        hubOrientation = new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+        );
+
+        imu.initialize(new IMU.Parameters(hubOrientation));
 
         //Make these values more accurate to make our heading more accurate
         odo.setOffsets(-4.5, 8, DistanceUnit.INCH);
-
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.resetPosAndIMU();
 
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        odo.resetPosAndIMU();
+
     }
 
     public void setDriveMode(DriveMode driveMode) {
@@ -153,7 +167,7 @@ public class Chassis {
 
 
     public double smoothPower(double currentPower, double targetPower) {
-            double sigma = 0.1;
+        double sigma = 0.1;
 
         if (currentPower < targetPower) {
             return currentPower + sigma;
@@ -185,18 +199,19 @@ public class Chassis {
     public void moveDistance(double x, double y, double yaw) {
 
         // Use the speed and turn "gains" to calculate how we want the robot to move.
-        double drive  = Range.clip(y * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-        double turn   = Range.clip(-yaw * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+        double drive = Range.clip(y * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+        double turn = Range.clip(-yaw * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
         double strafe = Range.clip(x * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
         moveRobot(drive, strafe, turn);
     }
+
     public void moveToPosition(double x, double y, double yaw) {
 
 
         double xErr = x - odo.getEncoderX();
         double yErr = y - odo.getEncoderY();
-        double yawErr = angleWrap(yaw - odo.getHeading(AngleUnit.RADIANS));
+        double yawErr = Util.angleWrap(yaw - odo.getHeading(AngleUnit.RADIANS));
 
 //        // Use the speed and turn "gains" to calculate how we want the robot to move.
 //        double drive  = Range.clip(yErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
@@ -205,25 +220,26 @@ public class Chassis {
 //
 //        moveRobot(drive, strafe, turn);
 
-        while(xErr!= 0 && yErr != 0 && yawErr!=0) {
+        while (xErr != 0 && yErr != 0 && yawErr != 0) {
             xErr = x - odo.getEncoderX();
             yErr = y - odo.getEncoderY();
-            yawErr = angleWrap(yaw - odo.getHeading(AngleUnit.RADIANS));
+            yawErr = Util.angleWrap(yaw - odo.getHeading(AngleUnit.RADIANS));
 
             // Use the speed and turn "gains" to calculate how we want the robot to move.
-            double drive  = Range.clip(yErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            double turn   = Range.clip(-yawErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+            double drive = Range.clip(yErr * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            double turn = Range.clip(-yawErr * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
             double strafe = Range.clip(xErr * STRAFE_GAIN, -MAX_AUTO_STRAFE, MAX_AUTO_STRAFE);
 
             moveRobot(drive, strafe, turn);
         }
     }
+
     public void moveRobot(double x, double y, double yaw) {
         // Calculate wheel powers.
-        double frontLeftPower    =  x - y - yaw;
-        double frontRightPower   =  x + y + yaw;
-        double backLeftPower     =  x + y - yaw;
-        double backRightPower    =  x - y + yaw;
+        double frontLeftPower = x - y - yaw;
+        double frontRightPower = x + y + yaw;
+        double backLeftPower = x + y - yaw;
+        double backRightPower = x - y + yaw;
 
         // Normalize wheel powers to be less than 1.0
         double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
@@ -254,16 +270,9 @@ public class Chassis {
     }
 
 
-    // Wrap angle between -PI and +PI
-    private double angleWrap(double radians) {
-        while (radians > Math.PI) radians -= 2 * Math.PI;
-        while (radians < -Math.PI) radians += 2 * Math.PI;
-        return radians;
-    }
-
     public void turnToAngle(double targetAngle) {
 
-        while(((LinearOpMode)opMode).opModeIsActive()) {
+        while (((LinearOpMode) opMode).opModeIsActive()) {
             odo.update();
             double currentAngle = odo.getHeading(AngleUnit.DEGREES);
             double error = (targetAngle - currentAngle);
@@ -272,16 +281,119 @@ public class Chassis {
             opMode.telemetry.addData("Error", error);
             opMode.telemetry.update();
 
-            if(Math.abs(error) < 2) {
-                setPowerToWheels(0,0,0,0);
+            if (Math.abs(error) < 2) {
+                setPowerToWheels(0, 0, 0, 0);
                 break;
             }
 
             double turnPower = 0.01 * error;
             turnPower = Math.max(-0.5, Math.min(turnPower, 0.5));
 
-            drive(0,0,turnPower);
+            drive(0, 0, turnPower);
         }
     }
-}
 
+    public void turnToHeadingWithImuDegrees(double targetHeadingDeg, double maxTurnSpeed, int timeoutMillis) {
+        imu.resetYaw();
+        odo.resetPosAndIMU();
+
+        YawPitchRollAngles yawPitchRollAngles = imu.getRobotYawPitchRollAngles();
+        opMode.telemetry.addData("IMU Pitch = ", yawPitchRollAngles.getPitch(AngleUnit.DEGREES));
+        opMode.telemetry.addData("IMU Yaw = ", yawPitchRollAngles.getYaw(AngleUnit.DEGREES));
+        opMode.telemetry.addData("IMU Roll = ", yawPitchRollAngles.getRoll(AngleUnit.DEGREES));
+        opMode.telemetry.addData("ODO Heading = ", odo.getHeading(AngleUnit.DEGREES));
+        opMode.telemetry.addData("ODO X = ", odo.getPosX(DistanceUnit.CM));
+        opMode.telemetry.addData("ODO Y = ", odo.getPosY(DistanceUnit.CM));
+
+        opMode.telemetry.update();
+        Util.sleepThread(3500);
+
+        ElapsedTime timer = new ElapsedTime();
+
+        while (((LinearOpMode) opMode).opModeIsActive() && timer.milliseconds() < timeoutMillis) {
+            // Step 1: Get the current heading from the IMU
+
+            yawPitchRollAngles = imu.getRobotYawPitchRollAngles();
+
+
+            opMode.telemetry.addData("IMU Pitch = ", yawPitchRollAngles.getPitch(AngleUnit.DEGREES));
+            opMode.telemetry.addData("IMU Yaw = ", yawPitchRollAngles.getYaw(AngleUnit.DEGREES));
+            opMode.telemetry.addData("IMU Roll = ", yawPitchRollAngles.getRoll(AngleUnit.DEGREES));
+            opMode.telemetry.addData("ODO Heading = ", odo.getHeading(AngleUnit.DEGREES));
+            opMode.telemetry.addData("ODO X = ", odo.getPosX(DistanceUnit.CM));
+            opMode.telemetry.addData("ODO Y = ", odo.getPosY(DistanceUnit.CM));
+
+            opMode.telemetry.update();
+            //Util.sleepThread(3000);
+
+/*
+            double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+
+            // Step 2: Calculate the error (shortest path)
+            double error = Util.angleWrap(targetHeadingDeg - currentHeading);
+
+             // --- TUNING CONSTANTS ---
+             // These are starting values. You MUST tune them for your robot.
+             // Proportional gain for turning. A higher value will result in faster, more aggressive turns.
+              final double P_TURN_GAIN = 0.02;
+             // Minimum power to apply to overcome static friction.
+              final double MIN_TURN_POWER = 0.15;
+             // Angle tolerance in degrees. The robot will stop turning when the error is within this range.
+              final double ANGLE_TOLERANCE = 4.0;
+             // Maximum speed for turning.
+              final double MAX_TURN_SPEED = 0.8;
+
+            // Step 3: Check if we've reached the target
+            if (Math.abs(error) < ANGLE_TOLERANCE) {
+                break; // Exit the loop
+            }
+
+            // Step 4: Calculate the turn power using a P-controller
+            double turnPower = error * P_TURN_GAIN;
+
+            // Step 5: Apply minimum power to overcome friction
+            if (Math.abs(turnPower) < MIN_TURN_POWER) {
+                turnPower = Math.signum(error) * MIN_TURN_POWER;
+            }
+
+            // Step 6: Clip the power to the max turn speed
+            turnPower = Util.clip(turnPower, -maxTurnSpeed, maxTurnSpeed);
+
+            // Step 7: Apply power to the motors to turn
+            setPowerToWheels(-turnPower, turnPower, -turnPower, turnPower);
+
+            // Telemetry for debugging
+             //opMode.telemetry.addData("Target Heading", "%.2f", targetHeadingDeg);
+             //opMode.telemetry.addData("Current Heading", "%.2f", currentHeading);
+             //opMode.telemetry.addData("Error", "%.2f", error);
+             //opMode.telemetry.addData("Turn Power", "%.2f", turnPower);
+             //opMode.telemetry.update();
+             Util.sleepThread(3000);
+        }
+
+        // Step 8: Stop the motors after the turn is complete or timed out
+        setPowerToWheels(0,0,0,0);
+        */
+        }
+    }
+
+    public void imuTurnRight(double targetHeading) {
+
+        imu.resetYaw();
+
+        while (((LinearOpMode) opMode).opModeIsActive()) {
+
+
+             if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)<=targetHeading-2)){
+                setPowerToWheels(0.5, -0.5, 0.5, -0.5);
+            }
+             else if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)>=targetHeading+2)){
+                setPowerToWheels(-0.5, 0.5, -0.5, 0.5);
+    }
+             else {
+                 setPowerToWheels(0,0,0,0);
+                 break;
+             }
+}
+    }
+}
