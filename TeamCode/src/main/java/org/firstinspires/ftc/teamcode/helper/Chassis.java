@@ -80,7 +80,7 @@ public class Chassis {
         opMode.telemetry.addData("Front left/Right", JavaUtil.formatNumber(leftFrontPower, 4, 2) + ", " + JavaUtil.formatNumber(rightFrontPower, 4, 2));
         opMode.telemetry.addData("Back  left/Right", JavaUtil.formatNumber(leftBackPower, 4, 2) + ", " + JavaUtil.formatNumber(rightBackPower, 4, 2));
         odo.update();
-        opMode.telemetry.addData("botHeading", JavaUtil.formatNumber(odo.getHeading(AngleUnit.RADIANS), 4, 2));
+        opMode.telemetry.addData("botHeading", JavaUtil.formatNumber(Math.toDegrees(AngleUnit.normalizeRadians(odo.getHeading(AngleUnit.RADIANS))), 4, 2));
         opMode.telemetry.addData("botX", JavaUtil.formatNumber(odo.getPosX(DistanceUnit.CM), 4, 2));
         opMode.telemetry.addData("botY", JavaUtil.formatNumber(odo.getPosY(DistanceUnit.CM), 4, 2));
         opMode.telemetry.update();
@@ -261,24 +261,33 @@ public class Chassis {
         return radians;
     }
 
+    final double MIN_TURN_PWR = 0.1;
+    final double MAX_TURN_PWR = 0.5;
+    final double ERROR_RANGE_DEGREE = 2;
     public void turnToAngle(double targetAngle) {
 
         while(((LinearOpMode)opMode).opModeIsActive()) {
             odo.update();
-            double currentAngle = odo.getHeading(AngleUnit.DEGREES);
-            double error = (targetAngle - currentAngle);
+            double currentAngleRAD = odo.getHeading(AngleUnit.RADIANS);
 
+            double currentAngle = Math.toDegrees(AngleUnit.normalizeRadians(currentAngleRAD));
+            double errorAngle = AngleUnit.normalizeDegrees(targetAngle - currentAngle);
+
+
+            opMode.telemetry.addData("Target Angle", targetAngle);
             opMode.telemetry.addData("Current Angle", currentAngle);
-            opMode.telemetry.addData("Error", error);
+            opMode.telemetry.addData("Error Angle", errorAngle);
             opMode.telemetry.update();
 
-            if(Math.abs(error) < 2) {
+            if( Math.abs(errorAngle) < ERROR_RANGE_DEGREE ) {
                 setPowerToWheels(0,0,0,0);
                 break;
             }
 
-            double turnPower = 0.01 * error;
-            turnPower = Math.max(-0.5, Math.min(turnPower, 0.5));
+            //double turnPower = 0.01 * error;
+            //turnPower = Math.max(-0.5, Math.min(turnPower, 0.5));
+
+            double turnPower = ( (Math.abs(errorAngle) / 180) * (MAX_TURN_PWR - MIN_TURN_PWR) + MIN_TURN_PWR ) * Math.signum(errorAngle) * -1;
 
             drive(0,0,turnPower);
         }
