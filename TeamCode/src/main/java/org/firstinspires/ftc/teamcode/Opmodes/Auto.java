@@ -19,7 +19,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import java.util.Arrays;
 import java.util.List;
 
-@Autonomous(name = "Alaqmar Auto 2.7;")
+@Autonomous(name = "Hozefa Auto 0.1;")
 public class Auto extends LinearOpMode {
 
     Chassis chassis = null;
@@ -40,6 +40,7 @@ public class Auto extends LinearOpMode {
 
     FlyWheel flyWheel = new FlyWheel();
     Gate gate = new Gate();
+
     //DecodeAprilTag aprilTag = new DecodeAprilTag(this);
 
     @Override
@@ -59,13 +60,41 @@ public class Auto extends LinearOpMode {
 
 
         waitForStart();
+
+        chassis.moveToPosition(0,10,0);
+
+        //chassis.moveDistance(0,20,0);
+        //telemetry.addData("x:0,y:20,yaw:0","");
+        //telemetry.update();
+        //sleep(2000);
+        //chassis.moveDistance(0,20,0);
+        //telemetry.addData("x:0,y:-20,yaw:0","");
+        //telemetry.update();
+        //sleep(2000);
+        //chassis.imuTurn(90);
+        //chassis.moveDistance(10,10,0);
+        //chassis.imuTurn(-90);
+        //chassis.moveDistance(10,0,0);
+        //chassis.imuTurn(90);
+        //chassis.moveDistance(-10,0,0);
+
+
         while (opModeIsActive()) {
+
+
+
+
+            //chassis.printOdoTelemetry();
+            //chassis.printIMUTelemetry();
+            //  telemetry.update();
+
+
 //                aprilTag.findAprilTag("BlueAllianceLeft");
 //                AprilTagPoseFtc aprilTagPoseFtc = aprilTag.getCoordinate("BlueAllianceLeft");
 //                sleep(1000);
 
             //for (int i = 0; i < 5; i++){
-                chassis.imuTurnRight(90);
+                //chassis.imuTurnRight(90);
                 //chassis.turnToHeadingWithImuDegrees(90, 0.5, 30000);
 //                if (i % 2 == 0) {
 //                    chassis.turnToHeadingWithImuDegrees(90, 0.5, 30000);

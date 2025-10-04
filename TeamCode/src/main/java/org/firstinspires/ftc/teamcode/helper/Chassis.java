@@ -10,9 +10,11 @@ import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
 import org.firstinspires.ftc.teamcode.helper.Util;
 
 public class Chassis {
@@ -293,6 +295,9 @@ public class Chassis {
         }
     }
 
+    public void turnToHeading2(double targetHeadingDeg, double maxTurnSpeed, int timeoutMillis){
+        //Util.turnToAngleIMU(targetHeadingDeg,maxTurnSpeed, );
+    }
     public void turnToHeadingWithImuDegrees(double targetHeadingDeg, double maxTurnSpeed, int timeoutMillis) {
         imu.resetYaw();
         odo.resetPosAndIMU();
@@ -377,23 +382,43 @@ public class Chassis {
         }
     }
 
-    public void imuTurnRight(double targetHeading) {
+    public void imuTurn(double targetHeading) {
 
         imu.resetYaw();
 
-        while (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)<targetHeading) {
+        double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double diff = targetHeading - currentHeading;
+        double power = 0.3;
 
-
-             if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)<=targetHeading-2)){
-                setPowerToWheels(0.2, -0.2, 0.2, -0.2);
+        while (Math.abs(diff) > 2)
+        {
+            if (diff < 0){
+                //move right
+                setPowerToWheels(power, -power, power, -power);
+            }else{
+                //move left
+                setPowerToWheels(-power, power, -power, power);
             }
-             else if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)>=targetHeading+2)){
-                setPowerToWheels(-0.2, 0.2, -0.2, 0.2);
+
+            currentHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            diff = targetHeading - currentHeading;
+
+        }
+        setPowerToWheels(0.0,0,0,0);
+
+        opMode.telemetry.addData("Target Heading", "%.2f", targetHeading);
+        opMode.telemetry.addData("Current Heading", "%.2f", currentHeading);
+        opMode.telemetry.update();
+
+
     }
-             else {
-                 setPowerToWheels(0,0,0,0);
-                 break;
-             }
-}
+
+    public void printOdoTelemetry(){
+        Util.printOdoTelemetry(odo, opMode.telemetry);
     }
+
+    public void printIMUTelemetry(){
+        Util.printIMUTelemetry(imu, opMode.telemetry);
+    }
+
 }

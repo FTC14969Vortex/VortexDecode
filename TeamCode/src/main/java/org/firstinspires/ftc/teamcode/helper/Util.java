@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 public class Util {
@@ -31,6 +32,28 @@ public class Util {
         } catch (InterruptedException e) {
         }
     }
+
+    public static void printOdoTelemetry(GoBildaPinpointDriver odo, Telemetry telemetry ){
+        telemetry.addData("Odo Device Name: ", odo.getDeviceName());
+        telemetry.addData("Odo Device Version: ", odo.getDeviceVersion());
+        telemetry.addData("Odo Connection Info: ", odo.getConnectionInfo());
+        telemetry.addData("Odo Device Status: ", odo.getDeviceStatus());
+        telemetry.addData("Odo Position X (cms): ", odo.getPosX(DistanceUnit.CM));
+        telemetry.addData("Odo Position Y (cms): ", odo.getPosY(DistanceUnit.CM));
+        telemetry.addData("Odo Heading (degrees): ", odo.getHeading(AngleUnit.DEGREES));
+    }
+
+    public static void printIMUTelemetry(IMU imu, Telemetry telemetry ){
+        telemetry.addData("IMU Device Name: ", imu.getDeviceName());
+        telemetry.addData("IMU Device Version: ", imu.getVersion());
+        telemetry.addData("IMU Connection Info: ", imu.getConnectionInfo());
+        telemetry.addData("IMU Yaw: ", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.addData("IMU Pitch: ", imu.getRobotYawPitchRollAngles().getPitch(AngleUnit.DEGREES));
+        telemetry.addData("IMU Roll: ", imu.getRobotYawPitchRollAngles().getRoll(AngleUnit.DEGREES));
+    }
+
+
+
     /**
      * Turns the robot to a specific angle using the IMU Yaw.
      * This is a self-contained method with no external utility calls.
@@ -45,7 +68,7 @@ public class Util {
      * @param opMode      The LinearOpMode instance, used to check if the OpMode is still active.
      * @param telemetry   The telemetry object for displaying debug information.
      */
-    public void turnToAngle2(double targetAngle, double turnPower,
+    public static void turnToAngleIMU(double targetAngle, double turnPower,
                              DcMotor leftFront, DcMotor leftBack,
                              DcMotor rightFront, DcMotor rightBack,
                              IMU imu, LinearOpMode opMode, Telemetry telemetry) {
