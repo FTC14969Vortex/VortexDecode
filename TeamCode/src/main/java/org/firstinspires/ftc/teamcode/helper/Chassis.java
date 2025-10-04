@@ -277,8 +277,8 @@ public class Chassis {
         return radians;
     }
 
-    final double MIN_TURN_PWR = 0.1;
-    final double MAX_TURN_PWR = 0.5;
+    final double MIN_TURN_PWR = 0.3;
+    final double MAX_TURN_PWR = 0.8;
     final double ERROR_RANGE_DEGREE = 2;
 
     public void turnToAngle(double targetAngle) {
@@ -311,107 +311,4 @@ public class Chassis {
         }
     }
 
-    public void turnToHeadingWithImuDegrees(double targetHeadingDeg, double maxTurnSpeed, int timeoutMillis) {
-        imu.resetYaw();
-        odo.resetPosAndIMU();
-
-        YawPitchRollAngles yawPitchRollAngles = imu.getRobotYawPitchRollAngles();
-        opMode.telemetry.addData("IMU Pitch = ", yawPitchRollAngles.getPitch(AngleUnit.DEGREES));
-        opMode.telemetry.addData("IMU Yaw = ", yawPitchRollAngles.getYaw(AngleUnit.DEGREES));
-        opMode.telemetry.addData("IMU Roll = ", yawPitchRollAngles.getRoll(AngleUnit.DEGREES));
-        opMode.telemetry.addData("ODO Heading = ", odo.getHeading(AngleUnit.DEGREES));
-        opMode.telemetry.addData("ODO X = ", odo.getPosX(DistanceUnit.CM));
-        opMode.telemetry.addData("ODO Y = ", odo.getPosY(DistanceUnit.CM));
-
-        opMode.telemetry.update();
-        Util.sleepThread(3500);
-
-        ElapsedTime timer = new ElapsedTime();
-
-        while (((LinearOpMode) opMode).opModeIsActive() && timer.milliseconds() < timeoutMillis) {
-            // Step 1: Get the current heading from the IMU
-
-            yawPitchRollAngles = imu.getRobotYawPitchRollAngles();
-
-
-            opMode.telemetry.addData("IMU Pitch = ", yawPitchRollAngles.getPitch(AngleUnit.DEGREES));
-            opMode.telemetry.addData("IMU Yaw = ", yawPitchRollAngles.getYaw(AngleUnit.DEGREES));
-            opMode.telemetry.addData("IMU Roll = ", yawPitchRollAngles.getRoll(AngleUnit.DEGREES));
-            opMode.telemetry.addData("ODO Heading = ", odo.getHeading(AngleUnit.DEGREES));
-            opMode.telemetry.addData("ODO X = ", odo.getPosX(DistanceUnit.CM));
-            opMode.telemetry.addData("ODO Y = ", odo.getPosY(DistanceUnit.CM));
-
-            opMode.telemetry.update();
-            //Util.sleepThread(3000);
-
-/*
-            double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-
-            // Step 2: Calculate the error (shortest path)
-            double error = Util.angleWrap(targetHeadingDeg - currentHeading);
-
-             // --- TUNING CONSTANTS ---
-             // These are starting values. You MUST tune them for your robot.
-             // Proportional gain for turning. A higher value will result in faster, more aggressive turns.
-              final double P_TURN_GAIN = 0.02;
-             // Minimum power to apply to overcome static friction.
-              final double MIN_TURN_POWER = 0.15;
-             // Angle tolerance in degrees. The robot will stop turning when the error is within this range.
-              final double ANGLE_TOLERANCE = 4.0;
-             // Maximum speed for turning.
-              final double MAX_TURN_SPEED = 0.8;
-
-            // Step 3: Check if we've reached the target
-            if (Math.abs(error) < ANGLE_TOLERANCE) {
-                break; // Exit the loop
-            }
-
-            // Step 4: Calculate the turn power using a P-controller
-            double turnPower = error * P_TURN_GAIN;
-
-            // Step 5: Apply minimum power to overcome friction
-            if (Math.abs(turnPower) < MIN_TURN_POWER) {
-                turnPower = Math.signum(error) * MIN_TURN_POWER;
-            }
-
-            // Step 6: Clip the power to the max turn speed
-            turnPower = Util.clip(turnPower, -maxTurnSpeed, maxTurnSpeed);
-
-            // Step 7: Apply power to the motors to turn
-            setPowerToWheels(-turnPower, turnPower, -turnPower, turnPower);
-
-            // Telemetry for debugging
-             //opMode.telemetry.addData("Target Heading", "%.2f", targetHeadingDeg);
-             //opMode.telemetry.addData("Current Heading", "%.2f", currentHeading);
-             //opMode.telemetry.addData("Error", "%.2f", error);
-             //opMode.telemetry.addData("Turn Power", "%.2f", turnPower);
-             //opMode.telemetry.update();
-             Util.sleepThread(3000);
-        }
-
-        // Step 8: Stop the motors after the turn is complete or timed out
-        setPowerToWheels(0,0,0,0);
-        */
-        }
-    }
-
-    public void imuTurnRight(double targetHeading) {
-
-        imu.resetYaw();
-
-        while (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)<targetHeading) {
-
-
-             if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)<=targetHeading-2)){
-                setPowerToWheels(0.2, -0.2, 0.2, -0.2);
-            }
-             else if ((imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES)>=targetHeading+2)){
-                setPowerToWheels(-0.2, 0.2, -0.2, 0.2);
-    }
-             else {
-                 setPowerToWheels(0,0,0,0);
-                 break;
-             }
-}
-    }
 }
