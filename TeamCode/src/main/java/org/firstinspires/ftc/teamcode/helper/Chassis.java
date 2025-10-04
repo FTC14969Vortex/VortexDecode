@@ -277,8 +277,8 @@ public class Chassis {
         return radians;
     }
 
-    final double MIN_TURN_PWR = 0.1;
-    final double MAX_TURN_PWR = 0.5;
+    final double MIN_TURN_PWR = 0.3;
+    final double MAX_TURN_PWR = 0.8;
     final double ERROR_RANGE_DEGREE = 2;
 
     public void turnToAngle(double targetAngle) {

@@ -60,21 +60,14 @@ public class Auto extends LinearOpMode {
 
         waitForStart();
         while (opModeIsActive()) {
-//                aprilTag.findAprilTag("BlueAllianceLeft");
-//                AprilTagPoseFtc aprilTagPoseFtc = aprilTag.getCoordinate("BlueAllianceLeft");
-//                sleep(1000);
-
-            //for (int i = 0; i < 5; i++){
-                chassis.imuTurnRight(90);
-                //chassis.turnToHeadingWithImuDegrees(90, 0.5, 30000);
-//                if (i % 2 == 0) {
-//                    chassis.turnToHeadingWithImuDegrees(90, 0.5, 30000);
-//                }else{
-//                    chassis.turnToHeadingWithImuDegrees(-90, 0.5, 30000);
-//                }
-
-            //}
-
+            for(int i = 15; i <= 180; i += 15){
+                chassis.turnToAngle(i);
+                sleep(1500);
+            }
+            for(int i = -15; i >= -180; i -= 15) {
+                chassis.turnToAngle(i);
+                sleep(1500);
+            }
 
         }
     }
