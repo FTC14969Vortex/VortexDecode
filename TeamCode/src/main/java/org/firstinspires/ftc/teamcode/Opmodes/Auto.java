@@ -19,7 +19,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import java.util.Arrays;
 import java.util.List;
 
-@Autonomous(name = "Alaqmar Auto 2.2;")
+@Autonomous(name = "Alaqmar Auto 2.7;")
 public class Auto extends LinearOpMode {
 
     Chassis chassis = null;
@@ -37,11 +37,10 @@ public class Auto extends LinearOpMode {
     private DcMotor backLeftDrive;
     private DcMotor frontRightDrive;
     private DcMotor backRightDrive;
-    private IMU imu;
 
     FlyWheel flyWheel = new FlyWheel();
     Gate gate = new Gate();
-    DecodeAprilTag aprilTag = new DecodeAprilTag(this);
+    //DecodeAprilTag aprilTag = new DecodeAprilTag(this);
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -55,16 +54,9 @@ public class Auto extends LinearOpMode {
         gate = new Gate();
         gate.init(this);
 
-        aprilTag = new DecodeAprilTag(this);
-        aprilTag.initCamera();
+        //aprilTag = new DecodeAprilTag(this);
+        //aprilTag.initCamera();
 
-
-        //chassis.turnToHeading(180,0.7,10000);
-        //sleep(1000);
-        //chassis.turnToHeading(-180,0.7,10000);
-        chassis.resetIMU();
-        telemetry.addData("odo pos", chassis.getPoseEstimate().getHeading(AngleUnit.DEGREES));
-        telemetry.update();
 
         waitForStart();
         while (opModeIsActive()) {
@@ -72,10 +64,17 @@ public class Auto extends LinearOpMode {
 //                AprilTagPoseFtc aprilTagPoseFtc = aprilTag.getCoordinate("BlueAllianceLeft");
 //                sleep(1000);
 
+            //for (int i = 0; i < 5; i++){
+                chassis.imuTurnRight(90);
+                //chassis.turnToHeadingWithImuDegrees(90, 0.5, 30000);
+//                if (i % 2 == 0) {
+//                    chassis.turnToHeadingWithImuDegrees(90, 0.5, 30000);
+//                }else{
+//                    chassis.turnToHeadingWithImuDegrees(-90, 0.5, 30000);
+//                }
 
-            chassis.turnToAngle(10);
-            sleep(1000);
-            chassis.turnToAngle(-90);
+            //}
+
 
         }
     }
