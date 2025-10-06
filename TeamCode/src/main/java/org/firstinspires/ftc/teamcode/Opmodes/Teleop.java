@@ -30,8 +30,8 @@ public class Teleop extends LinearOpMode {
         // Run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            telemetry.addData("Odo x", chassis.getPoseEstimate().getX(DistanceUnit.INCH));
-            telemetry.addData("Odo y", chassis.getPoseEstimate().getY(DistanceUnit.INCH));
+            //telemetry.addData("Odo x", chassis.getPoseEstimate().getX(DistanceUnit.INCH));
+            //telemetry.addData("Odo y", chassis.getPoseEstimate().getY(DistanceUnit.INCH));
             if (gamepad1.a) {
                 chassis.resetIMU();
 
