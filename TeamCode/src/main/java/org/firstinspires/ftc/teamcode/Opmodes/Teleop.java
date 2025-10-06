@@ -36,10 +36,6 @@ public class Teleop extends LinearOpMode {
         // Run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-//            aprilTag.findAprilTag("BlueAllianceLeft");
-//            AprilTagPoseFtc aprilTagPoseFtc = aprilTag.getCoordinate("BlueAllianceLeft");
-//            sleep(1000);
-
             chassis.odo.update();
             telemetry.addData("Odo x", chassis.odo.getEncoderX());
             telemetry.addData("Odo y", chassis.odo.getEncoderY());

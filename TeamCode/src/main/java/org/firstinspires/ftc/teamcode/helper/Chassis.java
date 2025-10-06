@@ -9,7 +9,12 @@ import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
+import org.firstinspires.ftc.teamcode.Helper.Util;
 
 public class Chassis {
     double leftFrontPower;
@@ -59,10 +64,10 @@ public class Chassis {
     public void init(OpMode opMode) {
 
         this.opMode = opMode;
-        frontLeftDrive = opMode.hardwareMap.get(DcMotor.class, "frontLeftDrive");
-        backLeftDrive = opMode.hardwareMap.get(DcMotor.class, "backLeftDrive");
-        frontRightDrive = opMode.hardwareMap.get(DcMotor.class, "frontRightDrive");
-        backRightDrive = opMode.hardwareMap.get(DcMotor.class, "backRightDrive");
+        frontLeftDrive = opMode.hardwareMap.get(DcMotor.class, "leftFront");
+        backLeftDrive = opMode.hardwareMap.get(DcMotor.class, "leftBack");
+        frontRightDrive = opMode.hardwareMap.get(DcMotor.class, "rightFront");
+        backRightDrive = opMode.hardwareMap.get(DcMotor.class, "rightBack");
         odo = opMode.hardwareMap.get(GoBildaPinpointDriver.class, "odo");
         imu = opMode.hardwareMap.get(IMU.class, "imu");
 
@@ -104,7 +109,7 @@ public class Chassis {
         opMode.telemetry.addData("Front left/Right", JavaUtil.formatNumber(leftFrontPower, 4, 2) + ", " + JavaUtil.formatNumber(rightFrontPower, 4, 2));
         opMode.telemetry.addData("Back  left/Right", JavaUtil.formatNumber(leftBackPower, 4, 2) + ", " + JavaUtil.formatNumber(rightBackPower, 4, 2));
         odo.update();
-        opMode.telemetry.addData("botHeading", JavaUtil.formatNumber(Math.toDegrees(AngleUnit.normalizeRadians(odo.getHeading(AngleUnit.RADIANS))), 4, 2));
+        opMode.telemetry.addData("botHeading", JavaUtil.formatNumber(odo.getHeading(AngleUnit.RADIANS), 4, 2));
         opMode.telemetry.addData("botX", JavaUtil.formatNumber(odo.getPosX(DistanceUnit.CM), 4, 2));
         opMode.telemetry.addData("botY", JavaUtil.formatNumber(odo.getPosY(DistanceUnit.CM), 4, 2));
         opMode.telemetry.update();
@@ -300,12 +305,6 @@ public class Chassis {
     }
 
 
-    // Wrap angle between -PI and +PI
-    private double angleWrap(double radians) {
-        while (radians > Math.PI) radians -= 2 * Math.PI;
-        while (radians < -Math.PI) radians += 2 * Math.PI;
-        return radians;
-    }
     public double wrap180(double deg) {
         double x = (deg + 180.0) % 360.0;
         if (x < 0) x += 360.0;
@@ -320,36 +319,29 @@ public class Chassis {
 
         while (((LinearOpMode) opMode).opModeIsActive()) {
             odo.update();
-            double currentAngleRAD = odo.getHeading(AngleUnit.RADIANS);
+            double currentAngle = odo.getHeading(AngleUnit.DEGREES);
+            double error = (targetAngle - currentAngle);
 
-            double currentAngle = Math.toDegrees(AngleUnit.normalizeRadians(currentAngleRAD));
-            double errorAngle = AngleUnit.normalizeDegrees(targetAngle - currentAngle);
-
-
-            opMode.telemetry.addData("Target Angle", targetAngle);
             opMode.telemetry.addData("Current Angle", currentAngle);
-            opMode.telemetry.addData("Error Angle", errorAngle);
+            opMode.telemetry.addData("Error", error);
             opMode.telemetry.update();
 
-            if( Math.abs(errorAngle) < ERROR_RANGE_DEGREE ) {
-                setPowerToWheels(0,0,0,0);
-
+            if (Math.abs(error) < 2) {
+                setPowerToWheels(0, 0, 0, 0);
                 break;
             }
 
-            //double turnPower = 0.01 * error;
-            //turnPower = Math.max(-0.5, Math.min(turnPower, 0.5));
-
-            double turnPower = ( (Math.abs(errorAngle) / 180) * (MAX_TURN_PWR - MIN_TURN_PWR) + MIN_TURN_PWR ) * Math.signum(errorAngle) * -1;
+            double turnPower = 0.01 * error;
+            turnPower = Math.max(-0.5, Math.min(turnPower, 0.5));
 
             drive(0, 0, turnPower);
         }
     }
     public static double P_DRIVE_COEFF = 0.05;
     public static final double minPower = 0.08;
+
     public void moveWithProportionalDeceleration(Direction direction, double maxPower, double distanceInches) {
         if (!linearOpMode.opModeIsActive()) return;
-
 
         int targetTicks = (int) (distanceInches * COUNTS_PER_INCH);
 
@@ -547,5 +539,16 @@ public class Chassis {
 
         // Stop hard
         setPowerToWheels( 0, 0, 0, 0);
+    }
+    public void turnToHeading2(double targetHeadingDeg, double maxTurnSpeed, int timeoutMillis){
+        //Util.turnToAngleIMU(targetHeadingDeg,maxTurnSpeed, );
+    }
+
+    public void printOdoTelemetry(){
+        Util.printOdoTelemetry(odo, opMode.telemetry);
+    }
+
+    public void printIMUTelemetry(){
+        Util.printIMUTelemetry(imu, opMode.telemetry);
     }
 }
