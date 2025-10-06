@@ -1,9 +1,8 @@
-package org.firstinspires.ftc.teamcode.helper;
+package org.firstinspires.ftc.teamcode.Helper;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
@@ -12,9 +11,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.helper.Util;
-
 public class Chassis {
     double leftFrontPower;
     double leftBackPower;
@@ -22,6 +18,10 @@ public class Chassis {
     double rightBackPower;
     private GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     RevHubOrientationOnRobot hubOrientation;
+    double COUNTS_PER_MOTOR_REV = 537.7;
+    double DRIVE_GEAR_REDUCTION = 1.0;
+    double WHEEL_DIAMETER_INCHES = 4.0;
+    double COUNTS_PER_INCH;
 
     private DcMotor frontLeftDrive;
     private DcMotor backLeftDrive;
@@ -31,6 +31,8 @@ public class Chassis {
 
     private OpMode opMode;
     private DriveMode driveMode;
+
+   private LinearOpMode linearOpMode;
 
     final double SPEED_GAIN = 0.02;   //  Forward Speed Control "Gain". e.g. Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
     final double STRAFE_GAIN = 0.015;   //  Strafe Speed Control "Gain".  e.g. Ramp up to 37% power at a 25 degree Yaw error.   (0.375 / 25.0)
@@ -45,6 +47,13 @@ public class Chassis {
 
         ROBOT_CENTRIC,
         FIELD_CENTRIC
+    }
+
+    public static enum Direction {
+        FORWARD,
+        BACKWARD,
+        LEFT,
+        RIGHT
     }
 
     public void init(OpMode opMode) {
@@ -63,7 +72,8 @@ public class Chassis {
         );
 
         imu.initialize(new IMU.Parameters(hubOrientation));
-
+        linearOpMode = (LinearOpMode)opMode;
+        COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION)/(WHEEL_DIAMETER_INCHES * Math.PI);
         //Make these values more accurate to make our heading more accurate
         odo.setOffsets(-4.5, 8, DistanceUnit.INCH);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
@@ -233,6 +243,26 @@ public class Chassis {
             moveRobot(drive, strafe, turn);
         }
     }
+    public void setMotorWheelMode(DcMotor.RunMode runMode){
+        frontLeftDrive.setMode(runMode);
+        frontRightDrive.setMode(runMode);
+        backLeftDrive.setMode(runMode);
+        backRightDrive.setMode(runMode);
+    }
+    public int getAverageCurrentPositionAllWheels(){
+
+
+        int fl = Math.abs(frontLeftDrive.getCurrentPosition());
+        int bl = Math.abs(backLeftDrive.getCurrentPosition());
+        int fr = Math.abs(frontRightDrive.getCurrentPosition());
+        int br = Math.abs(backRightDrive.getCurrentPosition());
+
+
+        int averageCurrentPosition = (fl + bl + fr + br)/4;
+        return averageCurrentPosition;
+
+
+    }
 
     public void moveRobot(double x, double y, double yaw) {
         // Calculate wheel powers.
@@ -276,8 +306,13 @@ public class Chassis {
         while (radians < -Math.PI) radians += 2 * Math.PI;
         return radians;
     }
+    public double wrap180(double deg) {
+        double x = (deg + 180.0) % 360.0;
+        if (x < 0) x += 360.0;
+        return x - 180.0;
+    }
 
-    final double MIN_TURN_PWR = 0.3;
+    final double MIN_TURN_PWR = 0.1;
     final double MAX_TURN_PWR = 0.8;
     final double ERROR_RANGE_DEGREE = 2;
 
@@ -310,5 +345,207 @@ public class Chassis {
             drive(0, 0, turnPower);
         }
     }
+    public static double P_DRIVE_COEFF = 0.05;
+    public static final double minPower = 0.08;
+    public void moveWithProportionalDeceleration(Direction direction, double maxPower, double distanceInches) {
+        if (!linearOpMode.opModeIsActive()) return;
 
+
+        int targetTicks = (int) (distanceInches * COUNTS_PER_INCH);
+
+
+        setMotorWheelMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setMotorWheelMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+        while (linearOpMode.opModeIsActive()) {
+
+
+            int remainingTicks = targetTicks - getAverageCurrentPositionAllWheels();
+            if (remainingTicks <= 0) break;
+
+
+            double progress = (double) remainingTicks / (double) targetTicks;
+            double drivePower = minPower + (maxPower - minPower) * Math.pow(progress, 0.5);
+            drivePower = Math.max(minPower, Math.min(drivePower, maxPower));
+
+
+
+
+            //double calculatedPower = remainingTicks * P_DRIVE_COEFF;
+            //double drivePower = Math.max(0.1, Math.min(Math.abs(calculatedPower), maxPower));
+
+
+
+
+            switch (direction) {
+                case FORWARD:
+                    setPowerToWheels(drivePower, drivePower, drivePower, drivePower);
+                    break;
+                case BACKWARD:
+                    setPowerToWheels(-drivePower, -drivePower, -drivePower, -drivePower);
+                    break;
+                case LEFT:
+                    setPowerToWheels(-drivePower, drivePower, drivePower, -drivePower);
+                    break;
+                case RIGHT:
+                    setPowerToWheels(drivePower, -drivePower, -drivePower, drivePower);
+                    break;
+            }
+        }
+        setPowerToWheels(0,0,0,0);
+    }
+
+
+
+
+    //Gyroscope
+    public static double HEADING_THRESHOLD = 1.0;
+    public static double P_TURN_COEFF = 0.03;
+
+
+    public void moveWithProportionalDecelerationAndHeading(Direction direction, double maxPower, double distanceInches, Double holdHeadingDeg){
+
+        double COUNTS_PER_MOTOR_REV = 537.7;
+        double DRIVE_GEAR_REDUCTION = 1.0;
+        double WHEEL_DIAMETER_INCHES = 4.0;
+        double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION)/(WHEEL_DIAMETER_INCHES * Math.PI);
+
+
+
+
+        double MIN_POWER       = 0.08;  // just above stall for your drivetrain
+        double KP_HEADING      = 0.012; // start here; tune on the field
+        double KI_HEADING      = 0.000; // optional (keep 0 to start)
+        double KD_HEADING      = 0.000; // optional (keep 0 to start)
+        double MAX_YAW_CORR    = 0.25;  // cap on turn correction (0..1)
+        int    STOP_TOL_TICKS  = 20;    // ~0.4 in @ 45 cpi
+
+
+    LinearOpMode linearOpMode = (LinearOpMode)opMode;
+
+        if (!linearOpMode.opModeIsActive()) return;
+
+
+        // --- Prep encoders ---
+        int targetTicks = (int) Math.round(Math.abs(distanceInches) * COUNTS_PER_INCH);
+        setMotorWheelMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        setMotorWheelMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+        // --- Prep IMU ---
+        // Assuming "imu" is com.qualcomm.hardware.bosch.BNO055IMU or the newer IMU interface and already initialized.
+        // Choose degrees for angle un` it when you init IMU elsewhere.
+        imu.resetYaw();
+        double yaw0 = -odo.getHeading(AngleUnit.DEGREES); // your helper that reads yaw in degrees
+        double headingSetpoint = (holdHeadingDeg != null) ? holdHeadingDeg : yaw0;
+
+
+        // Heading PID state
+        double lastErr = 0, errI = 0;
+        long   lastT   = System.nanoTime();
+
+
+        while (linearOpMode.opModeIsActive()) {
+
+
+            int remaining = targetTicks - getAverageCurrentPositionAllWheels();
+            if (remaining <= STOP_TOL_TICKS) break;
+
+
+            // Linear taper (1 -> 0)
+            double progress = Math.max(0.0, Math.min(1.0, (double) remaining / (double) targetTicks));
+            // Optional easing for earlier slowdown (gamma<1 decelerates earlier)
+            double gamma = 0.7;
+            double tapered = Math.pow(progress, gamma);
+
+
+            double drivePower = MIN_POWER + (maxPower - MIN_POWER) * tapered;
+            drivePower = Range.clip(drivePower, MIN_POWER, maxPower);
+
+
+            // --- Heading hold (PID) ---
+            double yaw = -odo.getHeading(AngleUnit.DEGREES); // current yaw in degrees
+            double err = wrap180(headingSetpoint - yaw);
+
+
+            long now = System.nanoTime();
+            double dt = Math.max(1e-6, (now - lastT) / 1e9); // seconds
+            lastT = now;
+
+
+            // PI(D)
+            errI += err * dt;
+            // simple anti-windup
+            errI = Range.clip(errI, -50.0, 50.0);
+
+
+            double errD = (err - lastErr) / dt;
+            lastErr = err;
+
+
+            double turnCorr = KP_HEADING * err + KI_HEADING * errI + KD_HEADING * errD;
+            turnCorr = Range.clip(turnCorr, -MAX_YAW_CORR, MAX_YAW_CORR);
+
+
+            // --- Command mix ---
+            // axial: forward/back; lateral: strafe; yaw: heading correction
+            double axial = 0, lateral = 0;
+            switch (direction) {
+                case FORWARD:  axial =  drivePower; break;
+                case BACKWARD: axial = -drivePower; break;
+                case LEFT:     lateral =  drivePower; break;
+                case RIGHT:    lateral = -drivePower; break;
+            }
+            double yawCmd = turnCorr;
+
+
+            // mecanum mix
+            double flPower = axial + lateral + yawCmd;
+            double frPower = axial - lateral - yawCmd;
+            double blPower = axial - lateral + yawCmd;
+            double brPower = axial + lateral - yawCmd;
+
+
+            // Normalize if any exceeds 1.0
+            double maxAbs = Math.max(1.0,
+                    Math.max(Math.abs(flPower),
+                            Math.max(Math.abs(frPower),
+                                    Math.max(Math.abs(blPower), Math.abs(brPower)))));
+            flPower /= maxAbs; frPower /= maxAbs; blPower /= maxAbs; brPower /= maxAbs;
+
+
+            // Scale to preserve the intended drive magnitude (keep <= maxPower)
+            flPower *= maxPower; frPower *= maxPower; blPower *= maxPower; brPower *= maxPower;
+
+
+            // Ensure we don't drop below MIN_POWER along the commanded axis (helps overcome static friction)
+            // but allow the heading correction to modulate around it.
+            // Only enforce MIN_POWER on the dominant drive component:
+            if (direction == Direction.FORWARD || direction == Direction.BACKWARD) {
+                double sign = Math.signum(axial);
+                flPower = sign * Math.max(MIN_POWER, Math.abs(flPower));
+                frPower = sign * Math.max(MIN_POWER, Math.abs(frPower));
+                blPower = sign * Math.max(MIN_POWER, Math.abs(blPower));
+                brPower = sign * Math.max(MIN_POWER, Math.abs(brPower));
+            } else {
+                double sign = Math.signum(lateral);
+                // For strafes, friction is higher—MIN_POWER helps a lot
+                flPower = (Math.signum(flPower) == 0 ? sign : Math.signum(flPower)) * Math.max(MIN_POWER, Math.abs(flPower));
+                frPower = (Math.signum(frPower) == 0 ? sign : Math.signum(frPower)) * Math.max(MIN_POWER, Math.abs(frPower));
+                blPower = (Math.signum(blPower) == 0 ? sign : Math.signum(blPower)) * Math.max(MIN_POWER, Math.abs(blPower));
+                brPower = (Math.signum(brPower) == 0 ? sign : Math.signum(brPower)) * Math.max(MIN_POWER, Math.abs(brPower));
+            }
+
+
+            // Apply powers
+            setPowerToWheels( flPower, frPower, blPower, brPower);
+
+
+        }
+
+
+        // Stop hard
+        setPowerToWheels( 0, 0, 0, 0);
+    }
 }

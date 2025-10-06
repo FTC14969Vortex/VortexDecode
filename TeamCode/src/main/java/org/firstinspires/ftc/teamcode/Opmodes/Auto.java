@@ -4,25 +4,16 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.helper.Chassis;
-import org.firstinspires.ftc.teamcode.helper.FlyWheel;
-import org.firstinspires.ftc.teamcode.helper.Gate;
-import org.firstinspires.ftc.teamcode.helper.DecodeAprilTag;
-import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
+import org.firstinspires.ftc.teamcode.Helper.Chassis;
+import org.firstinspires.ftc.teamcode.Helper.Chassis2;
+import org.firstinspires.ftc.teamcode.Helper.FlyWheel;
+import org.firstinspires.ftc.teamcode.Helper.Gate;
+import org.firstinspires.ftc.teamcode.Helper.Util;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.hardware.IMU;
-
-import java.util.Arrays;
-import java.util.List;
-
-@Autonomous(name = "Alaqmar Auto 2.7;")
+@Autonomous(name = "Alaqmar Auto 2.72;")
 public class Auto extends LinearOpMode {
 
-    Chassis chassis = null;
+    Chassis2 chassis = null;
     double leftFrontPower;
     double leftBackPower;
     double rightFrontPower;
@@ -45,8 +36,8 @@ public class Auto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        chassis = new Chassis();
-        chassis.init(this);
+        chassis = new Chassis2(this);
+        chassis.init(true);
 
         flyWheel = new FlyWheel();
         flyWheel.init(this);
@@ -54,20 +45,35 @@ public class Auto extends LinearOpMode {
         gate = new Gate();
         gate.init(this);
 
-        //aprilTag = new DecodeAprilTag(this);
-        //aprilTag.initCamera();
+        //DecodeAprilTag aprilTag = new DecodeAprilTag(this);
+       //aprilTag.initCamera();
 
 
+        while(opModeInInit()) {
+            if(opModeInInit()) {
+                chassis.odo.update();
+                telemetry.addData("Odo x", chassis.odo.getEncoderX());
+                telemetry.addData("Odo y", chassis.odo.getEncoderY());
+                telemetry.update();
+            }
+        }
         waitForStart();
+        chassis.resetAll();
+
         while (opModeIsActive()) {
-            for(int i = 15; i <= 180; i += 15){
-                chassis.turnToAngle(i);
-                sleep(1500);
-            }
-            for(int i = -15; i >= -180; i -= 15) {
-                chassis.turnToAngle(i);
-                sleep(1500);
-            }
+
+            chassis.drive(5,0.5,0.25);
+            chassis.turnTo(90,0.5,0.25);
+            chassis.strafe(5,0.5,0.25);
+
+            // for(int i = 15; i <= 180; i += 15){
+             //   chassis.turnToAngle(i);
+              //  sleep(1500);
+            //}
+            //for(int i = -15; i >= -180; i -= 15) {
+             //   chassis.turnToAngle(i);
+               // sleep(1500);
+            //}
 
         }
     }
