@@ -21,7 +21,7 @@ public class Chassis {
     double leftBackPower;
     double rightFrontPower;
     double rightBackPower;
-    private GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
+    public GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
     RevHubOrientationOnRobot hubOrientation;
     double COUNTS_PER_MOTOR_REV = 537.7;
     double DRIVE_GEAR_REDUCTION = 1.0;
@@ -64,10 +64,10 @@ public class Chassis {
     public void init(OpMode opMode) {
 
         this.opMode = opMode;
-        frontLeftDrive = opMode.hardwareMap.get(DcMotor.class, "leftFront");
-        backLeftDrive = opMode.hardwareMap.get(DcMotor.class, "leftBack");
-        frontRightDrive = opMode.hardwareMap.get(DcMotor.class, "rightFront");
-        backRightDrive = opMode.hardwareMap.get(DcMotor.class, "rightBack");
+        frontLeftDrive = opMode.hardwareMap.get(DcMotor.class, "frontLeftDrive");
+        backLeftDrive = opMode.hardwareMap.get(DcMotor.class, "backLeftDrive");
+        frontRightDrive = opMode.hardwareMap.get(DcMotor.class, "frontRightDrive");
+        backRightDrive = opMode.hardwareMap.get(DcMotor.class, "backRightDrive");
         odo = opMode.hardwareMap.get(GoBildaPinpointDriver.class, "odo");
         imu = opMode.hardwareMap.get(IMU.class, "imu");
 

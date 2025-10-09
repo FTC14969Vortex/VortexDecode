@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.Helper.Chassis;
-import org.firstinspires.ftc.teamcode.Helper.Chassis2;
 import org.firstinspires.ftc.teamcode.Helper.FlyWheel;
 import org.firstinspires.ftc.teamcode.Helper.Gate;
 import org.firstinspires.ftc.teamcode.Helper.Util;
@@ -14,7 +13,7 @@ import org.firstinspires.ftc.teamcode.Helper.Util;
 
 public class Auto extends LinearOpMode {
 
-    Chassis2 chassis = null;
+    Chassis chassis = null;
     double leftFrontPower;
     double leftBackPower;
     double rightFrontPower;
@@ -38,8 +37,8 @@ public class Auto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        chassis = new Chassis2(this);
-        chassis.init(true);
+        chassis = new Chassis();
+        chassis.init(this);
 
         flyWheel = new FlyWheel();
         flyWheel.init(this);
@@ -61,13 +60,8 @@ public class Auto extends LinearOpMode {
         }
         waitForStart();
 
-        chassis.resetAll();
-
         while (opModeIsActive()) {
 
-            chassis.drive(5, 0.5, 0.25);
-            chassis.turnTo(90, 0.5, 0.25);
-            chassis.strafe(5, 0.5, 0.25);
 
             // for(int i = 15; i <= 180; i += 15){
             //   chassis.turnToAngle(i);
