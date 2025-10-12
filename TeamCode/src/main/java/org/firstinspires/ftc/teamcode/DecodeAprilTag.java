@@ -203,7 +203,7 @@ public class DecodeAprilTag {
             .setDrawCubeProjection(false)
             .setDrawTagOutline(true)
             .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-            .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+            .setTagLibrary(AprilTagGameDatabase.getCurrentGameTagLibrary())
             .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
                 .setCameraPose(cameraPosition, cameraOrientation)
             // == CAMERA CALIBRATION ==

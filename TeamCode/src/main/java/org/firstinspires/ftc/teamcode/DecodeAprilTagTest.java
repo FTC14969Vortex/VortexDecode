@@ -166,7 +166,7 @@ public class DecodeAprilTagTest extends LinearOpMode {
             .setDrawCubeProjection(false)
             .setDrawTagOutline(true)
             .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-            .setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+            .setTagLibrary(AprilTagGameDatabase.getCurrentGameTagLibrary())
             .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
                 .setCameraPose(cameraPosition, cameraOrientation)
             // == CAMERA CALIBRATION ==
@@ -252,6 +252,7 @@ public class DecodeAprilTagTest extends LinearOpMode {
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
         }   // end for() loop
+
 
 
     }   // end method telemetryAprilTag()
