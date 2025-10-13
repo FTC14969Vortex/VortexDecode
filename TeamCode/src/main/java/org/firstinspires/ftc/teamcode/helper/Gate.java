@@ -18,7 +18,6 @@ public class Gate {
         rightGate.setDirection(CRServo.Direction.REVERSE);;
     }
     public void release(double power) {
-
         leftGate.setPower(power);
         rightGate.setPower(power);
     }

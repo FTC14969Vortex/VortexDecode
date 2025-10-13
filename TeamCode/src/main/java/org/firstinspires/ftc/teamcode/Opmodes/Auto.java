@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.Helper.Chassis;
 import org.firstinspires.ftc.teamcode.Helper.Chassis2;
 import org.firstinspires.ftc.teamcode.Helper.FlyWheel;
 import org.firstinspires.ftc.teamcode.Helper.Gate;
+import org.firstinspires.ftc.teamcode.Helper.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.Helper.Util;
 
 @Autonomous(name = "Alaqmar Auto 2.72;")
@@ -31,7 +32,7 @@ public class Auto extends LinearOpMode {
     private DcMotor backRightDrive;
 
     FlyWheel flyWheel = new FlyWheel();
-    Gate gate = new Gate();
+//    Gate gate = new Gate();
 
     //DecodeAprilTag aprilTag = new DecodeAprilTag(this);
 
@@ -44,24 +45,24 @@ public class Auto extends LinearOpMode {
         flyWheel = new FlyWheel();
         flyWheel.init(this);
 
-        gate = new Gate();
-        gate.init(this);
+//        gate = new Gate();
+//        gate.init(this);
 
         //DecodeAprilTag aprilTag = new DecodeAprilTag(this);
         //aprilTag.initCamera();
 
 
+
         while (opModeInInit()) {
             if (opModeInInit()) {
-                chassis.odo.update();
+                chassis.resetAll();
+                chassis.readSensors();
                 telemetry.addData("Odo x", chassis.odo.getEncoderX());
                 telemetry.addData("Odo y", chassis.odo.getEncoderY());
                 telemetry.update();
             }
         }
         waitForStart();
-
-        chassis.resetAll();
 
         while (opModeIsActive()) {
 

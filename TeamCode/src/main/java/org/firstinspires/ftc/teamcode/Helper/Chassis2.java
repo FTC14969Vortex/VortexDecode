@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.teamcode.Helper.ProportionalControl;
@@ -24,10 +25,10 @@ public class Chassis2{
    100.53096491487338mm = 0.003952755905511811inches.
    The encoder is 2000 counts per revolution. So the inches per count is 0.003952755905511811/2000 = 0.0019763779527559055.
     */
-    private final double ODOM_INCHES_PER_COUNT   = 0.001978956;   //  GoBilda Odometry Pod (1/226.8)
-
-    private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
-    private final boolean INVERT_STRAFE_ODOMETRY = false;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
+//    private final double ODOM_INCHES_PER_COUNT   = 0.001978956;   //  GoBilda Odometry Pod (1/226.8)
+//
+//    private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
+//    private final boolean INVERT_STRAFE_ODOMETRY = false;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
     private static final double DRIVE_GAIN          = 0.06;    // Strength of axial position control
     protected static double DRIVE_ACCEL         = 2;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
@@ -92,9 +93,9 @@ public class Chassis2{
 
     //Forward drive should be pos and left strafe should be pos
     private double rawDriveOdometer    = 0; // Unmodified axial odometer count
-    private double driveOdometerOffset = 76.2; // Used to offset axial odometer
+//    private double driveOdometerOffset = 76.2; // Used to offset axial odometer
     private double rawStrafeOdometer   = 0; // Unmodified lateral odometer count
-    private double strafeOdometerOffset= 78.74; // Used to offset lateral odometer
+//    private double strafeOdometerOffset= 78.74; // Used to offset lateral odometer
     private double rawHeading       = 0; // Unmodified heading (degrees)
     private double headingOffset    = 0; // Used to offset heading
 
@@ -125,7 +126,9 @@ public class Chassis2{
 //        strafeEncoder = myOpMode.hardwareMap.get(DcMotor.class, "OdoY");
 
         odo = myOpMode.hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.setOffsets(-0.5, 1.5, DistanceUnit.INCH);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.resetPosAndIMU();
 
         // zero out all the odometry readings.
         resetOdometry();
@@ -157,24 +160,25 @@ public class Chassis2{
     public boolean readSensors() {
 
         odo.update();
+
         //Reversed X encoder
-        int driveEncoder = odo.getEncoderY();
-        int strafeEncoder = -odo.getEncoderX();
+        int driveEncoder = odo.getEncoderX();
+        int strafeEncoder = odo.getEncoderY();
 
-        rawDriveOdometer = driveEncoder * (INVERT_DRIVE_ODOMETRY ? -1 : 1);
-        rawStrafeOdometer = strafeEncoder * (INVERT_STRAFE_ODOMETRY ? -1 : 1);
-        driveDistance = (rawDriveOdometer - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
-        strafeDistance = (rawStrafeOdometer - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
 
-        //Odo computer has issues reading degrees radians and then convert to degrees
-        rawHeading  = Math.toDegrees(odo.getHeading(AngleUnit.RADIANS));
-        heading     = rawHeading - headingOffset;
-        //Convert rad/sec to deg/sec
-        turnRate    = odo.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES) * (180/3.14);
+        driveDistance = (driveEncoder - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
+        strafeDistance = (strafeEncoder - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
+
+//        driveDistance =  pos.getX(DistanceUnit.INCH);
+//        strafeDistance = pos.getY(DistanceUnit.INCH);
+
+        rawHeading = pos.getHeading(AngleUnit.DEGREES);
+        heading = rawHeading - headingOffset;
+        turnRate = odo.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES);
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Odom X", rawDriveOdometer - driveOdometerOffset);
-            myOpMode.telemetry.addData("Odom Y", rawStrafeOdometer - strafeOdometerOffset);
+            myOpMode.telemetry.addData("Odom X", odo.getEncoderX());
+            myOpMode.telemetry.addData("Odom Y", odo.getEncoderY());
             myOpMode.telemetry.addData("Dist X", driveDistance);
             myOpMode.telemetry.addData("Dist Y", strafeDistance);
             myOpMode.telemetry.addData("Heading", heading);
@@ -320,12 +324,12 @@ public class Chassis2{
      * Set odometry counts and distances to zero.
      */
     public void resetOdometry() {
+        odo.resetPosAndIMU();
         readSensors();
-        driveOdometerOffset = rawDriveOdometer;
+
         driveDistance = 0.0;
         driveController.reset(0);
 
-        strafeOdometerOffset = rawStrafeOdometer;
         strafeDistance = 0.0;
         strafeController.reset(0);
     }
