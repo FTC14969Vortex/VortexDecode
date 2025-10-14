@@ -161,16 +161,11 @@ public class Chassis2{
 
         odo.update();
 
-        //Reversed X encoder
-        int driveEncoder = odo.getEncoderX();
-        int strafeEncoder = odo.getEncoderY();
+        Pose2D pos = odo.getPosition();
 
 
-        driveDistance = (driveEncoder - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
-        strafeDistance = (strafeEncoder - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
-
-//        driveDistance =  pos.getX(DistanceUnit.INCH);
-//        strafeDistance = pos.getY(DistanceUnit.INCH);
+        driveDistance =  pos.getX(DistanceUnit.INCH);
+        strafeDistance = pos.getY(DistanceUnit.INCH);
 
         rawHeading = pos.getHeading(AngleUnit.DEGREES);
         heading = rawHeading - headingOffset;
@@ -326,10 +321,8 @@ public class Chassis2{
     public void resetOdometry() {
         odo.resetPosAndIMU();
         readSensors();
-
         driveDistance = 0.0;
         driveController.reset(0);
-
         strafeDistance = 0.0;
         strafeController.reset(0);
     }
