@@ -33,6 +33,8 @@ import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -122,6 +124,9 @@ public class DecodeAprilTagTest extends LinearOpMode {
 
         initAprilTag();
 
+        DcMotorEx shootingWheel = this.hardwareMap.get(DcMotorEx.class, "ShootingWheel");
+        shootingWheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
         telemetry.addData(">", "Touch START to start OpMode");
@@ -131,20 +136,30 @@ public class DecodeAprilTagTest extends LinearOpMode {
         if (opModeIsActive()) {
             while (opModeIsActive()) {
 
-                telemetryAprilTag();
+                int loopcnt = 0;
+                int maxLoop = 5;
+                while (loopcnt++ <= maxLoop) {
 
-                // Push telemetry to the Driver Station.
-                telemetry.update();
+                    telemetryAprilTag();
 
-                // Save CPU resources; can resume streaming when needed.
-                if (gamepad1.dpad_down) {
-                    visionPortal.stopStreaming();
-                } else if (gamepad1.dpad_up) {
-                    visionPortal.resumeStreaming();
+                    // Save CPU resources; can resume streaming when needed.
+                    if (gamepad1.dpad_down) {
+                        visionPortal.stopStreaming();
+                    } else if (gamepad1.dpad_up) {
+                        visionPortal.resumeStreaming();
+                    }
+
+                    // Get motor velocity
+                    shootingWheel.setPower(((float)1.0/maxLoop) * loopcnt);
+                    double currentVelocity = shootingWheel.getVelocity();
+                    telemetry.addData("Shooting wheel velocity (ticks/sec)", currentVelocity);
+
+                    // Push telemetry to the Driver Station.
+                    telemetry.update();
+
+                    // Share the CPU.
+                    sleep(2000);
                 }
-
-                // Share the CPU.
-                sleep(20);
             }
         }
 
