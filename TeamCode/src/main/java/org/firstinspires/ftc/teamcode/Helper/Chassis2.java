@@ -1,81 +1,19 @@
 package org.firstinspires.ftc.teamcode.Helper;
-
-import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.Helper.ProportionalControl;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Chassis2{
-
-    /*
-   Inches per count calculation: diameter is 32mm (from goBuilda website) so the circumference is  pi*diameter = 100.53096491487338mm.
-   100.53096491487338mm = 0.003952755905511811inches.
-   The encoder is 2000 counts per revolution. So the inches per count is 0.003952755905511811/2000 = 0.0019763779527559055.
-    */
-//    private final double ODOM_INCHES_PER_COUNT   = 0.001978956;   //  GoBilda Odometry Pod (1/226.8)
-//
-//    private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
-//    private final boolean INVERT_STRAFE_ODOMETRY = false;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
-
-    private static final double DRIVE_GAIN          = 0.06;    // Strength of axial position control
-    protected static double DRIVE_ACCEL         = 2;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    protected static double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double DRIVE_DEADBAND      = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
-    private static final double DRIVE_MAX_AUTO      = 0.6;     // "default" Maximum Axial power limit during autonomous
-
-    private static final double STRAFE_GAIN         = 0.03;    // Strength of lateral position control
-    protected static double STRAFE_ACCEL        = 2;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    protected static double STRAFE_TOLERANCE    = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double STRAFE_DEADBAND     = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
-    private static final double STRAFE_MAX_AUTO     = 0.6;     // "default" Maximum Lateral power limit during autonomous
-
-    private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
-    protected static double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    protected static double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
-    private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
-
-    public void setDriveAccel(double DRIVE_ACCEL){
-        this.DRIVE_ACCEL = DRIVE_ACCEL;
-    }
-    public void setStrafeAccel(double STRAFE_ACCEL){
-        this.STRAFE_ACCEL = STRAFE_ACCEL;
-    }
-    public void setYawAccel(double YAW_ACCEL){
-        this.YAW_ACCEL = YAW_ACCEL;
-    }
-    public void setDriveTolerance(double DRIVE_TOLERANCE){
-        this.DRIVE_TOLERANCE = DRIVE_TOLERANCE;
-    }
-    public void setStrafeTolerance(double STRAFE_TOLERANCE){
-        this.STRAFE_TOLERANCE= STRAFE_TOLERANCE;
-    }
-    public void setYawTolerance(double YAW_TOLERANCE){
-        this.YAW_TOLERANCE = YAW_TOLERANCE;
-    }
-
-    // Public Members
-    public double driveDistance     = 0; // scaled axial distance (+ = forward)
-    public double strafeDistance    = 0; // scaled lateral distance (+ = left)
-    public double heading           = 0; // Latest Robot heading from IMU
-
-    // Establish a proportional controller for each axis to calculate the required power to achieve a setpoint.
-    public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, DRIVE_DEADBAND, false);
-    public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, STRAFE_MAX_AUTO, STRAFE_TOLERANCE, STRAFE_DEADBAND, false);
-    public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,YAW_DEADBAND, true);
 
 
     //Drivetrain Motor
@@ -89,6 +27,49 @@ public class Chassis2{
     private LinearOpMode myOpMode;
 
     private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
+
+
+    /*
+   Inches per count calculation: diameter is 32mm (from goBuilda website) so the circumference is  pi*diameter = 100.53096491487338mm.
+   100.53096491487338mm = 0.003952755905511811inches.
+   The encoder is 2000 counts per revolution. So the inches per count is 0.003952755905511811/2000 = 0.0019763779527559055.
+    */
+//    private final double ODOM_INCHES_PER_COUNT   = 0.001978956;   //  GoBilda Odometry Pod (1/226.8)
+//
+//    private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
+//    private final boolean INVERT_STRAFE_ODOMETRY = false;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
+
+
+    // PID parameters for DRIVE, STRAFE, and YAW corrections.
+    private static final double DRIVE_GAIN          = 0.06;    // Strength of axial position control
+    protected static double DRIVE_ACCEL         = 2;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
+    protected static double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double DRIVE_DEADBAND      = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
+    private static final double DRIVE_MAX_AUTO      = 0.6;     // "default" Maximum Axial power limit during autonomous
+
+    private static final double STRAFE_GAIN         = DRIVE_GAIN;    // Strength of lateral position control
+    protected static double STRAFE_ACCEL        = DRIVE_ACCEL;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
+    protected static double STRAFE_TOLERANCE    = DRIVE_TOLERANCE;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double STRAFE_DEADBAND     = DRIVE_DEADBAND;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
+    private static final double STRAFE_MAX_AUTO     = DRIVE_MAX_AUTO;     // "default" Maximum Lateral power limit during autonomous
+
+    private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
+    protected static double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
+    protected static double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
+    private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
+
+    // Variables to store the latest odometry readings.
+    public double driveDistance     = 0; // scaled axial distance (+ = forward)
+    public double strafeDistance    = 0; // scaled lateral distance (+ = left)
+    public double heading           = 0; // Latest Robot heading from IMU
+
+    // Instantiate a PID controller for each axis.
+    // Each controller calculates the required power to achieve a target.
+    public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, DRIVE_DEADBAND, false);
+    public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, STRAFE_MAX_AUTO, STRAFE_TOLERANCE, STRAFE_DEADBAND, false);
+    public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,YAW_DEADBAND, true);
+
 
 
     //Forward drive should be pos and left strafe should be pos
@@ -110,32 +91,9 @@ public class Chassis2{
     /**
      * Robot Initialization:
      *  Use the hardware map to Connect to devices.
-     *  Perform any set-up all the hardware devices.
+     *  Perform any set-up of the hardware devices.
      * @param showTelemetry  Set to true if you want telemetry to be displayed by the robot sensor/drive functions.
      */
-    public void init(boolean showTelemetry) throws InterruptedException {
-
-        // !!!  Set the drive direction to ensure positive power drives each wheel forward.
-        FLMotor = setupDriveMotor("frontLeftDrive", DcMotor.Direction.REVERSE);
-        FRMotor = setupDriveMotor("frontRightDrive", DcMotor.Direction.FORWARD);
-        BLMotor = setupDriveMotor( "backLeftDrive", DcMotor.Direction.REVERSE);
-        BRMotor = setupDriveMotor( "backRightDrive",DcMotor.Direction.FORWARD);
-
-//        //  Connect to the encoder channels using the name of that channel.
-//        driveEncoder = myOpMode.hardwareMap.get(DcMotor.class, "OdoX");
-//        strafeEncoder = myOpMode.hardwareMap.get(DcMotor.class, "OdoY");
-
-        odo = myOpMode.hardwareMap.get(GoBildaPinpointDriver.class, "odo");
-        odo.setOffsets(-0.5, 1.5, DistanceUnit.INCH);
-        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        odo.resetPosAndIMU();
-
-        // zero out all the odometry readings.
-        resetOdometry();
-
-        // Set the desired telemetry state
-        this.showTelemetry = showTelemetry;
-    }
 
     /**
      *   Setup a drive motor with passed parameters.  Ensure encoder is reset.
@@ -151,6 +109,28 @@ public class Chassis2{
         aMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);  // Requires motor encoder cables to be hooked up.
         return aMotor;
     }
+
+
+    public void init(boolean showTelemetry) throws InterruptedException {
+
+        // !!!  Set the drive direction to ensure positive power drives each wheel forward.
+        FLMotor = setupDriveMotor("frontLeftDrive", DcMotor.Direction.REVERSE);
+        FRMotor = setupDriveMotor("frontRightDrive", DcMotor.Direction.FORWARD);
+        BLMotor = setupDriveMotor( "backLeftDrive", DcMotor.Direction.REVERSE);
+        BRMotor = setupDriveMotor( "backRightDrive",DcMotor.Direction.FORWARD);
+
+        odo = myOpMode.hardwareMap.get(GoBildaPinpointDriver.class, "odo");
+        odo.setOffsets(-0.5, 1.5, DistanceUnit.INCH);
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.resetPosAndIMU();
+
+        // zero out all the odometry readings.
+        resetOdometry();
+
+        // Set the desired telemetry state
+        this.showTelemetry = showTelemetry;
+    }
+
 
     /**
      * Read all input devices to determine the robot's motion
@@ -289,9 +269,9 @@ public class Chassis2{
         double BLPower = drive + strafe - yaw;
         double BRPower = drive - strafe + yaw;
 
-        double max = Math.max(Math.abs(FLPower), Math.abs(FRPower));
-        max = Math.max(max, Math.abs(BLPower));
-        max = Math.max(max, Math.abs(BRPower));
+        //find the maximum power
+        List<Double> powers = Arrays.asList(Math.abs(FLPower), Math.abs(FRPower), Math.abs(BLPower), Math.abs(BRPower));
+        double max = Collections.max(powers);
 
         //normalize the motor values
         if (max > 1.0)  {

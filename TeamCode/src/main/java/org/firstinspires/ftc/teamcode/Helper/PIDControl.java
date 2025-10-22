@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-public class PIDControl extends LinearOpMode {
+public class PIDControl  {
 
     /*
 
@@ -15,7 +15,7 @@ public class PIDControl extends LinearOpMode {
 
 
     //Tune these
-    double Kp = 0;
+    double Kp = 1;
     double Ki = 0;
     double Kd = 0;
 
@@ -23,7 +23,6 @@ public class PIDControl extends LinearOpMode {
     double lastError = 0;
 
 
-    // Elapsed timer class from SDK, please use it, it's epic
     ElapsedTime timer = new ElapsedTime();
 
     boolean inPosition;
@@ -31,7 +30,6 @@ public class PIDControl extends LinearOpMode {
     public double getOutput(double target, double current) {
 
         double error = target - current;
-
 
         integralSum += error * timer.seconds();
 
@@ -46,11 +44,10 @@ public class PIDControl extends LinearOpMode {
     public boolean isInPosition() {
         return inPosition;
     }
-    @Override
-    public void runOpMode() throws InterruptedException {
-        DcMotorEx motor = hardwareMap.get(DcMotorEx.class, "motor");
-        motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//    @Override
+//    public void runOpMode() throws InterruptedException {
+//        DcMotorEx motor = hardwareMap.get(DcMotorEx.class, "motor");
+//        motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
     }
-}

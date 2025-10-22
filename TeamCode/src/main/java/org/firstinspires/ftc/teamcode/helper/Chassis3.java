@@ -7,6 +7,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class Chassis3 {
     public DcMotor FLMotor = null;
@@ -16,9 +19,9 @@ public class Chassis3 {
     //IMU
     public GoBildaPinpointDriver odo;
 
-    private LinearOpMode myOpMode;
+    private final LinearOpMode myOpMode;
 
-    private PIDControl pid;
+    private final PIDControl pid;
 
     private ElapsedTime holdTimer;
 
@@ -89,6 +92,33 @@ public class Chassis3 {
         myOpMode.sleep(10);
     }
 
+    public void strafe(double distanceInches, double power, double holdTime) {
+        odo.resetPosAndIMU();
+        odo.update();
+
+        holdTimer.reset();
+
+        while(myOpMode.opModeIsActive()) {
+            double powerX = pid.getOutput(distanceInches, odo.getPosX(DistanceUnit.INCH));
+            double powerY = pid.getOutput(odo.getPosY(DistanceUnit.INCH), odo.getPosY(DistanceUnit.INCH));
+            double powerHeading = pid.getOutput(odo.getHeading(AngleUnit.DEGREES), odo.getHeading(AngleUnit.DEGREES));
+
+            moveRobot(powerX, powerY, powerHeading);
+
+            // Time to exit?
+            if (pid.isInPosition()) {
+                if (holdTimer.time() > holdTime) {
+                    break;   // Exit loop if we are in position, and have been there long enough.
+                }
+            } else {
+                holdTimer.reset();
+            }
+            myOpMode.sleep(10);
+        }
+
+        myOpMode.sleep(10);
+    }
+
     public void moveRobot(double drive, double strafe, double yaw){
 
         double FLPower = drive - strafe - yaw;
@@ -96,9 +126,10 @@ public class Chassis3 {
         double BLPower = drive + strafe - yaw;
         double BRPower = drive - strafe + yaw;
 
-        double max = Math.max(Math.abs(FLPower), Math.abs(FRPower));
-        max = Math.max(max, Math.abs(BLPower));
-        max = Math.max(max, Math.abs(BRPower));
+        //find the maximum power
+        List<Double> powers = Arrays.asList(Math.abs(FLPower), Math.abs(FRPower), Math.abs(BLPower), Math.abs(BRPower));
+        double max = Collections.max(powers);
+
 
         //normalize the motor values
         if (max > 1.0)  {
