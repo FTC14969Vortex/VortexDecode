@@ -150,7 +150,8 @@ public class DecodeAprilTagTest extends LinearOpMode {
                     }
 
                     // Get motor velocity
-                    shootingWheel.setPower(((float)1.0/maxLoop) * loopcnt);
+                    float powerSetting = ((float)1.0/maxLoop) * loopcnt;
+                    shootingWheel.setPower(powerSetting);
                     double currentVelocity = shootingWheel.getVelocity();
                     telemetry.addData("Shooting wheel velocity (ticks/sec)", currentVelocity);
 
@@ -167,6 +168,23 @@ public class DecodeAprilTagTest extends LinearOpMode {
         visionPortal.close();
 
     }   // end method runOpMode()
+
+    private boolean waitForMotor(DcMotorEx dcWheel, long timeoutMs, double ticksPerSecond) {
+        boolean ret = false;
+        long sleepInMs = 200;
+
+        for (long i = 0; i < timeoutMs; i++) {
+            if (dcWheel.getVelocity() > Math.abs(ticksPerSecond)) {
+                ret = true;
+                break;
+            }
+
+            sleep(sleepInMs);
+            i = i + sleepInMs;
+        }
+
+        return ret;
+    }
 
     /**
      * Initialize the AprilTag processor.
