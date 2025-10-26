@@ -35,6 +35,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -119,6 +121,11 @@ public class DecodeAprilTagTest extends LinearOpMode {
      */
     private VisionPortal visionPortal;
 
+    /**
+     * * Distance sensor
+     */
+    private DistanceSensor channelSersor;
+
     @Override
     public void runOpMode() {
 
@@ -149,11 +156,16 @@ public class DecodeAprilTagTest extends LinearOpMode {
                         visionPortal.resumeStreaming();
                     }
 
-                    // Get motor velocity
-                    float powerSetting = ((float)1.0/maxLoop) * loopcnt;
-                    shootingWheel.setPower(powerSetting);
-                    double currentVelocity = shootingWheel.getVelocity();
-                    telemetry.addData("Shooting wheel velocity (ticks/sec)", currentVelocity);
+                    if ( readyToLoad() ) {
+                        // Get motor velocity
+                        float powerSetting = ((float) 1.0 / maxLoop) * loopcnt;
+                        shootingWheel.setPower(powerSetting);
+                        double currentVelocity = shootingWheel.getVelocity();
+                        telemetry.addData("Shooting wheel velocity (ticks/sec)", currentVelocity);
+                    }
+                    else {
+                        shootingWheel.setPower(0);
+                    }
 
                     // Push telemetry to the Driver Station.
                     telemetry.update();
@@ -169,6 +181,17 @@ public class DecodeAprilTagTest extends LinearOpMode {
 
     }   // end method runOpMode()
 
+    private boolean readyToLoad() {
+        boolean ret = false;
+
+        // Get distance reading from 2M sensor
+        channelSersor = hardwareMap.get(DistanceSensor.class, "channelSensor");
+        double dDistance = channelSersor.getDistance(DistanceUnit.CM);
+        telemetry.addData("channel distance sensor", dDistance);
+        if (dDistance < 3) ret = true;
+
+        return ret;
+    }
     private boolean waitForMotor(DcMotorEx dcWheel, long timeoutMs, double ticksPerSecond) {
         boolean ret = false;
         long sleepInMs = 200;
