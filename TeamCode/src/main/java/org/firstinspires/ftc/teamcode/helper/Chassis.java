@@ -10,6 +10,7 @@ import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
@@ -551,4 +552,9 @@ public class Chassis {
     public void printIMUTelemetry(){
         Util.printIMUTelemetry(imu, opMode.telemetry);
     }
+
+    public void printOdoPositionTelemetry() {
+        Util.printOdoPositionTelemetry(odo, opMode.telemetry);
+    }
+
 }
