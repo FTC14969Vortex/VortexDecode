@@ -101,11 +101,15 @@ public class DecodeAprilTag {
      * the camera is horizontal. Use a yaw of 0 if the camera is pointing forwards, +90 degrees if
      * it's pointing straight left, -90 degrees for straight right, etc. You can also set the roll
      * to +/-90 degrees if it's vertical, or 180 degrees if it's upside-down.
+     *
+     * CURRENT CONFIGURATION: Camera is mounted FACING REAR of robot
+     * - Yaw = 180 degrees (pointing backward)
+     * - Pitch = -90 degrees (horizontal)
      */
     private Position cameraPosition = new Position(DistanceUnit.INCH,
             0, 0, 0, 0);
     private YawPitchRollAngles cameraOrientation = new YawPitchRollAngles(AngleUnit.DEGREES,
-            0, -90, 0, 0);
+            180, -90, 0, 0);
 
 
     /**
