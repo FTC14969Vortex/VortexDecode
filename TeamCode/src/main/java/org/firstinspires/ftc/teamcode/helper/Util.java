@@ -384,7 +384,7 @@ public class Util {
 
         intake.setIntakePower(0.5); //reduce intake power to avoid jam
         kicker.setPosition(Kicker.gateClose); // close gate to clear ball for ramping up flywheel
-        sleepThread(200);       // wait for kicker to close
+        sleepThread(400);       // wait for kicker to close
 
     }
 
@@ -824,7 +824,7 @@ public class Util {
         final double FORWARD_SCAN_POWER = 0.15;      // Slow forward movement during scan
         final int CONTROL_LOOP_MS = 50;              // Control loop period
         final int SETTLE_TIME_MS = 150;              // Time to let robot settle after stopping
-        final int SCAN_SWEEP_MS = 1000;               // Time to sweep 90 degrees (approximate)
+        final int SCAN_SWEEP_MS = 2000;               // Time to sweep 90 degrees (approximate)
         
         ElapsedTime timer = new ElapsedTime();
         
@@ -908,14 +908,19 @@ public class Util {
             
             chassisInstance.moveRobot(FORWARD_SCAN_POWER, 0, -SCAN_TURN_POWER); // Turn right to return to center
             sleepThread(SCAN_SWEEP_MS);
-            chassisInstance.moveRobot(0, 0, 0);
-            sleepThread(100);
             
-            // One more quick check at center position
-            if (aprilTag.findAprilTag(aprilTagName)) {
-                tagFound = true;
-                telemetry.addData("Auto Align", "Tag found at center");
-                telemetry.update();
+            if (timer.milliseconds() < DETECTION_TIMEOUT_MS) {
+                chassisInstance.moveRobot(0, 0, 0);
+                sleepThread(100);
+                
+                // One more quick check at center position
+                if (aprilTag.findAprilTag(aprilTagName)) {
+                    tagFound = true;
+                    telemetry.addData("Auto Align", "Tag found at center");
+                    telemetry.update();
+                }
+            } else {
+                chassisInstance.moveRobot(0, 0, 0); // Stop immediately if timeout
             }
         }
         
@@ -1006,6 +1011,7 @@ public class Util {
             chassisInstance.moveRobot(0, strafePower, 0);
             
             telemetry.addData("Yaw", "%.1f°", yaw);
+            telemetry.addData("Auto Align", "Aligning yaw...");
             telemetry.update();
             
             sleepThread(CONTROL_LOOP_MS);
