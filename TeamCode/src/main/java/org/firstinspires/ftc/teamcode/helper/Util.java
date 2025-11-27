@@ -69,6 +69,9 @@ public class Util {
         double jamThreshold = JAM_DETECTION_THRESHOLD * velocity;  // 90% of target
         double boostMultiplier = 1.0 + SHOOTING_POWER_BOOST_PERCENT / 100.0;  // 1.2 for 20% boost
 
+        double initVelocity = flyWheel.getVelocity();
+        telemetry.addData("Init Velocity", "%.0f RPM (%.0f%% of target), initVelocity, (initVelocity / velocity) * 100);
+
         // Phase 1: Ramp up to target velocity (lower threshold)
         flyWheel.setPower(1.0); // Ramp up at full power
 
