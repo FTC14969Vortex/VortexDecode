@@ -1,4 +1,15 @@
 package org.firstinspires.ftc.teamcode.ReferenceNewTemplateOptionA;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Helper.Chassis;
+import org.firstinspires.ftc.teamcode.Helper.DecodeAprilTag;
+import org.firstinspires.ftc.teamcode.Helper.Flipper;
+import org.firstinspires.ftc.teamcode.Helper.FlyWheel;
+import org.firstinspires.ftc.teamcode.Helper.Intake;
+import org.firstinspires.ftc.teamcode.Helper.Kicker;
+
 public class VortexAutoOpMode extends LinearOpMode {
 
     @Override
@@ -7,11 +18,11 @@ public class VortexAutoOpMode extends LinearOpMode {
         Chassis chassis = new Chassis();
         chassis.init(this);
 
-        Intake intake = new Intake(hardwareMap);
-        FlyWheel flyWheel = new FlyWheel(hardwareMap);
-        Flipper flipper = new Flipper(hardwareMap);
-        Kicker kicker = new Kicker(hardwareMap);
-        DecodeAprilTag aprilTag = new DecodeAprilTag(hardwareMap, telemetry);
+        Intake intake = new Intake();
+        FlyWheel flyWheel = new FlyWheel();
+        Flipper flipper = new Flipper();
+        Kicker kicker = new Kicker();
+        DecodeAprilTag aprilTag = new DecodeAprilTag(this);
 
         // --- build high-level managers ---
         IntakeManager intakeManager = new IntakeManager(chassis, intake, telemetry);

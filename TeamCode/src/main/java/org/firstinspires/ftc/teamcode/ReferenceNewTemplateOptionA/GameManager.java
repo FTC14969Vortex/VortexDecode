@@ -28,7 +28,6 @@ public class GameManager {
     private boolean readyForPark   = false;
 
     private final long matchStartMs;
-    private final long matchDurationMs = 30000; // 30s auto
 
     // Subsystems
     private final IntakeManager intakeManager;
@@ -58,6 +57,9 @@ public class GameManager {
     }
 
     private long timeRemaining() {
+        // 30s auto
+        long matchDurationMs;
+        matchDurationMs = 30000;
         return matchDurationMs - timeElapsed();
     }
 
@@ -248,8 +250,8 @@ public class GameManager {
         readyForPark = false;
         mode = Mode.DONE;
     }
-
     public boolean isDone() {
         return mode == Mode.DONE;
     }
 }
+
