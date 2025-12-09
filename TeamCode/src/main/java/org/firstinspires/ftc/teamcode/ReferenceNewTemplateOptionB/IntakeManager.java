@@ -1,4 +1,11 @@
-package org.firstinspires.ftc.teamcode.newStructureOptionB;
+package org.firstinspires.ftc.teamcode.ReferenceNewTemplateOptionB;
+
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Helper.Intake;
+import org.firstinspires.ftc.teamcode.Helper.Util;
 
 public class IntakeManager {
 
@@ -16,9 +23,9 @@ public class IntakeManager {
         ABORTED         // e.g. time too short, or error
     }
 
-    private final Intake intake;
-    private final DistanceSensor channelSensor;
-    private final Telemetry telemetry;
+    private  Intake intake;
+    private  DistanceSensor channelSensor;
+    private Telemetry telemetry;
 
     private IntakeState state = IntakeState.IDLE;
     private IntakeResult result = IntakeResult.NONE;
@@ -28,13 +35,14 @@ public class IntakeManager {
     private long intakeTimeoutMs = 2500; //
     private int ballCount = 0;
 
+    private int targetBalls;
+    private int ballsCollected;
+
 //    private long startTimeMs;
 
-    public IntakeController(Intake intake,
-                            DistanceSensor channelSensor,
-                            Telemetry telemetry) {
+    public IntakeManager(Intake intake,
+                         Telemetry telemetry) {
         this.intake = intake;
-        this.channelSensor = channelSensor;
         this.telemetry = telemetry;
     }
 
@@ -92,7 +100,7 @@ public class IntakeManager {
 
     private void runUpdate() {
         // 1) Timeout?
-        if (timer.seconds() > timeoutSec) {
+        if (timer.seconds() > intakeTimeoutMs) {
             if (ballsCollected == 0) {
                 finish(IntakeResult.NO_BALL);
             } else {
@@ -126,7 +134,7 @@ public class IntakeManager {
      *  - records result
      */
     private void finish(IntakeResult finalResult) {
-        intake.stop();               // <- intake.stop() here, only once
+        intake.stopIntake();               // <- intake.stop() here, only once
         state = IntakeState.DONE;
         result = finalResult;
     }

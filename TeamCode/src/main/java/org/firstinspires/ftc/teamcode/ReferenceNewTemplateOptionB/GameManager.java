@@ -1,18 +1,8 @@
-package org.firstinspires.ftc.teamcode.newStructureOptionB;
-
-package org.firstinspires.ftc.teamcode.control;
+package org.firstinspires.ftc.teamcode.ReferenceNewTemplateOptionB;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-import org.firstinspires.ftc.teamcode.subsystems.DriveController.Pose2d;
-import org.firstinspires.ftc.teamcode.subsystems.DriveController.DriveState;
-import org.firstinspires.ftc.teamcode.subsystems.DriveController.DriveResult;
-import org.firstinspires.ftc.teamcode.subsystems.DriveController.DriveGoalKind;
-import org.firstinspires.ftc.teamcode.subsystems.IntakeController.IntakeState;
-import org.firstinspires.ftc.teamcode.subsystems.IntakeController.IntakeResult;
-import org.firstinspires.ftc.teamcode.subsystems.ShooterController.ShooterState;
-import org.firstinspires.ftc.teamcode.subsystems.ShooterController.ShooterResult;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 /**
  * GameManager (Option B)
@@ -45,17 +35,17 @@ public class GameManager {
     // FIELDS
     // ------------------------------------------------------------
 
-    private final DriveController   drive;
-    private final IntakeController  intake;
-    private final ShooterController shooter;
+    private final DriveManager drive;
+    private final IntakeManager intake;
+    private final ShootManager shooter;
     private final Telemetry telemetry;
 
     private GameState state = GameState.INIT;
 
     // Field layout (global static config)
-    private final Pose2d[] ballSpots;
-    private final Pose2d[] shootSpots;
-    private final Pose2d   parkPose;
+    private final Pose2D[] ballSpots;
+    private final Pose2D[] shootSpots;
+    private final Pose2D   parkPose;
 
     private int ballIndex  = 0;  // which BALL_SPOT we are at
     private int shootIndex = 0;  // which SHOOT_SPOT we are at (can be = ballIndex or separate)
@@ -67,9 +57,11 @@ public class GameManager {
 
     // Subsystem timeouts / params
     private final int    ballsPerSpot;
-    private final double driveTimeoutSec;
-    private final double intakeTimeoutSec;
-    private final double shootTimeoutSec;
+
+    //TODO: need to review
+    private double driveTimeoutSec = 4;
+    private double intakeTimeoutSec = 3;
+    private double shootTimeoutSec = 3;
 
     private final ElapsedTime stateTimer = new ElapsedTime();
 
@@ -78,13 +70,13 @@ public class GameManager {
     // ------------------------------------------------------------
 
     public GameManager(
-            DriveController drive,
-            IntakeController intake,
-            ShooterController shooter,
+            DriveManager drive,
+            IntakeManager intake,
+            ShootManager shooter,
             Telemetry telemetry,
-            Pose2d[] ballSpots,
-            Pose2d[] shootSpots,
-            Pose2d   parkPose,
+            Pose2D[] ballSpots,
+            Pose2D[] shootSpots,
+            Pose2D   parkPose,
             double autoTotalTimeSec,
             double parkReserveSec,
             int    ballsPerSpot,
@@ -221,13 +213,13 @@ public class GameManager {
             return;
         }
 
-        if (drive.getState() == DriveState.DONE) {
-            DriveResult res = drive.getResult();
+        if (drive.getState() == DriveManager.DriveState.DONE) {
+            DriveManager.DriveResult res = drive.getResult();
 
-            if (res == DriveResult.ARRIVED_OK) {
+            if (res == DriveManager.DriveResult.ARRIVED_OK) {
                 // Start intake at this ball spot
                 intake.resetCycle();
-                intake.startCycle(ballsPerSpot, intakeTimeoutSec);
+                intake.startCycle(ballsPerSpot, (long) intakeTimeoutSec);
 
                 state = GameState.AUTO_INTAKE;
                 stateTimer.reset();
@@ -241,14 +233,14 @@ public class GameManager {
 
     /** Run intake at current ball spot. */
     private void handleAutoIntake() {
-        if (intake.getState() == IntakeState.IDLE) {
+        if (intake.getState() == IntakeManager.IntakeState.IDLE) {
             // If somehow idle here, (re)start cycle
-            intake.startCycle(ballsPerSpot, intakeTimeoutSec);
+            intake.startCycle(ballsPerSpot, (long) intakeTimeoutSec);
             return;
         }
 
-        if (intake.getState() == IntakeState.DONE) {
-            IntakeResult res = intake.getResult();
+        if (intake.getState() == IntakeManager.IntakeState.DONE) {
+            IntakeManager.IntakeResult res = intake.getResult();
 
             switch (res) {
                 case GOT_BALLS:
@@ -273,10 +265,10 @@ public class GameManager {
             return;
         }
 
-        if (drive.getState() == DriveState.DONE) {
-            DriveResult res = drive.getResult();
+        if (drive.getState() == DriveManager.DriveState.DONE) {
+            DriveManager.DriveResult res = drive.getResult();
 
-            if (res == DriveResult.ARRIVED_OK) {
+            if (res == DriveManager.DriveResult.ARRIVED_OK) {
                 // start shooting
                 shooter.resetCycle();
                 shooter.startCycle(ballsPerSpot, shootTimeoutSec);
@@ -293,14 +285,14 @@ public class GameManager {
 
     /** Run shooter at current shoot spot. */
     private void handleAutoShoot() {
-        if (shooter.getState() == ShooterState.IDLE) {
+        if (shooter.getState() == ShootManager.ShooterState.IDLE) {
             // If idle unexpectedly, start
             shooter.startCycle(ballsPerSpot, shootTimeoutSec);
             return;
         }
 
-        if (shooter.getState() == ShooterState.DONE) {
-            ShooterResult res = shooter.getResult();
+        if (shooter.getState() == ShootManager.ShooterState.DONE) {
+            ShootManager.ShooterResult res = shooter.getResult();
 
             // For now, treat all results the same: move on
             // (you can branch differently if you want)
@@ -320,7 +312,7 @@ public class GameManager {
         if (drive.isIdle()) {
             drive.resetCycle();
             drive.startCycle(
-                    DriveGoalKind.GOTO_PARK,
+                    DriveManager.DriveGoalKind.GOTO_PARK,
                     parkPose,
                     driveTimeoutSec
             );
@@ -328,7 +320,7 @@ public class GameManager {
             return;
         }
 
-        if (drive.getState() == DriveState.DONE) {
+        if (drive.getState() == DriveManager.DriveState.DONE) {
             // whatever result, we end auto
             forceDone("Park move finished");
         }
@@ -345,11 +337,11 @@ public class GameManager {
             return;
         }
 
-        Pose2d target = ballSpots[ballIndex];
+        Pose2D target = ballSpots[ballIndex];
 
         drive.resetCycle();
         drive.startCycle(
-                DriveGoalKind.GOTO_BALL_SPOT,
+                DriveManager.DriveGoalKind.GOTO_BALL_SPOT,
                 target,
                 driveTimeoutSec
         );
@@ -369,11 +361,11 @@ public class GameManager {
 
         // simple mapping, you can make smarter later
         shootIndex = Math.min(ballIndex, shootSpots.length - 1);
-        Pose2d target = shootSpots[shootIndex];
+        Pose2D target = shootSpots[shootIndex];
 
         drive.resetCycle();
         drive.startCycle(
-                DriveGoalKind.GOTO_SHOOT_SPOT,
+                DriveManager.DriveGoalKind.GOTO_SHOOT_SPOT,
                 target,
                 driveTimeoutSec
         );

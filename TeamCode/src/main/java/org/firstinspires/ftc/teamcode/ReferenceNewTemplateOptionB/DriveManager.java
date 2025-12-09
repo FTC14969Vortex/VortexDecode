@@ -1,4 +1,15 @@
-package org.firstinspires.ftc.teamcode.newStructureOptionB;
+package org.firstinspires.ftc.teamcode.ReferenceNewTemplateOptionB;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Helper.Chassis;
+import org.firstinspires.ftc.teamcode.Helper.GoBildaPinpointDriver;
 
 public class DriveManager {
 
@@ -49,7 +60,13 @@ public class DriveManager {
     private double targetHeadingRad;
     private double timeoutSec = 5.0;
 
-    public DriveController(Chassis chassis, Telemetry telemetry) {
+
+    private final Chassis drive;
+    private double targetHeadingDeg;
+
+    private Pose2D targetPose;
+
+    public DriveManager (Chassis chassis, Telemetry telemetry) {
         this.frontLeft  = chassis.frontLeftDrive;
         this.frontRight = chassis.frontRightDrive;
         this.backLeft   = chassis.backLeftDrive;
@@ -57,6 +74,7 @@ public class DriveManager {
         this.odo        = chassis.odo;
         this.imu        = chassis.imu;
         this.telemetry  = telemetry;
+        this.drive     = chassis;
     }
 
     // ---------- Public API for GameManager ----------
@@ -70,7 +88,8 @@ public class DriveManager {
 
     /** Hard stop + clear result. */
     public void resetCycle() {
-        stopMotors();
+
+        //TODO, make sure we can stopMotors();
         state     = DriveState.IDLE;
         result    = DriveResult.NONE;
         goalKind  = DriveGoalKind.NONE;
@@ -78,7 +97,7 @@ public class DriveManager {
 
     public void abortCycle() {
         if (state == DriveState.IDLE) return;
-        stopMotors();
+        //TODO, make sure we can stopMotors();
         state  = DriveState.DONE;
         result = DriveResult.ABORTED;
     }
@@ -87,7 +106,7 @@ public class DriveManager {
     // ------------------------------------------------------------
 
     /** Generalized startCycle() for MOVE goals (ball spot, shoot spot, park). */
-    public void startCycle(DriveGoalKind kind, Pose2d target, double timeoutSec) {
+    public void startCycle(DriveGoalKind kind, Pose2D target, double timeoutSec) {
         if (state != DriveState.IDLE) return;
 
         this.goalKind = kind;
@@ -100,7 +119,7 @@ public class DriveManager {
         timer.reset();
 
         telemetry.addData("Drive", "Start MOVE cycle: %s to (%.1f, %.1f, %.1f°)",
-                kind, target.x, target.y, target.headingDeg);
+                kind, target.getX(DistanceUnit.CM), target.getY(DistanceUnit.CM), target.getHeading(AngleUnit.RADIANS));
     }
 
     /** startCycle() for ALIGN-ONLY mode (tag or heading). */
@@ -139,7 +158,7 @@ public class DriveManager {
         switch (state) {
 
             case MOVING:
-                boolean arrived = drive.moveTowardPoseNonBlocking(targetPose);
+                boolean arrived = true; //TODO: need to implement a method that Chassis did arrive at the required position
                 if (arrived) {
                     result = DriveResult.ARRIVED_OK;
                     // If this cycle requires alignment too:
@@ -155,7 +174,7 @@ public class DriveManager {
                 break;
 
             case ALIGNING:
-                boolean aligned = drive.alignHeadingNonBlocking(targetHeadingDeg);
+                boolean aligned = true; // TODO implement alignHeadingNonBlocking(targetHeadingDeg);
                 if (aligned) {
                     finish(DriveResult.ALIGNED);
                 }
@@ -171,7 +190,7 @@ public class DriveManager {
     // ------------------------------------------------------------
 
     private void finish(DriveResult finalResult) {
-        drive.stopMotors();
+        // TODO stop all motors too
         state = DriveState.DONE;
         result = finalResult;
 
