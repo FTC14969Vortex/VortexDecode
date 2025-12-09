@@ -104,7 +104,7 @@ public class ShootManager {
                 // break it into smaller steps. For now, call it once when entering:
 
                 Util.AlignmentResult alignResult =
-                        Util.autoAlignWithAprilTag(chassis.getOpMode(),
+                        Util.autoAlignWithAprilTag(chassis.getLinearOpMode(),
                                 aprilTag,
                                 targetTagName,
                                 chassis,
