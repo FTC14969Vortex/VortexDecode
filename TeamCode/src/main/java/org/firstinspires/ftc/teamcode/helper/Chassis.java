@@ -98,6 +98,10 @@ public class Chassis {
 
     }
 
+    public LinearOpMode getLinearOpMode() {
+        return linearOpMode;
+    }
+
     public void setDriveMode(DriveMode driveMode) {
         // save driveMode to use in drive()
         this.driveMode = driveMode;
