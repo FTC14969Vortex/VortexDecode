@@ -68,9 +68,11 @@ public class Constants {
     // Constants for the odometry localization system
     public static PinpointConstants localizerConstants = new PinpointConstants()
             // Y-offset of the forward odometry pod from the robot's center
-            .forwardPodY(0)
+            //convert mm to inches
+            .forwardPodY((12/25.4))
             // X-offset of the strafe odometry pod from the robot's center
-            .strafePodX(1.75)
+            //convert mm to inches
+            .strafePodX(-(24/25.4))
             // Unit of measurement for distances (inches)
             .distanceUnit(DistanceUnit.INCH)
             // Name of the odometry hardware in the hardware map
