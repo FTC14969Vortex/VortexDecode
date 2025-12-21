@@ -89,9 +89,9 @@ public class Constants {
             0.99, // Maximum velocity scaling factor (percentage of max velocity)
             100,  // Maximum acceleration in inches per second squared
             1.1,  // Maximum angular velocity in radians per second
-            0.7   // Maximum angular acceleration in radians per second squared
+            0.7// Maximum angular acceleration in radians per second squared
     );
-
+    
     // Method to create and configure the Follower object
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
