@@ -23,7 +23,7 @@ public class TurnWhileMoving extends OpMode {
                                 new Pose(0, 0, 0),
                                 new Pose(36, 36,90)))
                 .setLinearHeadingInterpolation(0,90)
-                .build(); 
+                .build();
     }
     public void autonomousPathUpdate() {
         switch (pathState) {
