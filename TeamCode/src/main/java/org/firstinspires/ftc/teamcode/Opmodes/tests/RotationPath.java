@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "180 Degree Rotation Path 0.7", group = "PedroPathTestCases")
+@Autonomous(name = "180 Degree Rotation Path 0.81", group = "PedroPathTestCases")
 public class RotationPath extends OpMode {
     private Follower follower;
     private Timer pathTimer;
@@ -20,19 +20,14 @@ public class RotationPath extends OpMode {
         // Start: (0,0) Heading 0
         // End:   (48,0) Heading 180 (Math.PI)
 
-        rotationPath = follower.pathBuilder()
-//                .addPath(new BezierLine(new Pose(0, 0, 0), new Pose(48, 0,Math.toRadians(180))))
-//                .setLinearHeadingInterpolation(0,Math.toRadians(180))
 
-                .addPath(new BezierLine(new Pose(0, 0, 0), new Pose(48, 0,0)))
-                .setLinearHeadingInterpolation(0,0)
-                .build(); // .build() ensures all math is calculated correctly
+                // .build() ensures all math is calculated correctly
     }
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
                 // Follow the path and hold the end position to prevent drift
-                follower.followPath(rotationPath, true);
+                follower.turn(Math.toRadians(90),false);
                 setPathState(1);
                 break;
             case 1:
