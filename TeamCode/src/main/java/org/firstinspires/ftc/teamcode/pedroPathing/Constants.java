@@ -30,11 +30,11 @@ public class Constants {
             // PIDF coefficients for secondary translational movement (fine-tuning)
             .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0.1, 0, 0.01, 0.025))
             // PIDF coefficients for secondary heading adjustments (fine-tuning heading control)
-            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(1.5, 0, 0.05, 0.025))
+            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(2, 0, 0.01, 0.02))
             // PIDF coefficients for secondary drive adjustments (fine-tuning drive control)
             .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(0.002, 0, 0.00002, 0.6, 0.1))
             // PIDF coefficients for heading control (primary control loop)
-            .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.035, 0.02))
+            .headingPIDFCoefficients(new PIDFCoefficients(3, 0, 0, 0.02))
             // PIDF coefficients for drive control (primary control loop)
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.009, 0.0, 0.0001, 0.6, 0.02))
             // Scaling factor for centripetal force calculations during turns
@@ -42,7 +42,7 @@ public class Constants {
             // Enable secondary translational PIDF control
             .useSecondaryTranslationalPIDF(true)
             // Enable secondary heading PIDF control
-            .useSecondaryHeadingPIDF(true)
+            .useSecondaryHeadingPIDF(false)
             // Enable secondary drive PIDF control
             .useSecondaryDrivePIDF(true);
 
