@@ -21,14 +21,13 @@ public class RotationPath extends OpMode {
         // End:   (48,0) Heading 180 (Math.PI)
 
         rotationPath = follower.pathBuilder()
-//                .addPath(new BezierLine(new Pose(0, 0, 0), new Pose(48, 0,Math.toRadians(180))))
-//                .setLinearHeadingInterpolation(0,Math.toRadians(180))
-
-                .addPath(
-                        new BezierLine(
-                                new Pose(0, 0, 0),
-                                new Pose(0, 0,0)))
-                .setLinearHeadingInterpolation(0,0)
+                .addPath(new BezierLine(new Pose(0, 0, 0), new Pose(48, 0,Math.toRadians(180))))
+                .setLinearHeadingInterpolation(0,Math.toRadians(180))
+//                .addPath(
+//                        new BezierLine(
+//                                new Pose(0, 0, 0),
+//                                new Pose(0, 0,0)))
+//                .setLinearHeadingInterpolation(0,0)
                 .build(); // .build() ensures all math is calculated correctly
     }
     public void autonomousPathUpdate() {

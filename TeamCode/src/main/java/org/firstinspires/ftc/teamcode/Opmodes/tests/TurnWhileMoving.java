@@ -21,9 +21,8 @@ public class TurnWhileMoving extends OpMode {
                 .addPath(
                         new BezierLine(
                                 new Pose(0, 0, 0),
-                                new Pose(36, 36,90)))
-                .setLinearHeadingInterpolation(0,90)
-                .build(); 
+                                new Pose(36, 36,0)))
+                .build();
     }
     public void autonomousPathUpdate() {
         switch (pathState) {
@@ -34,9 +33,10 @@ public class TurnWhileMoving extends OpMode {
                 break;
             case 1:
                 if (!follower.isBusy()) {
-                    follower.turn(Math.toRadians(180),true);
+                    follower.turnTo(Math.toRadians(90));
                     setPathState(2);
                 }
+                break;
             case 2:
                 if (!follower.isBusy()) {
                     // Path finished, robot should be at (24,0) facing 180 degrees
