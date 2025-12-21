@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "180 Degree Rotation Path 0.81", group = "PedroPathTestCases")
+@Autonomous(name = "Move and Turn 0.84", group = "PedroPathTestCases")
 public class RotationPath extends OpMode {
     private Follower follower;
     private Timer pathTimer;
@@ -20,19 +20,39 @@ public class RotationPath extends OpMode {
         // Start: (0,0) Heading 0
         // End:   (48,0) Heading 180 (Math.PI)
 
+        rotationPath = follower.pathBuilder()
+//                .addPath(new BezierLine(new Pose(0, 0, 0), new Pose(48, 0,Math.toRadians(180))))
+//                .setLinearHeadingInterpolation(0,Math.toRadians(180))
 
-                // .build() ensures all math is calculated correctly
+                .addPath(
+                        new BezierLine(
+                                new Pose(0, 0, 0),
+                                new Pose(0, 0,0)))
+                .setLinearHeadingInterpolation(0,0)
+                .build(); // .build() ensures all math is calculated correctly
     }
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
+                follower.turnTo(Math.toRadians(90));
                 // Follow the path and hold the end position to prevent drift
-                follower.turn(Math.toRadians(90),false);
                 setPathState(1);
                 break;
             case 1:
                 if (!follower.isBusy()) {
-                    // Path finished, robot should be at (24,0) facing 180 degrees
+                    follower.turnTo(Math.toRadians(180));
+                    setPathState(2);
+                }
+                break;
+            case 2:
+                if (!follower.isBusy()) {
+                    follower.turnTo(Math.toRadians(270));
+                    setPathState(3);
+                }
+                break;
+            case 3:
+                if (!follower.isBusy()) {
+                    follower.turnTo(Math.toRadians(45));
                     setPathState(-1);
                 }
                 break;
@@ -65,15 +85,3 @@ public class RotationPath extends OpMode {
         telemetry.update();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
