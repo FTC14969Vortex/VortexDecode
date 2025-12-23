@@ -33,25 +33,26 @@ public class RotationPath extends OpMode {
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                follower.turnTo(Math.toRadians(90));
+                follower.followPath(rotationPath,false);
+                //follower.turnTo(Math.toRadians(90));
                 // Follow the path and hold the end position to prevent drift
                 setPathState(1);
                 break;
             case 1:
                 if (!follower.isBusy()) {
-                    follower.turnTo(Math.toRadians(180));
+                    //follower.turnTo(Math.toRadians(180));
                     setPathState(2);
                 }
                 break;
             case 2:
                 if (!follower.isBusy()) {
-                    follower.turnTo(Math.toRadians(270));
+                    //follower.turnTo(Math.toRadians(270));
                     setPathState(3);
                 }
                 break;
             case 3:
                 if (!follower.isBusy()) {
-                    follower.turnTo(Math.toRadians(45));
+                    //follower.turnTo(Math.toRadians(45));
                     setPathState(-1);
                 }
                 break;

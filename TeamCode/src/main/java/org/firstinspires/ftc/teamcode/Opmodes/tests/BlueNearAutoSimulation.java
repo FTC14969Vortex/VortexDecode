@@ -12,6 +12,8 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
+import java.util.ArrayList;
+
 @Autonomous(name = "BlueNearAutoSimulation 0.4", group = "PedroPathTestCases")
 public class BlueNearAutoSimulation extends OpMode {
 
@@ -19,17 +21,19 @@ public class BlueNearAutoSimulation extends OpMode {
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
 
+    //private final ArrayList<Pose> posePath = new ArrayList<>();
+    //posePath.add(0,new Pose(0, 0, Math.toRadians(0)));
+
     private final Pose startPose = new Pose(0, 0, Math.toRadians(0)); // Start Pose of our robot.
     private final Pose scorePose = new Pose(24,0, Math.toRadians(0)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
     private final Pose pickup1Pose = new Pose(24,24, Math.toRadians(180)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
-    private final Pose pickup2Pose = new Pose(0, 24, Math.toRadians(0)); // Middle (Second Set) of Artifacts from the Spike Mark.
-    private final Pose pickup3Pose = new Pose(24, 0, Math.toRadians(0)); // Lowest (Third Set) of Artifacts from the Spike Mark.
+    //private final Pose pickup2Pose = new Pose(0, 24, Math.toRadians(0)); // Middle (Second Set) of Artifacts from the Spike Mark.
+    //private final Pose pickup3Pose = new Pose(24, 0, Math.toRadians(0)); // Lowest (Third Set) of Artifacts from the Spike Mark.
 
     private Path scorePreload;
     private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3 , scorePickup3;
 
     public void buildPaths() {
-        /* This is our scorePreload path. We are using a BezierLine, which is a straight line. */
         scorePreload = new Path(new BezierLine(startPose, scorePose));
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading());
 
@@ -42,6 +46,7 @@ public class BlueNearAutoSimulation extends OpMode {
                 .setLinearHeadingInterpolation(scorePose.getHeading(), pickup1Pose.getHeading())
                 .build();
 
+        /*
         // This is our scorePickup1 PathChain. We are using a single path with a BezierLine, which is a straight line.
         scorePickup1 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup1Pose, pickup2Pose))
@@ -53,6 +58,7 @@ public class BlueNearAutoSimulation extends OpMode {
                 .addPath(new BezierLine(pickup2Pose,pickup3Pose))
                 .setLinearHeadingInterpolation(pickup2Pose.getHeading(), pickup3Pose.getHeading())
                 .build();
+
 
         // This is our scorePickup2 PathChain. We are using a single path with a BezierLine, which is a straight line.
         scorePickup2 = follower.pathBuilder()
@@ -72,6 +78,8 @@ public class BlueNearAutoSimulation extends OpMode {
                 .setLinearHeadingInterpolation(pickup3Pose.getHeading(), scorePose.getHeading())
                 .build();
 
+         */
+
     }
     public void autonomousPathUpdate() {
         switch (pathState) {
@@ -90,7 +98,7 @@ public class BlueNearAutoSimulation extends OpMode {
             case 2:
                 if (!follower.isBusy()) {
                         follower.followPath(grabPickup2,false);
-                        setPathState(3);
+                        setPathState(-1);
                 }
                 break;
             case 3:
