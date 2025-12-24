@@ -22,7 +22,7 @@ public class Hozefa extends OpMode {
 
         if(pathState == 0) {
             Pose pose1 = new Pose(0, 0, 0);
-            Pose pose2 = new Pose(48, 0, Math.toRadians(180));
+            Pose pose2 = new Pose(24, 0, Math.toRadians(180));
             BezierLine line1 = new BezierLine(pose1, pose2);
             PathBuilder builder = follower.pathBuilder();
             builder.addPath(line1);

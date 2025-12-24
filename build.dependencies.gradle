@@ -2,6 +2,7 @@ repositories {
     mavenCentral()
     google() // Needed for androidx
     maven { url = "https://mymaven.bylazar.com/releases" }
+    maven { url = 'https://maven.brott.dev/' } // For FTC Dashboard
 }
 
 dependencies {
@@ -19,5 +20,11 @@ dependencies {
     implementation 'com.pedropathing:telemetry:1.0.0'
     implementation 'com.bylazar:fullpanels:1.0.6'
 
+    // FTC Dashboard for calibration and telemetry
+    implementation 'com.acmerobotics.dashboard:dashboard:0.4.16'
+
+    // EJML - Efficient Java Matrix Library for robust SVD calculations
+    implementation 'org.ejml:ejml-ddense:0.44.0'  // Dense double matrices (~200KB)
+    implementation 'org.ejml:ejml-core:0.44.0'    // Core functionality (~100KB)
 }
 

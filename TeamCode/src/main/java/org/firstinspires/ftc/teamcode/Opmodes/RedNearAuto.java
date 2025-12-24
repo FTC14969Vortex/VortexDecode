@@ -1,18 +1,18 @@
 package org.firstinspires.ftc.teamcode.Opmodes;
 
-import static org.firstinspires.ftc.teamcode.Helper.DecodeUtil.*;
+import static org.firstinspires.ftc.teamcode.helper.DecodeUtil.*;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.Helper.Chassis;
-import org.firstinspires.ftc.teamcode.Helper.DecodeAprilTag;
-import org.firstinspires.ftc.teamcode.Helper.DecodeUtil;
-import org.firstinspires.ftc.teamcode.Helper.Flipper;
-import org.firstinspires.ftc.teamcode.Helper.FlyWheel;
-import org.firstinspires.ftc.teamcode.Helper.Intake;
-import org.firstinspires.ftc.teamcode.Helper.Kicker;
-import org.firstinspires.ftc.teamcode.Helper.Util;
+import org.firstinspires.ftc.teamcode.helper.Chassis;
+import org.firstinspires.ftc.teamcode.helper.DecodeAprilTag;
+import org.firstinspires.ftc.teamcode.helper.DecodeUtil;
+import org.firstinspires.ftc.teamcode.helper.Flipper;
+import org.firstinspires.ftc.teamcode.helper.FlyWheel;
+import org.firstinspires.ftc.teamcode.helper.Intake;
+import org.firstinspires.ftc.teamcode.helper.Kicker;
+import org.firstinspires.ftc.teamcode.helper.Util;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
 @Autonomous(name = "Red Near Auto 4.63", group = "Autonomous")
