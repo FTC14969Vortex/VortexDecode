@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Opmodes.tests;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathBuilder;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 
@@ -9,42 +11,27 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Turn while moving", group = "PedroPathTestCases")
-public class TurnWhileMoving extends OpMode {
+@Autonomous(name = "Hozefa 0.01", group = "PedroPathTestCases")
+public class Hozefa extends OpMode {
     private Follower follower;
     private Timer pathTimer;
-    private int pathState;
-    private PathChain rotationPath;
+    private int pathState = 0;
 
-    public void buildPaths() {
-        rotationPath = follower.pathBuilder()
-                .addPath(
-                        new BezierLine(
-                                new Pose(0, 0, 0),
-                                new Pose(36, 0,180)))
-                .build();
 
-    }
     public void autonomousPathUpdate() {
-        switch (pathState) {
-            case 0:
-                // Follow the path and hold the end position to prevent drift
-                follower.followPath(rotationPath, true);
-                setPathState(1);
-                break;
-            case 1:
-                if (!follower.isBusy()) {
-                    follower.turnTo(Math.toRadians(90));
-                    setPathState(2);
-                }
-                break;
-            case 2:
-                if (!follower.isBusy()) {
-                    // Path finished, robot should be at (24,0) facing 180 degrees
-                    setPathState(-1);
-                }
-                break;
+
+        if(pathState == 0) {
+            Pose pose1 = new Pose(0, 0, 0);
+            Pose pose2 = new Pose(48, 0, Math.toRadians(180));
+            BezierLine line1 = new BezierLine(pose1, pose2);
+            PathBuilder builder = follower.pathBuilder();
+            builder.addPath(line1);
+            builder.setLinearHeadingInterpolation(pose1.getHeading(), pose2.getHeading());
+            PathChain pathChain1 = builder.build();
+            follower.followPath(pathChain1);
+            setPathState(1);
         }
+
     }
     public void setPathState(int pState) {
         pathState = pState;
@@ -54,8 +41,6 @@ public class TurnWhileMoving extends OpMode {
     public void init() {
         pathTimer = new Timer();
         follower = Constants.createFollower(hardwareMap);
-        buildPaths();
-        // Ensure starting pose matches the start of our path
         follower.setStartingPose(new Pose(0, 0, 0));
     }
     @Override

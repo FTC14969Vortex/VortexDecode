@@ -20,8 +20,8 @@ public class RotationPath extends OpMode {
         // Start: (0,0) Heading 0
         // End:   (48,0) Heading 180 (Math.PI)
 
-        rotationPath = follower.pathBuilder()
-                .addPath(new BezierLine(new Pose(0, 0, 0), new Pose(48, 0,Math.toRadians(180))))
+            rotationPath = follower.pathBuilder()
+                    .addPath(new BezierLine(new Pose(0, 0, 0), new Pose(48, 0,Math.toRadians(180))))
                 .setLinearHeadingInterpolation(0,Math.toRadians(180))
 //                .addPath(
 //                        new BezierLine(

@@ -84,7 +84,7 @@ public class BlueNearAutoSimulation extends OpMode {
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                follower.followPath(scorePreload,false);
+                follower.followPath(scorePreload,true);
                 setPathState(1);
                 break;
             case 1:
