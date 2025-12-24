@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.motion;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.helper.GoBildaPinpointDriver;
+import org.firstinspires.ftc.teamcode.external.gobilida.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.calibration.CalibrationCoefficients;
 import org.firstinspires.ftc.teamcode.calibration.RobotConstants;
 import com.qualcomm.robotcore.util.ElapsedTime;

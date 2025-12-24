@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.calibration;
 
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import org.firstinspires.ftc.teamcode.helper.GoBildaPinpointDriver;
+import org.firstinspires.ftc.teamcode.external.gobilida.GoBildaPinpointDriver;
 
 /**
  * Single source of truth for all robot constants including geometry, hardware specifications,

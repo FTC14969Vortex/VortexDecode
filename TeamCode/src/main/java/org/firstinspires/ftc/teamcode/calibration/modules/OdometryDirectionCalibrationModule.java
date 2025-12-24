@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.calibration.RobotConstants;
 import org.firstinspires.ftc.teamcode.calibration.SmartDashboardManager;
 import org.firstinspires.ftc.teamcode.calibration.MotionCalibrationAndDemo;
 
-import org.firstinspires.ftc.teamcode.helper.GoBildaPinpointDriver;
+import org.firstinspires.ftc.teamcode.external.gobilida.GoBildaPinpointDriver;
 
 /**
  * Odometry Direction Calibration Module

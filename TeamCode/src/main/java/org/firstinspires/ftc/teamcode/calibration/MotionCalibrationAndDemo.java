@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.calibration.modules.HybridControlCalibrati
 import org.firstinspires.ftc.teamcode.calibration.modules.KinematicMatrixCalibrationModule;
 import org.firstinspires.ftc.teamcode.motion.MotionExecutor;
 import org.firstinspires.ftc.teamcode.motion.OdometryManager;
-import org.firstinspires.ftc.teamcode.helper.GoBildaPinpointDriver;
+import org.firstinspires.ftc.teamcode.external.gobilida.GoBildaPinpointDriver;
 
 /**
  * Motion Calibration and Demo System - Modular Architecture

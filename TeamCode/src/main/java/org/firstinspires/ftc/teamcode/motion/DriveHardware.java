@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.motion;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import org.firstinspires.ftc.teamcode.helper.GoBildaPinpointDriver;
+import org.firstinspires.ftc.teamcode.external.gobilida.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.calibration.CalibrationCoefficients;
 
 /**
