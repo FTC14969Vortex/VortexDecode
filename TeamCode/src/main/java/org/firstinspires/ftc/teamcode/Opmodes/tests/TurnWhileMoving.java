@@ -21,7 +21,11 @@ public class TurnWhileMoving extends OpMode {
                 .addPath(
                         new BezierLine(
                                 new Pose(0, 0, 0),
+<<<<<<< HEAD
                                 new Pose(36, 0,0)))
+=======
+                                new Pose(36, 0,180)))
+>>>>>>> ab4d00ca2c6d435ba20a6882f4553882d93152d0
                 .build();
 
     }
