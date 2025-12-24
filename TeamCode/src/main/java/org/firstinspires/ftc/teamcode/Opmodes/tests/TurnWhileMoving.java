@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Turn while moving", group = "PedroPathTestCases")
+@Autonomous(name = "Turn while moving 0.01", group = "PedroPathTestCases")
 public class TurnWhileMoving extends OpMode {
     private Follower follower;
     private Timer pathTimer;
@@ -21,7 +21,7 @@ public class TurnWhileMoving extends OpMode {
                 .addPath(
                         new BezierLine(
                                 new Pose(0, 0, 0),
-                                new Pose(36, 36,0)))
+                                new Pose(36, 0,0)))
                 .build();
 
     }

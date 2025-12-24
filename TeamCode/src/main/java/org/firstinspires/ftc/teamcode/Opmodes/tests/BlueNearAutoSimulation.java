@@ -12,9 +12,13 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
+<<<<<<< Updated upstream
 import java.util.ArrayList;
 
 @Autonomous(name = "BlueNearAutoSimulation 0.4", group = "PedroPathTestCases")
+=======
+@Autonomous(name = "BlueNearAutoSimulation 0.87", group = "PedroPathTestCases")
+>>>>>>> Stashed changes
 public class BlueNearAutoSimulation extends OpMode {
 
     private Follower follower;
@@ -25,10 +29,17 @@ public class BlueNearAutoSimulation extends OpMode {
     //posePath.add(0,new Pose(0, 0, Math.toRadians(0)));
 
     private final Pose startPose = new Pose(0, 0, Math.toRadians(0)); // Start Pose of our robot.
+<<<<<<< Updated upstream
     private final Pose scorePose = new Pose(24,0, Math.toRadians(0)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
     private final Pose pickup1Pose = new Pose(24,24, Math.toRadians(180)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
     //private final Pose pickup2Pose = new Pose(0, 24, Math.toRadians(0)); // Middle (Second Set) of Artifacts from the Spike Mark.
     //private final Pose pickup3Pose = new Pose(24, 0, Math.toRadians(0)); // Lowest (Third Set) of Artifacts from the Spike Mark.
+=======
+    private final Pose scorePose = new Pose(48,0, Math.toRadians(0)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
+    private final Pose pickup1Pose = new Pose(48,48, Math.toRadians(135)); // Scoring Pose of our robot. It is facing the goal at a 135 degree angle.
+    private final Pose pickup2Pose = new Pose(12, 24, Math.toRadians(0)); // Middle (Second Set) of Artifacts from the Spike Mark.
+    private final Pose pickup3Pose = new Pose(24, 0, Math.toRadians(0)); // Lowest (Third Set) of Artifacts from the Spike Mark.
+>>>>>>> Stashed changes
 
     private Path scorePreload;
     private PathChain grabPickup1, scorePickup1, grabPickup2, scorePickup2, grabPickup3 , scorePickup3;
@@ -53,6 +64,7 @@ public class BlueNearAutoSimulation extends OpMode {
                 .setLinearHeadingInterpolation(pickup1Pose.getHeading(), pickup2Pose.getHeading())
                 .build();
 
+/*
         // This is our grabPickup2 PathChain. We are using a single path with a BezierLine, which is a straight line.
         grabPickup2 = follower.pathBuilder()
                 .addPath(new BezierLine(pickup2Pose,pickup3Pose))
@@ -77,6 +89,8 @@ public class BlueNearAutoSimulation extends OpMode {
                 .addPath(new BezierLine(pickup3Pose, scorePose))
                 .setLinearHeadingInterpolation(pickup3Pose.getHeading(), scorePose.getHeading())
                 .build();
+                */
+
 
          */
 
@@ -85,19 +99,26 @@ public class BlueNearAutoSimulation extends OpMode {
         switch (pathState) {
             case 0:
                 follower.followPath(scorePreload,false);
+
                 setPathState(1);
                 break;
             case 1:
                 if (!follower.isBusy()) {
                     if (pathTimer.getElapsedTimeSeconds() > 3.0) {
-                        follower.followPath(grabPickup1,false);
+                        follower.turnToDegrees(Math.toRadians(135));
                         setPathState(2);
                     }
                 }
                 break;
             case 2:
                 if (!follower.isBusy()) {
+<<<<<<< Updated upstream
                         follower.followPath(grabPickup2,false);
+=======
+                        //follower.followPath(grabPickup2,false);
+
+                    follower.followPath(grabPickup1,false);
+>>>>>>> Stashed changes
                         setPathState(-1);
                 }
                 break;
