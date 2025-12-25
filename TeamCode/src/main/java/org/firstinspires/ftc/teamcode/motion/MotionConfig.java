@@ -295,7 +295,7 @@ public class MotionConfig {
      * 
      */
 
-    public static final ComponentPosition ACTIVE_REFERENCE_POINT = RobotConstants.INTAKE_POINT;
+    public static final ComponentPosition ACTIVE_REFERENCE_POINT = RobotConstants.INTAKE_POINT_REF;
                                                 // RobotConstants.SCORING_POINT;
                                              //RobotConstants.Robot_CENTER;
                                              //RobotConstants.BACK_CAMERA;

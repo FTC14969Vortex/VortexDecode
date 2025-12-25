@@ -1196,7 +1196,13 @@ public class RobotUtil {
             return new AlignmentResult(true, distance, bearing, yaw);
         }
 
-
+    public final void sleep(long milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
 
 }

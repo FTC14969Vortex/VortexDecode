@@ -5,11 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.robot.Robot;
 
 import org.firstinspires.ftc.teamcode.external.gobilida.GoBildaPinpointDriver;
 import org.firstinspires.ftc.teamcode.motion.FieldPose;
 import org.firstinspires.ftc.teamcode.motion.MotionExecutor;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.utils.RobotUtil;
 import org.firstinspires.ftc.teamcode.vision.CameraServo;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -31,7 +33,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  *
  * Camera automatically aims at blue goal tag (Tag 20) when detected.
  */
-@Autonomous(name = " FVMotionTest 0.16", group = "Debug")
+@Autonomous(name = " FVMotionTest 0.18", group = "Debug")
 public class FVMotionTest extends OpMode {
 
     Intake intake;
@@ -98,8 +100,9 @@ public class FVMotionTest extends OpMode {
         if (stepper == 0) {
             //intake.startIntake();
             //motionExecutor.linearMove(45, 67,90, 40);
+            RobotUtil.threadSleep(1000);
 
-            motionExecutor.moveToPose(0, 0, 90, 10);
+            motionExecutor.moveToPose(0, 0, 180, 10);
             //motionExecutor.moveToPose(0, 0, 180);
             stepper++;
         } /*else if (stepper == 1) {
