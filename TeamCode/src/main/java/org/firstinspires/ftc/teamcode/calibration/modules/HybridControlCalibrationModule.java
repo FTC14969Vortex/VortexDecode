@@ -270,7 +270,10 @@ public class HybridControlCalibrationModule extends BaseCalibration {
         telemetry.addLine(String.format("   Max Velocity: %.1f in/sec", velocity));
         telemetry.update();
         
-        // Execute movement to each vertex
+        // Execute movement to each vertex and accumulate position errors
+        double totalPositionError = 0.0;
+        double totalHeadingError = 0.0;
+        
         for (int i = 0; i < 3; i++) {
             telemetry.addLine(String.format("🎯 Moving to vertex %d: (%.1f, %.1f) heading %.0f°", 
                 i + 1, triangleVerticesX[i], triangleVerticesY[i], triangleHeadings[i]));
@@ -278,9 +281,31 @@ public class HybridControlCalibrationModule extends BaseCalibration {
             
             motionExecutor.moveToPose(triangleVerticesX[i], triangleVerticesY[i], 
                 triangleHeadings[i], velocity);
+            
+            // Capture actual position after reaching this vertex
+            motionExecutor.updateState();
+            double actualX = motionExecutor.getMotionState().getX();
+            double actualY = motionExecutor.getMotionState().getY();
+            double actualHeading = motionExecutor.getMotionState().getHeading();
+            
+            // Calculate position error for this vertex
+            double vertexPositionError = Math.sqrt(
+                Math.pow(actualX - triangleVerticesX[i], 2) + 
+                Math.pow(actualY - triangleVerticesY[i], 2)
+            );
+            
+            // Calculate heading error for this vertex
+            double vertexHeadingError = Math.abs(normalizeAngle(actualHeading - triangleHeadings[i]));
+            
+            // Accumulate errors
+            totalPositionError += vertexPositionError;
+            totalHeadingError += vertexHeadingError;
+            
+            telemetry.addLine(String.format("   Vertex %d error: %.2f inches, %.1f°", 
+                i + 1, vertexPositionError, vertexHeadingError));
         }
         
-        // Capture final results and calculate errors
+        // Capture final results
         motionExecutor.updateState();
         double actualX = motionExecutor.getMotionState().getX();
         double actualY = motionExecutor.getMotionState().getY();
@@ -289,14 +314,9 @@ public class HybridControlCalibrationModule extends BaseCalibration {
         long testEndTime = System.currentTimeMillis();
         double completionTime = (testEndTime - testStartTime) / 1000.0;
         
-        // Calculate errors (should return to start)
-        double expectedFinalX = startX;
-        double expectedFinalY = startY;
-        double expectedFinalHeading = normalizeAngle(startHeading + (headingChange * 3));
-        
-        double positionError = Math.sqrt(Math.pow(actualX - expectedFinalX, 2) + 
-            Math.pow(actualY - expectedFinalY, 2));
-        double headingError = normalizeAngle(actualHeading - expectedFinalHeading);
+        // Use accumulated errors as the total error metric
+        double positionError = totalPositionError;
+        double headingError = totalHeadingError;
         
         // Store results
         _7_HybridControl.FINAL_X = actualX;
@@ -306,16 +326,33 @@ public class HybridControlCalibrationModule extends BaseCalibration {
         _7_HybridControl.HEADING_ERROR = headingError;
         _7_HybridControl.TRIANGLE_COMPLETION_TIME = completionTime;
         
-        // Calculate quality score based on position accuracy
-        if (positionError < 0.5) {
-            _7_HybridControl.CONTROL_QUALITY_SCORE = 100;
-        } else if (positionError < 1.0) {
-            _7_HybridControl.CONTROL_QUALITY_SCORE = 90 - (positionError - 0.5) * 40;
-        } else if (positionError < 2.0) {
-            _7_HybridControl.CONTROL_QUALITY_SCORE = 70 - (positionError - 1.0) * 30;
+        // Calculate quality score based on both position error and heading error (equal weight: 50/50)
+        // Position score: based on total accumulated position error across all 3 vertices
+        double positionScore;
+        if (positionError < 1.5) {  // < 0.5" per vertex average
+            positionScore = 100;
+        } else if (positionError < 3.0) {  // < 1.0" per vertex average
+            positionScore = 90 - (positionError - 1.5) * 26.67;
+        } else if (positionError < 6.0) {  // < 2.0" per vertex average
+            positionScore = 70 - (positionError - 3.0) * 10;
         } else {
-            _7_HybridControl.CONTROL_QUALITY_SCORE = Math.max(0, 40 - (positionError - 2.0) * 20);
+            positionScore = Math.max(0, 40 - (positionError - 6.0) * 6.67);
         }
+        
+        // Heading score: based on total accumulated heading error across all 3 vertices
+        double headingScore;
+        if (headingError < 3.0) {  // < 1° per vertex average
+            headingScore = 100;
+        } else if (headingError < 6.0) {  // < 2° per vertex average
+            headingScore = 90 - (headingError - 3.0) * 26.67;
+        } else if (headingError < 12.0) {  // < 4° per vertex average
+            headingScore = 70 - (headingError - 6.0) * 10;
+        } else {
+            headingScore = Math.max(0, 40 - (headingError - 12.0) * 6.67);
+        }
+        
+        // Combined quality score: equal weight (50% position, 50% heading)
+        _7_HybridControl.CONTROL_QUALITY_SCORE = (positionScore + headingScore) / 2.0;
         
         testInProgress = false;
         
@@ -324,12 +361,10 @@ public class HybridControlCalibrationModule extends BaseCalibration {
         
         // Display results with telemetry
         telemetry.addLine("✅ Triangle Test Complete!");
-        telemetry.addLine(String.format("   Expected Final: (%.1f, %.1f, %.0f°)", 
-            expectedFinalX, expectedFinalY, expectedFinalHeading));
-        telemetry.addLine(String.format("   Actual Final: (%.1f, %.1f, %.0f°)", 
+        telemetry.addLine(String.format("   Final Position: (%.1f, %.1f, %.0f°)", 
             actualX, actualY, actualHeading));
-        telemetry.addLine(String.format("   Position Error: %.2f inches", positionError));
-        telemetry.addLine(String.format("   Heading Error: %+.1f degrees", headingError));
+        telemetry.addLine(String.format("   Total Position Error: %.2f inches (all 3 vertices)", positionError));
+        telemetry.addLine(String.format("   Total Heading Error: %.1f degrees (all 3 vertices)", headingError));
         telemetry.addLine(String.format("   Completion Time: %.1f seconds", completionTime));
         telemetry.addLine(String.format("   Quality Score: %.0f/100", _7_HybridControl.CONTROL_QUALITY_SCORE));
         

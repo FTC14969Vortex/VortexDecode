@@ -101,10 +101,10 @@ public class CameraServo {
     private static final double SEARCH_RANGE_DEGREES = 20.0;
     
     /** Servo search step size (degrees) */
-    private static final double SEARCH_STEP_DEGREES = 5.0;
+    private static final double SEARCH_STEP_DEGREES = 10.0;
     
     /** Time to wait at each search position (milliseconds) */
-    private static final long SEARCH_DWELL_TIME_MS = 100;
+    private static final long SEARCH_DWELL_TIME_MS = 200;
     
     /** Update frequency (Hz) - CameraServo runs at 5 Hz */
     private static final double UPDATE_FREQUENCY_HZ = 5.0;
@@ -785,6 +785,10 @@ public class CameraServo {
      * @param tagId Target AprilTag ID
      */
     public void aimAtTag(FieldPose robotPose, int tagId) {
+        if (coordinateTransformer == null) {
+            return; // Cannot aim without coordinate transformer
+        }
+        
         FieldPose tagPose = getAprilTagPosition(tagId);
         if (tagPose == null) {
             return; // Unknown tag

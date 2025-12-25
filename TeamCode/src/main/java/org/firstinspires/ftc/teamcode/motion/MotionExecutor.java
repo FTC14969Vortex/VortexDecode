@@ -134,7 +134,7 @@ public class MotionExecutor {
     
     // ========== CONTROL MODE MANAGEMENT ==========
     
-    private ControlMode currentControlMode = ControlMode.HYBRID;
+    private ControlMode currentControlMode = ControlMode.PURE_FEEDBACK;
     private ControlMode defaultControlMode = ControlMode.HYBRID;
     
     // ========== VELOCITY RAMPING ==========
@@ -234,6 +234,14 @@ public class MotionExecutor {
      */
     public MotionState getMotionState() {
         return motionState;
+    }
+    
+    /**
+     * Gets the coordinate transformer
+     * @return Coordinate transformer for coordinate system conversions
+     */
+    public CoordinateTransformer getCoordinateTransformer() {
+        return coordinateTransformer;
     }
     
     /**

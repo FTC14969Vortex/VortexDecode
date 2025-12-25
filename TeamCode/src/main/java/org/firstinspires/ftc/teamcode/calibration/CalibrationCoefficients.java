@@ -128,23 +128,23 @@ public class CalibrationCoefficients {
      * to account for directional performance differences in mecanum wheels
      */
     
-    // teste at 40 inch/s close to 70% of theoretical max
+    // teste at 40 inch/s close to 70% of theoretical, duration 1s
     // Positive contribution scaling factors (wheel spinning forward)
-    public static double WHEEL_VELOCITY_SCALE_FL_POSITIVE = 0.93;  // Front Left forward
-    public static double WHEEL_VELOCITY_SCALE_FR_POSITIVE = 0.93;  // Front Right forward  
-    public static double WHEEL_VELOCITY_SCALE_BL_POSITIVE = 0.94;  // Back Left forward
-    public static double WHEEL_VELOCITY_SCALE_BR_POSITIVE = 0.92;  // Back Right forward
+    public static double WHEEL_VELOCITY_SCALE_FL_POSITIVE = 1.04;  // Front Left forward
+    public static double WHEEL_VELOCITY_SCALE_FR_POSITIVE = 1.05;  // Front Right forward
+    public static double WHEEL_VELOCITY_SCALE_BL_POSITIVE = 1.01;  // Back Left forward
+    public static double WHEEL_VELOCITY_SCALE_BR_POSITIVE = 1.03;  // Back Right forward
 
     // Negative contribution scaling factors (wheel spinning backward)
-    public static double WHEEL_VELOCITY_SCALE_FL_NEGATIVE = 0.92;  // Front Left backward
-    public static double WHEEL_VELOCITY_SCALE_FR_NEGATIVE = 0.92;  // Front Right backward
-    public static double WHEEL_VELOCITY_SCALE_BL_NEGATIVE = 0.92;  // Back Left backward
-    public static double WHEEL_VELOCITY_SCALE_BR_NEGATIVE = 0.93;  // Back Right backward
+    public static double WHEEL_VELOCITY_SCALE_FL_NEGATIVE = 1.01;  // Front Left backward
+    public static double WHEEL_VELOCITY_SCALE_FR_NEGATIVE = 1.03;  // Front Right backward
+    public static double WHEEL_VELOCITY_SCALE_BL_NEGATIVE = 1.03;  // Back Left backward
+    public static double WHEEL_VELOCITY_SCALE_BR_NEGATIVE = 1.05;  // Back Right backward
 
     // 8-Factor calibration control and metadata
     public static boolean USE_8_FACTOR_VELOCITY_SCALING = true;  // Flag: use 8-factor scaling OR kinematic matrix
     public static boolean WHEEL_VELOCITY_SCALES_CALIBRATED = true;
-    public static String WHEEL_VELOCITY_CALIBRATION_DATE = "12/19/2025";
+    public static String WHEEL_VELOCITY_CALIBRATION_DATE = "12/24/2025";
     public static double WHEEL_VELOCITY_CALIBRATION_ACCURACY = 999.0;  // RMS error in in/s
 
     // ========== CALIBRATION HISTORY ==========

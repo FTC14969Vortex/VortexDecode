@@ -74,7 +74,13 @@ public class CameraServoTest extends OpMode {
         
         // Initialize camera servo system
         cameraServo = new CameraServo();
-        cameraServo.init(hardwareMap, aprilTagProcessor);
+        cameraServo.init(
+            hardwareMap, 
+            aprilTagProcessor, 
+            motionExecutor.getMotionState().getOdometryManager(),
+            motionExecutor.getCoordinateTransformer(),
+            motionExecutor
+        );
         cameraServo.setTargetTag(20); // Set target to blue GOAL (tag 20)
         
         telemetry.addLine("✅ Systems Ready!");
@@ -91,6 +97,7 @@ public class CameraServoTest extends OpMode {
     @Override
     public void start() {
         // No threading needed - OpMode loop handles updates
+
     }
     
     @Override

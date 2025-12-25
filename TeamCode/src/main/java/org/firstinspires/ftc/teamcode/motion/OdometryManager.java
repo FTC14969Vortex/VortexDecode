@@ -168,7 +168,30 @@ public class OdometryManager {
             // Uncommenting the line below will OVERRIDE the factory calibration:
             // pinpoint.setYawScalar(CalibrationCoefficients.ODOMETRY_HEADING_SCALE);
             
-            lastErrorMessage = "Pinpoint configured successfully";
+            // CRITICAL: Reset position to 0,0,0 and calibrate IMU
+            // This establishes the heading zero baseline and clears any accumulated position
+            // Robot MUST be stationary during this ~250ms calibration period
+            // This is called automatically during initialization - user should not need to manually reset
+            pinpoint.resetPosAndIMU();
+            
+            // Wait for calibration to complete (Pinpoint documentation: takes ~250ms)
+            // Check device status to ensure it's ready before proceeding
+            ElapsedTime calibrationTimer = new ElapsedTime();
+            while (calibrationTimer.milliseconds() < 300) {
+                pinpoint.update();
+                GoBildaPinpointDriver.DeviceStatus status = pinpoint.getDeviceStatus();
+                if (status == GoBildaPinpointDriver.DeviceStatus.READY) {
+                    break; // Calibration complete
+                }
+                try {
+                    Thread.sleep(10); // Small delay to avoid busy-waiting
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+            
+            lastErrorMessage = "Pinpoint configured and calibrated successfully";
             
         } catch (Exception e) {
             sensorHealthy = false;
@@ -464,7 +487,7 @@ public class OdometryManager {
      */
     public void resetToPose(Pose2D pose) {
         try {
-            // Reset hardware - this resets to (0,0,0) and recalibrates IMU (~0.25s)
+            // Reset hardware - this resets pose and recalibrates IMU (~0.25s)
             pinpoint.resetPosAndIMU();
             
             // Wait for IMU recalibration
@@ -474,12 +497,7 @@ public class OdometryManager {
                 Thread.currentThread().interrupt();
             }
             
-            // Set to target pose if not (0,0,0)
-            if (pose.getX(DistanceUnit.INCH) != 0.0 || 
-                pose.getY(DistanceUnit.INCH) != 0.0 || 
-                pose.getHeading(AngleUnit.DEGREES) != 0.0) {
-                pinpoint.setPosition(pose);
-            }
+            pinpoint.setPosition(pose);
             
             // Update and read actual position from Pinpoint
             pinpoint.update();

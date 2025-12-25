@@ -295,11 +295,12 @@ public class MotionConfig {
      * 
      */
 
-    public static final ComponentPosition ACTIVE_REFERENCE_POINT = RobotConstants.SCORING_POINT;
+    public static final ComponentPosition ACTIVE_REFERENCE_POINT = RobotConstants.INTAKE_POINT;
+                                                // RobotConstants.SCORING_POINT;
                                              //RobotConstants.Robot_CENTER;
                                              //RobotConstants.BACK_CAMERA;
     
-    /** 
+    /** zz
      * Reference point field origin - where the reference point is positioned at start
      * This defines the initial field position of the ACTIVE_REFERENCE_POINT when
      * the robot is placed for autonomous start.

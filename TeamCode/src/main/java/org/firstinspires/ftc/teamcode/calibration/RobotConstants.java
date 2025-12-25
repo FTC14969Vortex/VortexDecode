@@ -266,7 +266,7 @@ public class RobotConstants {
     public static final ComponentPosition FRONT_CAMERA_REF = FRONT_RIGHT_WHEEL_REF.translate(1.0, -TRACK_WIDTH/2,0); // To be implemented in the middle of the front side.         
     
     public static final ComponentPosition INTAKE_POINT_REF = 
-        new ComponentPosition(11.34, 5.98,  0.0, 0, 0, 0);  // y= 152/25.4, x=288/25.4
+        new ComponentPosition(13, 6,  0.0, 0, 0, 0);  // y= 152/25.4, x=288/25.4
     
     
     public static final ComponentPosition SCORING_POINT_REF = BACK_RIGHT_WHEEL_REF.translate(-3.78, TRACK_WIDTH/2, 0);  // x= -96/25.4, y= 152/25.4
