@@ -377,7 +377,7 @@ public class ShootManager {
                     return;
                 }
                 
-                // Get target velocity and ensure flywheel is at target before proceeding (matching FullAutoOperateTest)
+                // Get target velocity and attempt to recover flywheel between shots (matching FullAutoOperateTest)
                 // This ensures flywheel has recovered between shots for consistent shooting
                 double targetVelocity;
                 if (cameraServo != null) {
@@ -388,12 +388,15 @@ public class ShootManager {
                 }
                 
                 // Start spin-up (idempotent - won't reset if same target)
+                // Non-blocking: attempts to reach target but doesn't block
                 flyWheel.startSpinUp(targetVelocity);
                 
-                // Wait for flywheel to reach target before turning flipper (matching FullAutoOperateTest behavior)
-                // This ensures shot consistency by waiting for flywheel recovery
-                if (flyWheel.isAtTarget(targetVelocity, 0.95)) {
-                    // Flywheel at target - proceed with shot
+                // FIXED: If spin-up timed out, skip isAtTarget() check and proceed immediately
+                // This matches FullAutoOperateTest's "shoot anyway" behavior - once we've decided to shoot
+                // despite timeout, we continue shooting without waiting for target between shots
+                // Safety: We still call startSpinUp() above to attempt recovery, but don't block on it
+                if (spinUpTimedOut || flyWheel.isAtTarget(targetVelocity, 0.95)) {
+                    // Flywheel at target OR spin-up timed out - proceed with shot
                     double flipperAngle = INITIAL_FLIPPER_ANGLE + (shotIndex * ANGLE_INCREMENT);
                     flipper.turnFlipper(flipperAngle);
                     firingTimer.reset();
