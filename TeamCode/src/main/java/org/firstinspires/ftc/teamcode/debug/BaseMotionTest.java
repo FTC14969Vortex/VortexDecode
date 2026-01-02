@@ -48,7 +48,7 @@ public class BaseMotionTest extends LinearOpMode {
         
         // Test BLUE positions (should work without prefix)
         FieldPose blueStartNear = FieldPositions.START_NEAR;
-        FieldPose blueShootingClose = FieldPositions.SHOOTING_CLOSE;
+        FieldPose blueShootingClose = FieldPositions.SHOOTING_NEAR;
         
         telemetry.addData("BLUE START_NEAR", blueStartNear.toCompactString());
         telemetry.addData("BLUE SHOOTING_CLOSE", blueShootingClose.toCompactString());
