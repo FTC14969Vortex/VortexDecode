@@ -67,6 +67,10 @@ public class ShootManager {
     
     private FiringSubState firingSubState = FiringSubState.IDLE;
     
+    // Track if spin-up timed out - if true, skip isAtTarget() check in PREPARE_SHOT
+    // This matches FullAutoOperateTest behavior where shooting proceeds even if spin-up fails
+    private boolean spinUpTimedOut = false;
+    
     // Shooting parameters (from FullAutoOperateTest)
     private static final double INITIAL_FLIPPER_ANGLE = 120.0;
     private static final double ANGLE_INCREMENT = 30.0;
@@ -164,6 +168,7 @@ public class ShootManager {
         this.spinUpTimeoutSec = spinUpTimeoutSec;
         this.firingTimeoutSec = firingTimeoutSec;
         this.shotIndex = 0;
+        this.spinUpTimedOut = false;  // Reset timeout flag for new cycle
 
         if (dryRun) {
             // Testing mode: skip hardware, immediately complete
@@ -201,8 +206,7 @@ public class ShootManager {
     /**
      * Close gate for parallel preparation (called during drive to shoot position).
      * This matches FullAutoOperateTest behavior where gate is closed in preparation thread.
-     * 
-     * @param dryRun If true, skip hardware calls
+     * Uses the class's dryRun field to determine whether to skip hardware calls.
      */
     public void closeGateForPrep() {
         if (!dryRun) {
@@ -251,6 +255,8 @@ public class ShootManager {
         // This ensures shots are attempted even if flywheel didn't reach target (safer than skipping entirely)
         if (timer.seconds() > spinUpTimeoutSec) {
             telemetry.addData("Shooter", "⚠️ Spin-up timeout - proceeding to fire anyway (matching FullAutoOperateTest)");
+            // Set flag to skip isAtTarget() check in PREPARE_SHOT (flywheel may never reach target)
+            spinUpTimedOut = true;
             // Transition to firing phase anyway (matching FullAutoOperateTest line 252-257)
             // This attempts shooting even if flywheel didn't reach target velocity
             if (logger != null) {
@@ -329,13 +335,15 @@ public class ShootManager {
                 // FIXED: Ensure flywheel is at target before opening gate (matching FullAutoOperateTest)
                 // FullAutoOperateTest waits for spin-up to complete (line 250) before opening gate (line 260)
                 // This prevents early feeding if velocity is still recovering
+                // EXCEPTION: If spin-up timed out, skip isAtTarget() check and proceed anyway (matching FullAutoOperateTest line 252-257)
                 kicker.setGatePosition(Kicker.GATE_CLOSE);
                 if (cameraServo != null) {
                     double targetVelocity = cameraServo.getFlywheelVelocity();
                     flyWheel.startSpinUp(targetVelocity); // Idempotent - won't reset if same target
-                    // Wait for flywheel to reach target before opening gate
-                    if (flyWheel.isAtTarget(targetVelocity, 0.95)) {
-                        // Flywheel at target - open gate and proceed
+                    // FIXED: If spin-up timed out, skip isAtTarget() check and proceed to open gate
+                    // This matches FullAutoOperateTest behavior where shooting proceeds even if spin-up failed
+                    if (spinUpTimedOut || flyWheel.isAtTarget(targetVelocity, 0.95)) {
+                        // Flywheel at target OR spin-up timed out - open gate and proceed
                         kicker.setGatePosition(Kicker.GATE_SHOOT);
                         firingTimer.reset();
                         firingSubState = FiringSubState.OPEN_GATE;
@@ -445,6 +453,7 @@ public class ShootManager {
         state  = ShooterState.DONE;
         result = finalResult;
         firingSubState = FiringSubState.IDLE;
+        spinUpTimedOut = false;  // Reset timeout flag
     }
 }
 
