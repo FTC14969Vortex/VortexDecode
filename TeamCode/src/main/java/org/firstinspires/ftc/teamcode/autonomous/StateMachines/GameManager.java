@@ -409,11 +409,10 @@ public class GameManager {
                     stateTimer.reset();
                     telemetry.addData("GM", "Drive to initial shoot OK → AUTO_SHOOT (no vision, dist=%.1f)", defaultShootDistanceInch);
                 }
-            } else {
-                // Cannot reach initial shoot position → go to park
-                telemetry.addData("GM/ERROR", "Cannot reach initial shoot position (%s) - going to park", res);
-                goToParkState(nowSec);
             }
+            // REMOVED: Dead failure branch - initial drive failure is now handled in handleAutoDriveToShoot
+            // When handleInit transitions to AUTO_DRIVE_TO_SHOOT state, drive completion (including failures)
+            // will be handled by handleAutoDriveToShoot, not handleInit. This branch was unreachable.
         }
     }   
 
@@ -540,8 +539,23 @@ public class GameManager {
                     telemetry.addData("GM", "Drive to shoot OK → AUTO_SHOOT (no vision, ballIndex=%d, dist=%.1f)", ballIndex, defaultShootDistanceInch);
                 }
             } else {
-                // cannot reach good shoot spot → next ball or park
-                advanceBallIndexOrPark(nowSec);
+                // Drive failed - handle based on ballIndex
+                if (ballIndex == -1) {
+                    // FIXED: Initial drive failed → explicitly go to ball 0 (make behavior explicit)
+                    // This makes the "initial drive failed → go to ball 0" behavior unambiguous
+                    // and keeps the state machine non-blocking
+                    // Stop flywheel if it was spinning (safety and state consistency)
+                    if (flyWheel != null && flywheelSpinUpStarted) {
+                        flyWheel.stopSpinUp();
+                        flywheelSpinUpStarted = false;  // Reset flag
+                    }
+                    ballIndex = 0;
+                    telemetry.addData("GM", "Initial drive to shoot failed (%s) → going to ball 0", res);
+                    startDriveToBallSpot(nowSec);
+                } else {
+                    // Cannot reach shoot spot for current ball → next ball or park
+                    advanceBallIndexOrPark(nowSec);
+                }
             }
         }
     }
