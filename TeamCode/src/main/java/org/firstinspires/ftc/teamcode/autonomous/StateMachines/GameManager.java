@@ -252,24 +252,35 @@ public class GameManager {
                 if (state != GameState.PARK_DRIVE && state != GameState.DONE) {
                     goToParkState(nowSec);
                 }
-                return;
+                // CRITICAL FIX: Don't return here - continue processing so handleParkDrive() can run
+                // If we just transitioned to PARK_DRIVE, we need to process it in this same update cycle
+                // Otherwise the park drive never starts
+                if (state == GameState.PARK_DRIVE) {
+                    // Continue to state machine processing below so handleParkDrive() runs
+                } else {
+                    // State didn't change (already DONE or transition failed) - safe to return
+                    return;
+                }
+            } else {
+                // if close to the end, force transition to parking, unless already parking/done
+                // This ensures we can abort intake/drive/shoot and go to parking even if timeouts are disabled
+                if (timeRemaining(nowSec) <= parkReserveSec &&
+                        state != GameState.PARK_DRIVE &&
+                        state != GameState.DONE) {
+                    goToParkState(nowSec);
+                    // Continue processing - if we just transitioned to PARK_DRIVE, handleParkDrive() needs to run
+                }
             }
-
-            // if close to the end, force transition to parking, unless already parking/done
-            // This ensures we can abort intake/drive/shoot and go to parking even if timeouts are disabled
-            if (timeRemaining(nowSec) <= parkReserveSec &&
-                    state != GameState.PARK_DRIVE &&
-                    state != GameState.DONE) {
-                goToParkState(nowSec);
+            
+            // Additional safety: if time is critically low (< 1 second), abort intake immediately
+            // This ensures intake can be stopped even if ignoreTimeoutDuringDrive is true
+            // FIXED: Only apply this safety check when enforceAutoTimeLimit is true
+            // When false (run-to-completion mode), don't abort intake based on time
+            if (timeRemaining(nowSec) < 1.0 && 
+                (state == GameState.AUTO_INTAKE || intake.getState() == IntakeManager.IntakeState.RUNNING)) {
+                intake.abortCycle();
+                telemetry.addData("GM", "Critical time remaining (%.1fs) - aborting intake", timeRemaining(nowSec));
             }
-        }
-        
-        // Additional safety: if time is critically low (< 1 second), abort intake immediately
-        // This ensures intake can be stopped even if ignoreTimeoutDuringDrive is true
-        if (timeRemaining(nowSec) < 1.0 && 
-            (state == GameState.AUTO_INTAKE || intake.getState() == IntakeManager.IntakeState.RUNNING)) {
-            intake.abortCycle();
-            telemetry.addData("GM", "Critical time remaining (%.1fs) - aborting intake", timeRemaining(nowSec));
         }
 
         switch (state) {
@@ -578,8 +589,11 @@ public class GameManager {
             return;
         }
         
-        // Check for alignment timeout (explicit check for clarity)
-        if (stateTimer.seconds() > 3.0) {  // Alignment timeout (matches DriverManager timeout)
+        // Check for alignment timeout (only when enforceAutoTimeLimit is true)
+        // FIXED: FullAutoOperateTest doesn't time-limit alignment - it waits until alignment completes
+        // When enforceAutoTimeLimit is false (run-to-completion mode), don't timeout alignment
+        // When true (timed mode), use timeout as safety fallback to prevent infinite alignment
+        if (enforceAutoTimeLimit && stateTimer.seconds() > 3.0) {  // Alignment timeout (safety fallback in timed mode)
             telemetry.addData("GM", "Alignment timeout (%.1fs) → proceeding to shoot", stateTimer.seconds());
             // Critical: Stop drive before starting to shoot (prevents robot from moving while firing)
             drive.abortCycle();
@@ -817,7 +831,10 @@ public class GameManager {
             flywheelSpinUpStarted = false;  // Reset flag
         }
         
+        // CRITICAL FIX: Actually set the state to PARK_DRIVE so handleParkDrive() can run
+        // Without this, the state never changes and parking never starts
         logStateTransition(GameState.PARK_DRIVE, "Time remaining <= parkReserveSec");
+        state = GameState.PARK_DRIVE;  // Set state so switch statement routes to handleParkDrive()
         stateTimer.reset();
         telemetry.addData("GM", "Transition → PARK_DRIVE");
     }
