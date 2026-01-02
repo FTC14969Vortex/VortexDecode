@@ -135,10 +135,11 @@ public class CameraServo {
     // ========== POSE FUSION PARAMETERS ==========
 
     /** Vision weight for pose fusion (0.0 = odometry only, 1.0 = vision only) */
-    private static final double VISION_FUSION_WEIGHT = 0.3;
+    private static final double VISION_FUSION_WEIGHT = 0.1;
 
     /** Maximum distance for pose correction (inches) */
-    private static final double MAX_CORRECTION_DISTANCE = 80.0;
+    private static final double MAX_CORRECTION_DISTANCE = 5.0;
+    private static final double MAX_CORRECTION_Angle = 10.0;
 
     // ========== DETECTION DISTANCE LIMITS ==========
 
@@ -177,7 +178,7 @@ public class CameraServo {
     private int lastDetectedTagId = -1;
     private double lastDetectedDistance = 0.0;
 
-    private double lastShootingAngle = 0; // robote rotation angle for shooting
+    private double lastShootingAngle = 0; // robot rotation angle for shooting, in degree
 
     private boolean hasInitializedPosition = false;
 
@@ -433,7 +434,7 @@ public class CameraServo {
             // Calculate and update flywheel velocity
             lastFlywheelVelocity = calculateFlywheelVelocity(lastDetectedDistance);
 
-            lastShootingAngle = normalizeAngle(targetDetection.ftcPose.yaw + currentAngle + 180) ; // robot back facing tag, robot need to rotate
+            lastShootingAngle = normalizeAngle(targetDetection.ftcPose.bearing + currentAngle + 180) ; // robot back facing tag, robot need to rotate
 
             // Perform automatic odometry correction using ACTUAL detection distance
             // This ensures correction works even when odometry is wrong (e.g., robot lifted)
@@ -449,13 +450,12 @@ public class CameraServo {
                 stopSearch();
             }
         } else {
-            // Tag not detected - start search if within reliable range
-            if (withinReliableRange && !isSearching) {
+            // Tag not detected calculate flywheel velocity from predicted odometry
+            lastFlywheelVelocity = calculateFlywheelVelocity(predictedDistance);
+            if (!isSearching) {
                 // Start search pattern around current predicted angle
                 startSearch(targetAngle);
             }
-            // If outside reliable range, don't search (just aim at predicted position)
-            // Keep last flywheel velocity when no detection
         }
     }
 
@@ -474,11 +474,6 @@ public class CameraServo {
 
     /**
      * Calculates distance from camera to detected AprilTag
-     *
-     * NOTE: detection.range should equal Math.sqrt(dx*dx + dy*dy) from detection.ftcPose
-     * when both are available. detection.range is the direct distance measurement from SDK,
-     * while ftcPose calculation gives the same result from X,Y components.
-     *
      * Uses detection.range when available (direct tag-to-camera distance),
      * otherwise calculates using tag position and camera position
      */
@@ -528,6 +523,8 @@ public class CameraServo {
     public double getFlywheelVelocity() {
         return lastFlywheelVelocity;
     }
+    public double getShootingAngle() {return lastShootingAngle;}
+
     private double calculateFlywheelVelocity(double distance) {
         if (distance <= 0) {
             return MIN_FLYWHEEL_VELOCITY;
@@ -573,8 +570,15 @@ public class CameraServo {
         if (!hasInitializedPosition) {
             // First detection - accept any distance to establish initial position
             hasInitializedPosition = true;
-        } else if (correctionDistance > MAX_CORRECTION_DISTANCE) {
-            return null; // Subsequent detections - reject if correction too large
+        } else {
+            if (correctionDistance > MAX_CORRECTION_DISTANCE) {
+                return null; // Subsequent detections - reject if correction too large
+            }
+
+            double correctionAngle = Math.abs(visionPose.heading - currentOdometryPose.heading);
+            if (correctionAngle > MAX_CORRECTION_Angle) {
+                return null; // Subsequent detections - reject if correction too large
+            }
         }
 
         // Fuse odometry and vision poses (both now in reference point coordinates)
@@ -586,7 +590,7 @@ public class CameraServo {
     /**
      * Calculates robot pose from camera detection using mathematically correct transformation
      * COORDINATE SYSTEM UNDERSTANDING:
-     * - detection.ftcPose.x,y,yaw = Tag position/orientation relative to camera (in camera frame)
+     * - detection.ftcPose.x,y,bearing = Tag position/orientation relative to camera (in camera frame)
      * - We need to find robot center position in field frame
      *
      * TRANSFORMATION CHAIN:
@@ -612,9 +616,10 @@ public class CameraServo {
 
         double robotCurrentHeading = odometryManager.getCurrentPose().getHeading(AngleUnit.RADIANS);
         // in tag frame
-        double tagYawRad = Math.toRadians(detection.ftcPose.yaw); // tag rotated CCW when viewed by the camera
-        double dx_tag = detection.ftcPose.range*Math.cos(tagYawRad);
-        double dy_tag = detection.ftcPose.range*Math.sin(tagYawRad);
+        // FTC camera pose: y - forward, x- side, bearing = atan(x/y) - different with robot frame, need to rotate 90 degree
+        double bearingRad = Math.toRadians(detection.ftcPose.bearing); // tag rotated CCW when viewed by the camera
+        double dx_tag = -detection.ftcPose.range*Math.cos(bearingRad);
+        double dy_tag = detection.ftcPose.range*Math.sin(bearingRad);
 
         double fieldFrameCameraX = dx_tag + tagPose.x;
         double fieldFrameCameraY = dy_tag + tagPose.y;
@@ -624,7 +629,7 @@ public class CameraServo {
 
         double robotCenterX = fieldFrameCameraX -(CAMERA_OFFSET_X*Math.cos(servoAngleRad) - CAMERA_OFFSET_Y*Math.sin(servoAngleRad));
         double robotCenterY = fieldFrameCameraY - (CAMERA_OFFSET_X*Math.sin(servoAngleRad) + CAMERA_OFFSET_Y*Math.cos(servoAngleRad));
-        double robotHeading = robotCurrentHeading - tagYawRad;   // robot heading correction
+        double robotHeading = Math.toDegrees(robotCurrentHeading - bearingRad);   // robot heading correction
 
         Pose2D robotPose = new Pose2D(DistanceUnit.INCH, robotCenterX, robotCenterY, AngleUnit.DEGREES, robotHeading);
 
@@ -968,7 +973,7 @@ public class CameraServo {
 
     // ========== PRIVATE UTILITY METHODS ==========
     private static double angleToServoPosition(double angle) {
-        angle = angle - - CAMERA_OFFSET_HEADING; // Remove camera offset
+        angle = angle - CAMERA_OFFSET_HEADING; // Remove camera offset
 
         angle = Math.max(SERVO_MIN_ANGLE, Math.min(SERVO_MAX_ANGLE, angle));
 
