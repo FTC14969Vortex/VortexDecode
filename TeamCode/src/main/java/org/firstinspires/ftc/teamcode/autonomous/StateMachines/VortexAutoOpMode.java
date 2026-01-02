@@ -6,12 +6,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.Helper.DecodeAprilTag;
+import org.firstinspires.ftc.teamcode.vision.AprilTagProcessor;
+// Note: DecodeAprilTag removed - not used in current implementation
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import org.firstinspires.ftc.teamcode.Helper.Flipper;
-import org.firstinspires.ftc.teamcode.Helper.FlyWheel;
-import org.firstinspires.ftc.teamcode.Helper.Intake;
-import org.firstinspires.ftc.teamcode.Helper.Kicker;
+import org.firstinspires.ftc.teamcode.subsystems.Flipper;
+import org.firstinspires.ftc.teamcode.subsystems.FlyWheel;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Kicker;
 
 @Autonomous(name = " State Machines Auto 0.01" +
         "", group = "Autonomous")
@@ -39,7 +40,7 @@ public class VortexAutoOpMode extends LinearOpMode {
         FlyWheel flyWheel = new FlyWheel();
         Flipper flipper = new Flipper();
         Kicker kicker = new Kicker();
-        DecodeAprilTag aprilTag = new DecodeAprilTag(this);
+        // Note: DecodeAprilTag removed - not used in current implementation
 
         // --- build high-level managers ---
         // Use dryRun=true to skip hardware calls when hardware is not initialized
@@ -59,7 +60,6 @@ public class VortexAutoOpMode extends LinearOpMode {
 
         // Setup poses for GameManager (single shoot position)
         Pose2D[] BALL_POS = {pickup1Pose, pickup2Pose, pickup3Pose};  
-        Pose2D SHOOT_POS = shootPose;  // Single shoot position
         Pose2D PARK_POS = shootPose;  // Park at shoot pose
 
         // Initialize GameManager
@@ -69,15 +69,12 @@ public class VortexAutoOpMode extends LinearOpMode {
             shootManager,
             telemetry,
             BALL_POS,
-            SHOOT_POS,
-            PARK_POS,
-            SHOOT_POS,  // Initial shoot position (same as shoot position)
+            PARK_POS,   // parkPose
+            shootPose,  // defaultShootSpot (single shoot position)
             30,  // autoTotalTimeSec
             5,   // parkReserveSec
             3,   // ballsPerSpot
-            SHOOT_DISTANCE,
-            new double[]{SHOOT_DISTANCE},  // Single shoot distance
-            SHOOT_DISTANCE,
+            SHOOT_DISTANCE,  // defaultShootDistanceInch (single shoot distance)
             INTAKE_FORWARD_DISTANCE,  // intakeForwardDistanceInch
             4,   // driveTimeoutSec
             3,   // intakeTimeoutSec

@@ -44,12 +44,11 @@ public class GameManager {
 
     // Field layout (global static config)
     private final Pose2D[] ballSpots;
-    private final Pose2D[] shootSpots;
-    private final Pose2D   parkPose;
-    private final Pose2D   initialShootPose;  // initial/preload shoot position
 
-    private int ballIndex  = 0;  // which BALL_SPOT we are at (also used for shoot spots)
-    private boolean isInitialShoot = false;  // track if we're doing initial shoot
+    private final Pose2D defaultShootSpot;
+    private final Pose2D parkPose;
+
+    private int ballIndex = -1;  // which BALL_SPOT we are at (-1 = initial shoot, then 0, 1, 2...)
 
     // Auto timing
     private final double autoTotalTimeSec;   // e.g. 30.0
@@ -58,8 +57,6 @@ public class GameManager {
 
     // Subsystem timeouts / params
     private final int    ballsPerSpot;
-    private final double initialShootDistanceInch;  // Distance for initial/preload shoot
-    private final double[] shootDistances;          // Array of distances for each shoot spot (matches shootSpots[])
     private final double defaultShootDistanceInch; // Ultimate fallback distance if array access fails
     private final double intakeForwardDistanceInch; // Fixed distance to drive forward while intaking at each ball spot
 
@@ -80,14 +77,11 @@ public class GameManager {
             ShootManager shooter,
             Telemetry telemetry,
             Pose2D[] ballSpots,
-            Pose2D[] shootSpots,
             Pose2D   parkPose,
-            Pose2D   initialShootPose,
+            Pose2D   defaultShootSpot,
             double autoTotalTimeSec,
             double parkReserveSec,
             int    ballsPerSpot,
-            double initialShootDistanceInch,
-            double[] shootDistances,
             double defaultShootDistanceInch,
             double intakeForwardDistanceInch,
             double driveTimeoutSec,
@@ -100,33 +94,30 @@ public class GameManager {
         this.telemetry = telemetry;
 
         this.ballSpots  = ballSpots;
-        this.shootSpots = shootSpots;
+        this.defaultShootSpot = defaultShootSpot;
         this.parkPose   = parkPose;
-        this.initialShootPose = initialShootPose;
 
         this.autoTotalTimeSec = autoTotalTimeSec;
         this.parkReserveSec   = parkReserveSec;
         this.ballsPerSpot     = ballsPerSpot;
-        this.initialShootDistanceInch = initialShootDistanceInch;
-        this.shootDistances = shootDistances;
         this.defaultShootDistanceInch = defaultShootDistanceInch;
         this.intakeForwardDistanceInch = intakeForwardDistanceInch;
         this.driveTimeoutSec  = driveTimeoutSec;
         this.intakeTimeoutSec = intakeTimeoutSec;
         this.shootTimeoutSec  = shootTimeoutSec;
 
-        // Validate array lengths match
-        if (shootDistances != null && shootSpots != null && 
-            shootDistances.length != shootSpots.length) {
-            telemetry.addData("GM/WARNING", "shootDistances.length (%d) != shootSpots.length (%d)",
-                    shootDistances.length, shootSpots.length);
+        // Validation checks
+        if (ballSpots == null || ballSpots.length == 0) {
+            telemetry.addData("GM/WARNING", "ballSpots is null or empty");
         }
-        
-        // Warn if shootSpots.length < ballSpots.length (will park early, skipping some ball spots)
-        if (shootSpots != null && ballSpots != null && 
-            shootSpots.length < ballSpots.length) {
-            telemetry.addData("GM/WARNING", "shootSpots.length (%d) < ballSpots.length (%d) - will park early",
-                    shootSpots.length, ballSpots.length);
+        if (defaultShootSpot == null) {
+            telemetry.addData("GM/WARNING", "defaultShootSpot is null");
+        }
+        if (parkPose == null) {
+            telemetry.addData("GM/WARNING", "parkPose is null");
+        }
+        if (defaultShootDistanceInch <= 0) {
+            telemetry.addData("GM/WARNING", "defaultShootDistanceInch is invalid: %.1f", defaultShootDistanceInch);
         }
     }
 
@@ -145,8 +136,7 @@ public class GameManager {
     /** Call once when AUTO actually starts (after waitForStart). */
     public void startAuto(double nowSec) {
         autoStartTimeSec = nowSec;
-        ballIndex  = 0;
-        isInitialShoot = true;
+        ballIndex = -1;  // Start with initial shoot (-1), then go to 0, 1, 2...
 
         drive.resetCycle();
         intake.resetCycle();
@@ -155,7 +145,7 @@ public class GameManager {
         state = GameState.INIT;
         stateTimer.reset();
 
-        telemetry.addData("GM", "Auto start: state=INIT");
+        telemetry.addData("GM", "Auto start: state=INIT (will do initial shoot first)");
     }
 
     /**
@@ -224,9 +214,9 @@ public class GameManager {
 
     /** INIT → go to initial shoot position first, then proceed to ball pickup cycles. */
     private void handleInit() {
-        // Validate initialShootPose is not null
-        if (initialShootPose == null) {
-            telemetry.addData("GM/ERROR", "initialShootPose is null - going to park");
+        // Validate defaultShootSpot is not null
+        if (defaultShootSpot == null) {
+            telemetry.addData("GM/ERROR", "defaultShootSpot is null - going to park");
             goToParkState();
             return;
         }
@@ -236,12 +226,12 @@ public class GameManager {
             drive.resetCycle();
             drive.startCycle(
                     DriverManager.DriveGoalKind.GOTO_SHOOT_SPOT,
-                    initialShootPose,
+                    defaultShootSpot,
                     driveTimeoutSec
             );
             state = GameState.AUTO_DRIVE_TO_SHOOT;
             stateTimer.reset();
-            telemetry.addData("GM", "Goto INITIAL_SHOOT_POSE");
+            telemetry.addData("GM", "Goto INITIAL_SHOOT (defaultShootSpot)");
             return;
         }
 
@@ -249,14 +239,15 @@ public class GameManager {
             DriverManager.DriveResult res = drive.getResult();
 
             if (res == DriverManager.DriveResult.ARRIVED_OK) {
-                // Start initial shoot (use initial shoot distance)
+                // Start initial shoot (use default shoot distance)
                 shooter.resetCycle();
-                shooter.startCycle(initialShootDistanceInch, shootTimeoutSec);
+                shooter.startCycle(defaultShootDistanceInch, shootTimeoutSec);
                 state = GameState.AUTO_SHOOT;
                 stateTimer.reset();
-                telemetry.addData("GM", "Drive to initial shoot OK → AUTO_SHOOT (dist=%.1f)", initialShootDistanceInch);
+                telemetry.addData("GM", "Drive to initial shoot OK → AUTO_SHOOT (dist=%.1f)", defaultShootDistanceInch);
             } else {
                 // Cannot reach initial shoot position → go to park
+                telemetry.addData("GM/ERROR", "Cannot reach initial shoot position (%s) - going to park", res);
                 goToParkState();
             }
         }
@@ -334,14 +325,13 @@ public class GameManager {
             DriverManager.DriveResult res = drive.getResult();
 
             if (res == DriverManager.DriveResult.ARRIVED_OK) {
-                // start shooting (use distance for current ballIndex)
-                double distance = getShootDistance(ballIndex);
+                // start shooting (always use defaultShootDistanceInch - single shoot position)
                 shooter.resetCycle();
-                shooter.startCycle(distance, shootTimeoutSec);
+                shooter.startCycle(defaultShootDistanceInch, shootTimeoutSec);
 
                 state = GameState.AUTO_SHOOT;
                 stateTimer.reset();
-                telemetry.addData("GM", "Drive to shoot OK → AUTO_SHOOT (ballIndex=%d, dist=%.1f)", ballIndex, distance);
+                telemetry.addData("GM", "Drive to shoot OK → AUTO_SHOOT (ballIndex=%d, dist=%.1f)", ballIndex, defaultShootDistanceInch);
             } else {
                 // cannot reach good shoot spot → next ball or park
                 advanceBallIndexOrPark();
@@ -353,9 +343,8 @@ public class GameManager {
     private void handleAutoShoot() {
         if (shooter.getState() == ShootManager.ShooterState.IDLE) {
             // If idle unexpectedly, start
-            // Use initial distance if initial shoot, otherwise use distance for current ballIndex
-            double distance = isInitialShoot ? initialShootDistanceInch : getShootDistance(ballIndex);
-            shooter.startCycle(distance, shootTimeoutSec);
+            // Always use defaultShootDistanceInch (single shoot position)
+            shooter.startCycle(defaultShootDistanceInch, shootTimeoutSec);
             return;
         }
 
@@ -363,9 +352,8 @@ public class GameManager {
             ShootManager.ShooterResult res = shooter.getResult();
 
             // After initial shoot, transition to first ball pickup
-            if (isInitialShoot) {
-                isInitialShoot = false;
-                ballIndex = 0;  // Start with first ball spot
+            if (ballIndex == -1) {
+                ballIndex = 0;  // Start with first ball spot (was -1 for initial shoot)
                 startDriveToBallSpot();
                 return;
             }
@@ -432,32 +420,26 @@ public class GameManager {
         telemetry.addData("GM", "Goto BALL_SPOT[%d]", ballIndex);
     }
 
-    /** Start drive cycle toward SHOOT_SPOT[ballIndex]. */
+    /** Start drive cycle toward defaultShootSpot. */
     private void startDriveToShootSpot() {
-        if (shootSpots == null || shootSpots.length == 0) {
-            // no shoot spots → go park instead
+        // Validate defaultShootSpot is not null
+        if (defaultShootSpot == null) {
+            telemetry.addData("GM/ERROR", "defaultShootSpot is null - going to park");
             goToParkState();
             return;
         }
 
-        if (ballIndex >= shootSpots.length) {
-            // No more shoot spots → go park
-            goToParkState();
-            return;
-        }
-
-        Pose2D target = shootSpots[ballIndex];
-
+        // Always use the single defaultShootSpot
         drive.resetCycle();
         drive.startCycle(
                 DriverManager.DriveGoalKind.GOTO_SHOOT_SPOT,
-                target,
+                defaultShootSpot,
                 driveTimeoutSec
         );
 
         state = GameState.AUTO_DRIVE_TO_SHOOT;
         stateTimer.reset();
-        telemetry.addData("GM", "Goto SHOOT_SPOT[%d]", ballIndex);
+        telemetry.addData("GM", "Goto SHOOT_SPOT (ballIndex=%d)", ballIndex);
     }
 
     /**
@@ -510,16 +492,6 @@ public class GameManager {
     // DISTANCE HELPERS
     // ------------------------------------------------------------
 
-    /**
-     * Get shooting distance for cycle shoot at given index.
-     * Returns shootDistances[index] if valid, otherwise falls back to defaultShootDistanceInch.
-     */
-    private double getShootDistance(int index) {
-        if (shootDistances != null && index >= 0 && index < shootDistances.length) {
-            return shootDistances[index];
-        }
-        // Fallback to default if array is null, empty, or index out of bounds
-        telemetry.addData("GM/WARNING", "Using fallback distance for index %d", index);
-        return defaultShootDistanceInch;
-    }
+    // Note: Removed getShootDistance() - we now always use defaultShootDistanceInch
+    // since there's only one shoot position
 }

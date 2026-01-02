@@ -4,8 +4,8 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.Helper.Intake;
-import org.firstinspires.ftc.teamcode.Helper.Util;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.utils.RobotUtil;
 
 public class IntakeManager {
 
@@ -133,7 +133,7 @@ public class IntakeManager {
         boolean detected = false;
         if (channelSensor != null) {
             try {
-                detected = Util.isObjectDetected(channelSensor, telemetry);
+                detected = RobotUtil.isObjectDetected(channelSensor, telemetry);
             } catch (Exception e) {
                 finish(IntakeResult.ABORTED);
                 telemetry.addData("Intake", "ERROR reading sensor: %s", e.getMessage());

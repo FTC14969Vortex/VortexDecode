@@ -150,7 +150,7 @@ public class DriverManager {
         timer.reset();
 
         telemetry.addData("Drive", "Start MOVE cycle: %s to (%.1f, %.1f, %.1f°)",
-                kind, target.getX(), target.getY(), target.getHeading());
+                kind, target.getX(DistanceUnit.INCH), target.getY(DistanceUnit.INCH), target.getHeading(AngleUnit.DEGREES));
     }
 
     /** startCycle() for ALIGN-ONLY mode (tag or heading). */

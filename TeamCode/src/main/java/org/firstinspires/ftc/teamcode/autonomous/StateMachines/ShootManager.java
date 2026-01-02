@@ -4,7 +4,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-import org.firstinspires.ftc.teamcode.Helper.*;
+import org.firstinspires.ftc.teamcode.subsystems.FlyWheel;
+import org.firstinspires.ftc.teamcode.subsystems.Flipper;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Kicker;
+import org.firstinspires.ftc.teamcode.utils.RobotUtil;
+
 
 public class ShootManager {
 
@@ -104,7 +109,7 @@ public class ShootManager {
             finish(ShooterResult.SUCCESS);
         } else {
             // Normal mode: prepare mechanisms for shooting and begin spin-up
-            Util.prepareFlyWheelToShoot(flyWheel, kicker, intake, targetDistanceInch, telemetry);
+            RobotUtil.prepareFlyWheelToShoot(flyWheel, kicker, intake, targetDistanceInch, telemetry);
             timer.reset();
             state  = ShooterState.SPINNING_UP;
             result = ShooterResult.NONE;
@@ -147,7 +152,7 @@ public class ShootManager {
 
         // Use your Util.waitForFlyWheelShootingVelocity model,
         // but in non-blocking form. Rough sketch:
-        int targetVelocity = Util.getRequiredFlyWheelVelocity(targetDistanceInch);
+        int targetVelocity = RobotUtil.getRequiredFlyWheelVelocity(targetDistanceInch);
 
         // Example: check if we are close enough:
         double currentVelocity = flyWheel.getVelocity();
