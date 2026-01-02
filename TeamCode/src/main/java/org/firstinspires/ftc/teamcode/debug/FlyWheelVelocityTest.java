@@ -76,7 +76,7 @@ public class FlyWheelVelocityTest extends OpMode {
         cameraServo = new CameraServo();
         cameraServo.init(hardwareMap, aprilTagProcessor);
         cameraServo.setTargetTag(20); // Blue AprilTag
-        cameraServo.center(); // Keep servo at center position for manual robot alignment
+        cameraServo.moveToCenter(); // Keep servo at center position for manual robot alignment
         
         // Initialize flywheel subsystem
         flyWheel = new FlyWheel();

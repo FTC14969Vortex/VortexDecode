@@ -300,7 +300,7 @@ public class CameraServoTestEnhanced extends OpMode {
         
         if (gamepad.b && !bPressed) {
             bPressed = true;
-            cameraServo.center(); // Center camera servo
+            cameraServo.moveToCenter(); // Center camera servo
         } else if (!gamepad.b) {
             bPressed = false;
         }
@@ -319,7 +319,7 @@ public class CameraServoTestEnhanced extends OpMode {
         // Reset odometry
         if (gamepad.y && !yPressed) {
             yPressed = true;
-            motionExecutor.resetOdometry();
+            motionExecutor.resetToFieldOrigin();
         } else if (!gamepad.y) {
             yPressed = false;
         }
@@ -361,7 +361,7 @@ public class CameraServoTestEnhanced extends OpMode {
         // ========== APRILTAG POSITIONS ==========
         
         // Blue Goal (Tag 20)
-        FieldPose blueGoal = FieldPositions.BLUE_GOAL_APRILTAG;
+        FieldPose blueGoal = FieldPositions.GOAL_APRILTAG;
         if (blueGoal != null) {
             packet.fieldOverlay()
                 .setFill("#2196F3")
@@ -370,7 +370,7 @@ public class CameraServoTestEnhanced extends OpMode {
         }
         
         // Red Goal (Tag 24)
-        FieldPose redGoal = FieldPositions.RED_GOAL_APRILTAG;
+        FieldPose redGoal = FieldPositions.getRedPosition(FieldPositions.GOAL_APRILTAG);
         if (redGoal != null) {
             packet.fieldOverlay()
                 .setFill("#F44336")
@@ -473,7 +473,6 @@ public class CameraServoTestEnhanced extends OpMode {
         // Camera servo data
         packet.put("camera_angle", cameraServo.getCurrentAngle());
         packet.put("camera_target_angle", cameraServo.getTargetAngle());
-        packet.put("camera_moving", cameraServo.isMoving());
         packet.put("camera_searching", cameraServo.isSearching());
         
         // AprilTag detection data
@@ -512,7 +511,6 @@ public class CameraServoTestEnhanced extends OpMode {
         telemetry.addLine("=== CAMERA SERVO ===");
         telemetry.addData("Current Angle", "%.1f°", cameraServo.getCurrentAngle());
         telemetry.addData("Target Angle", "%.1f°", cameraServo.getTargetAngle());
-        telemetry.addData("Moving", cameraServo.isMoving() ? "YES" : "NO");
         telemetry.addData("Searching", cameraServo.isSearching() ? "YES" : "NO");
         telemetry.addLine("");
         

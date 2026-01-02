@@ -92,6 +92,18 @@ public class FieldPose {
     public FieldPose offset(double deltaX, double deltaY, double deltaHeading) {
         return new FieldPose(this.x + deltaX, this.y + deltaY, this.heading + deltaHeading);
     }
+
+    public FieldPose mirror(String axis_name) {
+        if (axis_name.equals("x") || axis_name.equals("X")) {
+            return new FieldPose(this.x, -this.y, -this.heading); // also change heading
+        } else if (axis_name.equals("y") || axis_name.equals("Y")) {
+            return new FieldPose(-this.x, this.y, 180-this.heading);
+        } else {
+            return new FieldPose(this.x, this.y, this.heading);
+        }
+    }
+
+
     
     /**
      * Creates a new pose offset from this pose by the specified distance and angle

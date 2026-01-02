@@ -260,15 +260,22 @@ public class RobotConstants {
 
      // other positions relative to back-right wheel reference point
      // ODOMETRY SENSOR, CAMERAS, INTAKE POINT, SCORING POINT, Front/Back/Left/Right references, DISTANCE SENSOR  
-  
+
+    /* odometry setup -- CRITICAL
+     for odometry: X is the pod-x offset, Y is the pod-y offset.
+     */
+    public static final double ODOMETRY_DX = 0.5; // x_pod center - y_pod center in x direction of our robot coordinate
+    public static final double ODOMETRY_DY = -2.5; // y_pod center - x_pod center in y direction of our robot coordinate
     public static final ComponentPosition ODOMETRY_SENSOR_REF = BACK_RIGHT_WHEEL_REF.translate(-1, 7.87, 0);  // -24/25.4, 200/25.4
-    public static final ComponentPosition BACK_CAMERA_REF = BACK_RIGHT_WHEEL_REF.translate(3.78, 5.98,0); // 96/25.4, 152/25.4        
+
+
+    public static final ComponentPosition BACK_RIGHT_CORNER_REF = BACK_RIGHT_WHEEL_REF.translate(-3.75, -1,0); //
+
+    public static final ComponentPosition BACK_CAMERA_REF = new ComponentPosition (8, 5.98,0, 0, 0, 180); // 96/25.4, 152/25.4             // looking back initially
     public static final ComponentPosition FRONT_CAMERA_REF = FRONT_RIGHT_WHEEL_REF.translate(1.0, -TRACK_WIDTH/2,0); // To be implemented in the middle of the front side.         
     
-    public static final ComponentPosition INTAKE_POINT_REF = 
-        new ComponentPosition(13, 6,  0.0, 0, 0, 0);  // y= 152/25.4, x=288/25.4
-    
-    
+    public static final ComponentPosition INTAKE_POINT_REF = BACK_RIGHT_WHEEL_REF.translate(14, TRACK_WIDTH/2,  0.0);
+
     public static final ComponentPosition SCORING_POINT_REF = BACK_RIGHT_WHEEL_REF.translate(-3.78, TRACK_WIDTH/2, 0);  // x= -96/25.4, y= 152/25.4
     
     public static final ComponentPosition ROBOT_FRONT_REF = INTAKE_POINT_REF;
@@ -307,24 +314,7 @@ public class RobotConstants {
         );
     }
     
-    /**
-     * Converts a position from robot center coordinates to reference point coordinates
-     * 
-     * @param robotPosition Position relative to robot center
-     * @return Position relative to physical reference point
-     */
-    public static ComponentPosition convertToReferencePoint(ComponentPosition robotPosition) {
-        ComponentPosition robotCenter = calculateRobotCenter();
-        return new ComponentPosition(
-            robotPosition.x + robotCenter.x,
-            robotPosition.y + robotCenter.y,
-            robotPosition.z + robotCenter.z,
-            robotPosition.roll,
-            robotPosition.pitch,
-            robotPosition.yaw
-        );
-    }
-    
+
     
     /**
      * Calculates the geometric center of the robot (center of 4 wheels) from wheel measurements
@@ -349,6 +339,9 @@ public class RobotConstants {
     public static final ComponentPosition ROBOT_CENTER_FROM_REF = calculateRobotCenter();
     
     // ========== WHEEL POSITIONS RELATIVE TO ROBOT CENTER ==========
+
+    public static final ComponentPosition BACK_RIGHT_CORNER =
+        convertToRobotCenter(BACK_RIGHT_CORNER_REF);
 
     public static final ComponentPosition Robot_CENTER =
         convertToRobotCenter(ROBOT_CENTER_FROM_REF);

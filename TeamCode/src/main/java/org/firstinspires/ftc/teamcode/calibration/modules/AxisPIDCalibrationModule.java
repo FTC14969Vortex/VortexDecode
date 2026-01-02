@@ -126,7 +126,7 @@ public class AxisPIDCalibrationModule extends BaseCalibration {
         telemetry.addLine("   Original mode: " + originalControlMode);
         
         // CRITICAL: Reset odometry to (0,0) at start of each test
-        motionExecutor.resetOdometry();
+        motionExecutor.resetToFieldOrigin();
         motionExecutor.updateState();
         startX = 0;  // Always start from origin after reset
         startY = 0;

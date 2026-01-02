@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.motion;
 import org.firstinspires.ftc.teamcode.calibration.CalibrationCoefficients;
 import org.firstinspires.ftc.teamcode.calibration.RobotConstants;
 import org.firstinspires.ftc.teamcode.calibration.RobotConstants.ComponentPosition;
+import org.firstinspires.ftc.teamcode.motion.FieldPositions;
+
 
 /**
  * Configuration constants for the motion control system.
@@ -64,24 +66,7 @@ public class MotionConfig {
     /** Wheel radius (inches) */
     public static final double WHEEL_RADIUS = WHEEL_DIAMETER / 2.0;
     
-    // ========== ODOMETRY CONFIGURATION (GoBilda Pinpoint) ==========
-    
-    /** 
-     * X offset of odometry computer from robot center (inches)
-     * Positive = forward of center, Negative = behind center
-     * CRITICAL: Measure accurately for rotation accuracy!
-     * Current value: -4.5 inches (behind robot center)
-     */
-    public static final double ODOMETRY_X_OFFSET = RobotConstants.ODOMETRY_SENSOR.x;
-    
-    /** 
-     * Y offset of odometry computer from robot center (inches)
-     * Positive = left of center, Negative = right of center
-     * CRITICAL: Measure accurately for rotation accuracy!
-     * Current value: 8.0 inches (left of robot center)
-     */
-    public static final double ODOMETRY_Y_OFFSET = RobotConstants.ODOMETRY_SENSOR.y;
-    
+
     // ========== MOTOR CONFIGURATION ==========
     
     /** Motor encoder counts per revolution */
@@ -170,9 +155,9 @@ public class MotionConfig {
     public static final double DISTANCE_KD = 0.0;   // Derivative gain for distance control
     
     // Heading controller (rotation)
-    public static final double HEADING_KP = 2;    // Increased for better heading control
-    public static final double HEADING_KI = 0.4;   // Slightly increased integral gain
-    public static final double HEADING_KD = 0.0;    // Derivative gain disabled for PID tuning
+    public static final double HEADING_KP = 1.8;    // Increased for better heading control
+    public static final double HEADING_KI = 0.3;   // Slightly increased integral gain
+    public static final double HEADING_KD = 0.1;    // Derivative gain disabled for PID tuning
     
     
     
@@ -265,7 +250,7 @@ public class MotionConfig {
     // ========== SAFETY LIMITS ==========
     
     /** Default timeout for motion commands (milliseconds) */
-    public static final int MOTION_TIMEOUT_MS = 4000;  // Increased for more reliable motion execution
+    public static final int MOTION_TIMEOUT_MS = 5000;  // Increased for more reliable motion execution
     
     /** Safety factor for timeout calculations (multiplier for estimated time) */
     public static final double TIMEOUT_SAFETY_FACTOR = 1.5;  // 50% extra time for acceleration/deceleration
@@ -278,49 +263,6 @@ public class MotionConfig {
     
     /** Velocity threshold for stall detection (inches/sec) */
     public static final double STALL_VELOCITY_THRESHOLD = 1.0;
-    
-    // ========== REFERENCE POINT COORDINATE SYSTEM ==========
-    // IMPORTANT: This system allows all motion commands to be specified in terms of where
-    // you want a specific reference point (like the scoring mechanism) to be positioned,
-    // rather than where the robot center should be. The system automatically converts
-    // reference point coordinates to robot center coordinates internally.
-    
-    /** 
-     * Active reference point for all motion commands (relative to robot center)
-     * This determines which point on the robot will be positioned at the coordinates
-     * specified in motion commands. Common options:
-     * - RobotConstants.SCORING_POINT: Position the scoring mechanism
-     * - RobotConstants.INTAKE_POINT: Position the intake mechanism
-     * - new ComponentPosition(0,0,0,0,0,0): Use robot center (traditional mode)
-     * 
-     */
-
-    public static final ComponentPosition ACTIVE_REFERENCE_POINT = RobotConstants.INTAKE_POINT_REF;
-                                                // RobotConstants.SCORING_POINT;
-                                             //RobotConstants.Robot_CENTER;
-                                             //RobotConstants.BACK_CAMERA;
-    
-    /** zz
-     * Reference point field origin - where the reference point is positioned at start
-     * This defines the initial field position of the ACTIVE_REFERENCE_POINT when
-     * the robot is placed for autonomous start.
-     */
-    public static final FieldPose REFERENCE_FIELD_ORIGIN = new FieldPose(0.0, 0.0, 0.0);
-
-
-    /** Robot's initial X position on the field (inches) - MUST be configured for your starting position */
-    public static final double FIELD_ORIGIN_X = REFERENCE_FIELD_ORIGIN.x;
-
-    /** Robot's initial Y position on the field (inches) - MUST be configured for your starting position */
-    public static final double FIELD_ORIGIN_Y = REFERENCE_FIELD_ORIGIN.y;
-
-    /** Robot's initial heading on the field (degrees) - MUST be configured for your starting orientation
-     *  0 = facing +X axis, 90 = facing +Y axis, 180 = facing -X axis, -90 = facing -Y axis */
-    public static final double FIELD_ORIGIN_HEADING = REFERENCE_FIELD_ORIGIN.heading;
-
-    
-    
-
     
 
     // Prevent instantiation

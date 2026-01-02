@@ -4,6 +4,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.calibration.RobotConstants.ComponentPosition;
+import org.firstinspires.ftc.teamcode.motion.FieldPositions;
 
 /**
  * Centralized coordinate system management and transformations.
@@ -36,56 +37,7 @@ public class CoordinateTransformer {
         this.motionState = motionState;
     }
     
-    // ========== FIELD ORIGIN MANAGEMENT ==========
-    
-    /**
-     * Resets odometry to field origin position
-     * 
-     * Sets the robot's current position to the configured field origin values
-     * from MotionConfig (FIELD_ORIGIN_X, FIELD_ORIGIN_Y, FIELD_ORIGIN_HEADING).
-     * This establishes the coordinate system for all subsequent field-centric motion.
-     * 
-     * Call this at the start of autonomous with the robot positioned at a known
-     * starting location on the field.
-     */
-    public void resetToFieldOrigin() {
-        // Reset odometry to configured field origin
-        odometry.resetToFieldOrigin();
-        
-        // Update motion state with new position
-        motionState.updateFromOdometry();
-    }
-    
-    /**
-     * Set field origin using reference point coordinates
-     * 
-     * @param refPointX Reference point X coordinate (inches)
-     * @param refPointY Reference point Y coordinate (inches)
-     * @param robotHeading Robot heading (degrees)
-     */
-    public void setFieldOrigin(double refPointX, double refPointY, double robotHeading) {
-        // Convert reference point position to robot center position
-        Pose2D robotCenterOrigin = convertReferencePointToRobotCenter(refPointX, refPointY, robotHeading);
-        
-        // Reset odometry and set robot center position
-        odometry.resetToPose(robotCenterOrigin);
-        
-        // Update motion state with new position
-        motionState.updateFromOdometry();
-    }
-    
-    /**
-     * Set field origin using reference point position
-     * 
-     * @param referencePose Where the reference point is positioned at start
-     */
-    public void setFieldOrigin(FieldPose referencePose) {
-        setFieldOrigin(referencePose.x, referencePose.y, referencePose.heading);
-    }
-    
-    // ========== REFERENCE POINT CONVERSIONS ==========
-    
-    /**
+     /**
      * Converts reference point field coordinates to robot center field coordinates.
      * 
      * This method takes a position where the reference point should be located and
@@ -97,7 +49,7 @@ public class CoordinateTransformer {
      * @return Robot center position in field frame
      */
     public Pose2D convertReferencePointToRobotCenter(double refPointX, double refPointY, double robotHeading) {
-        ComponentPosition refPoint = MotionConfig.ACTIVE_REFERENCE_POINT;
+        ComponentPosition refPoint = FieldPositions.getActiveReferencePoint();
         
         // Rotate reference point offset by robot heading
         double headingRad = Math.toRadians(robotHeading);
@@ -124,8 +76,8 @@ public class CoordinateTransformer {
      * @param robotCenterPose Robot center position in field frame
      * @return Reference point position as FieldPose
      */
-    public FieldPose convertRobotCenterToReferencePoint(Pose2D robotCenterPose) {
-        ComponentPosition refPoint = MotionConfig.ACTIVE_REFERENCE_POINT;
+    public static FieldPose convertRobotCenterToReferencePoint(Pose2D robotCenterPose) {
+        ComponentPosition refPoint = FieldPositions.getActiveReferencePoint();
         
         double robotX = robotCenterPose.getX(DistanceUnit.INCH);
         double robotY = robotCenterPose.getY(DistanceUnit.INCH);
@@ -199,34 +151,5 @@ public class CoordinateTransformer {
         );
     }
     
-    // ========== COORDINATE VALIDATION ==========
-    
-    /**
-     * Validates that a field position is within reasonable bounds
-     * 
-     * @param x X coordinate (inches)
-     * @param y Y coordinate (inches)
-     * @return true if position is valid
-     */
-    public boolean isValidFieldPosition(double x, double y) {
-        // FTC field is typically 12' x 12' (144" x 144")
-        // Allow some margin for positioning outside field boundaries
-        final double MAX_FIELD_COORDINATE = 180.0;  // inches
-        final double MIN_FIELD_COORDINATE = -36.0;  // inches
-        
-        return x >= MIN_FIELD_COORDINATE && x <= MAX_FIELD_COORDINATE &&
-               y >= MIN_FIELD_COORDINATE && y <= MAX_FIELD_COORDINATE;
-    }
-    
-    /**
-     * Validates that a heading is within valid range
-     * 
-     * @param heading Heading in degrees
-     * @return true if heading is valid
-     */
-    public boolean isValidHeading(double heading) {
-        // Headings should be normalized to [-180, 180] or [0, 360]
-        // We'll accept any reasonable range
-        return heading >= -720.0 && heading <= 720.0;
-    }
+
 }

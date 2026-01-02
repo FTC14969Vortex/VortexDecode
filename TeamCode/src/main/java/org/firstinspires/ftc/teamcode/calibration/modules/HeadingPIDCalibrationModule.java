@@ -109,7 +109,7 @@ public class HeadingPIDCalibrationModule extends BaseCalibration {
         telemetry.addLine("   Original mode: " + originalControlMode);
         
         // Reset odometry to (0,0,0) at start of each test
-        motionExecutor.resetOdometry();
+        motionExecutor.resetToFieldOrigin();
         motionExecutor.updateState();
         
         startHeading = 0;  // Always start from 0 after reset

@@ -116,7 +116,7 @@ public class OdometryCalibrationModule extends BaseCalibration {
         
         // CRITICAL: Reset odometry to (0,0,0) at start of calibration
         // This ensures all distance measurements are relative to a known origin
-        motionExecutor.resetOdometry();
+        motionExecutor.resetToFieldOrigin();
         
         // Motors are already initialized in BaseCalibration from MotionCalibrationAndDemo
         // Motor directions are already set from RobotConstants via MotionExecutor
@@ -280,7 +280,7 @@ public class OdometryCalibrationModule extends BaseCalibration {
         
         // CRITICAL: Reset odometry to (0,0,0) before each test
         // This ensures robot starts at known position and heading=0 for each movement
-        motionExecutor.resetOdometry();
+        motionExecutor.resetToFieldOrigin();
         
         // Record starting odometry position (will be 0,0,0)
         motionExecutor.updateState();
@@ -313,7 +313,7 @@ public class OdometryCalibrationModule extends BaseCalibration {
         movementStartTime = System.currentTimeMillis();
         
         // CRITICAL: Reset odometry to (0,0,0) before each test
-        motionExecutor.resetOdometry();
+        motionExecutor.resetToFieldOrigin();
         
         // Record starting odometry position (will be 0,0,0)
         motionExecutor.updateState();

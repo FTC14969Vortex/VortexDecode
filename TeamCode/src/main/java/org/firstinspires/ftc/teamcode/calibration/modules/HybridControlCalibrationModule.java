@@ -130,7 +130,7 @@ public class HybridControlCalibrationModule extends BaseCalibration {
         applyHybridControlParameters();
         
         // Reset odometry to (0,0,0)
-        motionExecutor.resetOdometry();
+        motionExecutor.resetToFieldOrigin();
         motionExecutor.updateState();
         
         // Record start position

@@ -90,7 +90,7 @@ public class CalibrationCoefficients {
      * Current calculation: Based on linear velocity and drivetrain geometry
      * Future: Will be determined through rotation testing and stability analysis
      */
-    public static final double CALIBRATED_MAX_ANGULAR_VELOCITY = RobotConstants.MAX_THEORETICAL_ANGULAR_VELOCITY * 0.7;  
+    public static final double CALIBRATED_MAX_ANGULAR_VELOCITY = RobotConstants.MAX_THEORETICAL_ANGULAR_VELOCITY * 0.2;
     
     /**
      * Maximum linear acceleration (inches/sec^2)
@@ -112,7 +112,7 @@ public class CalibrationCoefficients {
      * Current value: Conservative estimate to prevent instability
      * Future: Will be determined through rotational acceleration testing
      */
-    public static final double CALIBRATED_MAX_ANGULAR_ACCELERATION = 360.0;  // 
+    public static final double CALIBRATED_MAX_ANGULAR_ACCELERATION = 180.0;  //
     
     // ========== DISTANCE SCALING FACTORS ==========
     // NOTE: FORWARD_DISTANCE_SCALE and STRAFE_DISTANCE_SCALE have been removed.

@@ -106,7 +106,7 @@ public class MotorVelocityPIDFCalibrationModule extends BaseCalibration {
         
         // CRITICAL: Reset odometry to (0,0,0) at start of calibration
         // This ensures velocity measurements start from a known position
-        motionExecutor.resetOdometry();
+        motionExecutor.resetToFieldOrigin();
         
         // Reset progress indicators
         _2_MotorVelocityPIDF.CURRENT_TEST = "Ready";

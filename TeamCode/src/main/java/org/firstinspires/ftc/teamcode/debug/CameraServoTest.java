@@ -97,7 +97,6 @@ public class CameraServoTest extends OpMode {
     @Override
     public void start() {
         // No threading needed - OpMode loop handles updates
-
     }
     
     @Override
@@ -173,7 +172,7 @@ public class CameraServoTest extends OpMode {
         
         if (gamepad.b && !bPressed) {
             bPressed = true;
-            cameraServo.center(); // Center camera servo
+            cameraServo.moveToCenter(); // Center camera servo
             telemetry.addLine("📍 Centering camera...");
         } else if (!gamepad.b) {
             bPressed = false;
@@ -198,7 +197,6 @@ public class CameraServoTest extends OpMode {
         telemetry.addLine("=== CAMERA SERVO ===");
         telemetry.addData("Current Angle", "%.1f°", cameraServo.getCurrentAngle());
         telemetry.addData("Target Angle", "%.1f°", cameraServo.getTargetAngle());
-        telemetry.addData("Moving", cameraServo.isMoving() ? "YES" : "NO");
         telemetry.addData("Searching", cameraServo.isSearching() ? "YES" : "NO");
         telemetry.addLine("");
         

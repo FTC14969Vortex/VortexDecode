@@ -49,12 +49,6 @@ public class OdometryManager {
     private ElapsedTime updateTimer;
     private ElapsedTime healthTimer;
     
-    // ========== INCREMENTAL CALIBRATION STATE ==========
-    private double lastRawX;
-    private double lastRawY;
-    private double lastRawHeading;
-    private boolean firstUpdate;
-    
     // ========== VALIDATION PARAMETERS ==========
     private double maxVelocityThreshold;
     private double maxAccelerationThreshold;
@@ -130,14 +124,8 @@ public class OdometryManager {
         this.sensorHealthy = true;
         this.lastErrorMessage = "OK";
         
-        // Initialize incremental calibration state
-        this.lastRawX = 0.0;
-        this.lastRawY = 0.0;
-        this.lastRawHeading = 0.0;
-        this.firstUpdate = true;
-        
         // Configure Pinpoint with inch offsets
-        configurePinpoint();
+        configurePinpoint();        // set odo to reference point
     }
     
     /**
@@ -146,11 +134,17 @@ public class OdometryManager {
     private void configurePinpoint() {
         try {
             // Calculate the offset vector from odometry sensor to reference point
-            // This makes Pinpoint track around the reference point, returning reference point coordinates
-            // Mathematical formula: offset = sensor_position - reference_point_position (both in robot center coords)
-            double offsetX = RobotConstants.ODOMETRY_SENSOR.x - MotionConfig.ACTIVE_REFERENCE_POINT.x;
-            double offsetY = RobotConstants.ODOMETRY_SENSOR.y - MotionConfig.ACTIVE_REFERENCE_POINT.y;
-            pinpoint.setOffsets(offsetX, offsetY, DistanceUnit.INCH);
+
+            // GoBilda Pinpoint uses convention coordinate system where: x  is side-to-side, y is front-to-back
+            // Our robot coordinate system defines: x is front-to-back, y is side-to-side
+            // plus the internal r_ref = r_odometry - r_offset_rotated, r_offset_rotated = r_offset*e^(i*(theta+pi/2)), pi/2 is coordinate system rotation, very confusing
+            // and we have two odo-pod, they have offset in different direction, so we just hardcode the offset here for simplicity
+
+            double offsetX =  FieldPositions.getActiveReferencePoint().x - (RobotConstants.ODOMETRY_SENSOR.x + RobotConstants.ODOMETRY_DX);
+            double offsetY =  FieldPositions.getActiveReferencePoint().y - (RobotConstants.ODOMETRY_SENSOR.y + RobotConstants.ODOMETRY_DY);
+
+            pinpoint.setOffsets(-offsetY, -offsetX, DistanceUnit.INCH); // gobilda's convention
+
             
             // Set encoder resolution for GoBilda 4-bar pods
             pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
@@ -161,11 +155,7 @@ public class OdometryManager {
                 RobotConstants.ODOMETRY_Y_ENCODER_DIRECTION
             );
             
-            // NOTE: Do NOT call setYawScalar() - the GoBilda Pinpoint comes pre-calibrated from factory
-            // Each device has a per-device tuned yaw offset already applied
-            // Only set a custom yaw scalar if you have specifically calibrated it and found the factory
-            // calibration to be inaccurate (which is rare - GoBilda tests each unit before shipping)
-            // Uncommenting the line below will OVERRIDE the factory calibration:
+            // NOTE:  call setYawScalar() - if needed to apply your calibration
             // pinpoint.setYawScalar(CalibrationCoefficients.ODOMETRY_HEADING_SCALE);
             
             // CRITICAL: Reset position to 0,0,0 and calibrate IMU
@@ -190,6 +180,7 @@ public class OdometryManager {
                     break;
                 }
             }
+
             
             lastErrorMessage = "Pinpoint configured and calibrated successfully";
             
@@ -203,224 +194,58 @@ public class OdometryManager {
     
     /**
      * Updates the current pose from the Pinpoint sensor
-     * Includes validation and filtering for reliable data
+     * Direct reading - hardware tracks position from setPosition() calls
      * 
      * @return true if update was successful and valid
      */
     public boolean update() {
         totalUpdates++;
-        
+
         try {
-            // === DEBUG: Odometry Update ===
-
-            
             // Update Pinpoint sensor
-
             pinpoint.update();
 
+            // Read position directly from hardware
+            // Hardware already tracks from the position set by setPosition()
+            currentPose = pinpoint.getPosition();
             
-            // Get new pose from Pinpoint
-            // CRITICAL: Pinpoint returns position in MM, must convert to INCH
-            Pose2D rawPose = pinpoint.getPosition();
-            
-            // Convert from MM (Pinpoint's native unit) to INCH (our system unit)
-            double rawX = rawPose.getX(DistanceUnit.MM) / 25.4;  // MM to INCH
-            double rawY = rawPose.getY(DistanceUnit.MM) / 25.4;  // MM to INCH
-            double rawHeading = rawPose.getHeading(AngleUnit.DEGREES);
-            
-            Pose2D newPose;
-            
-            if (firstUpdate) {
-                // First update: Initialize pose directly (no calibration needed for initial position)
-                newPose = new Pose2D(DistanceUnit.INCH, rawX, rawY, AngleUnit.DEGREES, rawHeading);
-                
-                // Store raw values for next incremental update
-                lastRawX = rawX;
-                lastRawY = rawY;
-                lastRawHeading = rawHeading;
-                firstUpdate = false;
-                
-            } else {
-                // Subsequent updates: Apply calibration to INCREMENTAL changes (CORRECT METHOD)
-                
-                // Calculate incremental changes since last update
-                double deltaX = rawX - lastRawX;
-                double deltaY = rawY - lastRawY;
-                double deltaHeading = rawHeading - lastRawHeading;
-                
-                // Handle heading wraparound (e.g., 359° to 1° = +2°, not -358°)
-                if (deltaHeading > 180.0) {
-                    deltaHeading -= 360.0;
-                } else if (deltaHeading < -180.0) {
-                    deltaHeading += 360.0;
-                }
-                
-                // Apply calibration scaling factors to INCREMENTAL changes
-                // This corrects systematic measurement errors without compounding
-                double calibratedDeltaX = deltaX * CalibrationCoefficients.ODOMETRY_X_SCALE;
-                double calibratedDeltaY = deltaY * CalibrationCoefficients.ODOMETRY_Y_SCALE;
-                // CRITICAL: DO NOT scale heading here! Pinpoint already applies ODOMETRY_HEADING_SCALE internally via setYawScalar()
-                // Scaling again here would result in double-scaling and incorrect heading values
-                double calibratedDeltaHeading = deltaHeading;  // No additional scaling needed
-                
-                // Update pose incrementally with calibrated deltas
-                double newX = currentPose.getX(DistanceUnit.INCH) + calibratedDeltaX;
-                double newY = currentPose.getY(DistanceUnit.INCH) + calibratedDeltaY;
-                double newHeading = currentPose.getHeading(AngleUnit.DEGREES) + calibratedDeltaHeading;
-                
-                // Normalize heading to [-180, 180] range
-                while (newHeading > 180.0) newHeading -= 360.0;
-                while (newHeading < -180.0) newHeading += 360.0;
-                
-                // Create new pose with calibrated incremental updates
-                newPose = new Pose2D(DistanceUnit.INCH, newX, newY, AngleUnit.DEGREES, newHeading);
-                
-                // Store current raw values for next incremental update
-                lastRawX = rawX;
-                lastRawY = rawY;
-                lastRawHeading = rawHeading;
+            validUpdates++;
+
+            // Update frequency calculation
+            if (updateTimer.seconds() > 0) {
+                updateFrequency = 1.0 / updateTimer.seconds();
             }
-            
-            // Validate the new pose
+            updateTimer.reset();
 
-            if (isValidPose(newPose)) {
-                // Valid pose - update state
+            return true;
 
-                lastValidPose = currentPose;
-                currentPose = newPose;
-                validUpdates++;
-                consecutiveInvalidReadings = 0;
-                lastValidUpdate.reset();
-                
-                // Update frequency calculation
-                if (updateTimer.seconds() > 0) {
-                    updateFrequency = 1.0 / updateTimer.seconds();
-                }
-                updateTimer.reset();
-                
-
-                return true;
-                
-            } else {
-                // Invalid pose - increment counter
-                System.out.println("[OdometryManager] [WARNING] Pose validation failed");
-                invalidUpdates++;
-                consecutiveInvalidReadings++;
-                
-                // Check if sensor is becoming unhealthy
-                if (consecutiveInvalidReadings >= maxInvalidReadings) {
-                    sensorHealthy = false;
-                    lastErrorMessage = "Too many consecutive invalid readings";
-                    System.out.println("[OdometryManager] [ERROR] Sensor marked as unhealthy");
-                }
-                
-                return false;
-            }
-            
         } catch (Exception e) {
             invalidUpdates++;
-            consecutiveInvalidReadings++;
-            sensorHealthy = false;
             lastErrorMessage = "Sensor update failed: " + e.getMessage();
             return false;
         }
     }
     
-    /**
-     * Validates a pose reading for reasonableness
-     * 
-     * @param pose Pose to validate
-     * @return true if pose appears valid
-     */
-    private boolean isValidPose(Pose2D pose) {
-        if (pose == null) {
-            return false;
-        }
-        
-        // Check for NaN or infinite values
-        double x = pose.getX(DistanceUnit.INCH);
-        double y = pose.getY(DistanceUnit.INCH);
-        double heading = pose.getHeading(AngleUnit.DEGREES);
-        
-        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(heading)) {
-            return false;
-        }
-        
-        // Check for reasonable position bounds (within field size + margin)
-        double maxFieldSize = 200.0;  // inches (generous margin for 12x12 foot field)
-        if (Math.abs(x) > maxFieldSize || Math.abs(y) > maxFieldSize) {
-            return false;
-        }
-        
-        // Check velocity and acceleration limits (if we have previous data)
-        if (totalUpdates > 0 && updateTimer.seconds() > 0) {
-            double deltaTime = updateTimer.seconds();
-            
-            // Calculate velocity
-            double deltaX = x - currentPose.getX(DistanceUnit.INCH);
-            double deltaY = y - currentPose.getY(DistanceUnit.INCH);
-            double velocity = Math.hypot(deltaX, deltaY) / deltaTime;
-            
-            if (velocity > maxVelocityThreshold) {
-                return false;
-            }
-            
-            // Calculate heading change rate
-            double deltaHeading = heading - currentPose.getHeading(AngleUnit.DEGREES);
-            // Normalize to [-180, 180] range
-            while (deltaHeading > 180) deltaHeading -= 360;
-            while (deltaHeading <= -180) deltaHeading += 360;
-            double headingRate = Math.abs(deltaHeading) / deltaTime;
-            
-            if (headingRate > maxHeadingChangeRate) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    
-    /**
-     * Gets the current robot pose
-     * 
-     * @return Current pose (validated and filtered)
-     */
+
     public Pose2D getCurrentPose() {
         return currentPose;
     }
-    
-    /**
-     * Gets the last known valid pose (fallback for invalid readings)
-     * 
-     * @return Last valid pose
-     */
+
     public Pose2D getLastValidPose() {
         return lastValidPose;
     }
     
-    /**
-     * Gets the current X position in inches
-     * 
-     * @return Current X position
-     */
+
     public double getX() {
         return currentPose.getX(DistanceUnit.INCH);
     }
     
-    /**
-     * Gets the current Y position in inches
-     * 
-     * @return Current Y position
-     */
+
     public double getY() {
         return currentPose.getY(DistanceUnit.INCH);
     }
     
-    /**
-     * Gets the current heading in degrees
-     * 
-     * @return Current heading
-     */
+
     public double getHeading() {
         return currentPose.getHeading(AngleUnit.DEGREES);
     }
@@ -431,98 +256,36 @@ public class OdometryManager {
      * Resets the odometry to field origin position
      * Sets the robot's current position to the configured field origin
      */
-    public void resetToFieldOrigin() {
-        try {
-            // Reset hardware odometry - this resets Pinpoint to (0,0,0) and recalibrates IMU
-            // Takes approximately 0.25 seconds for IMU calibration
-            pinpoint.resetPosAndIMU();
-            
-            // Wait for IMU recalibration to complete -- very important!
-            try {
-                Thread.sleep(300);  // 300ms to ensure IMU calibration finishes
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            
-
-            // Update Pinpoint to get current position
-            pinpoint.update();
-            Pose2D actualPose = pinpoint.getPosition();
-            
-            // Set our logical position to field origin
-            Pose2D fieldOrigin = new Pose2D(
-                DistanceUnit.INCH, 
-                MotionConfig.FIELD_ORIGIN_X, 
-                MotionConfig.FIELD_ORIGIN_Y,
-                AngleUnit.DEGREES, 
-                MotionConfig.FIELD_ORIGIN_HEADING
-            );
-            
-            currentPose = fieldOrigin;
-            lastValidPose = fieldOrigin;
-            
-            // CRITICAL: Initialize incremental tracking with the ACTUAL raw values from Pinpoint
-            // This ensures the next incremental update calculates deltas correctly
-            lastRawX = actualPose.getX(DistanceUnit.MM) / 25.4;  // Convert MM to INCH
-            lastRawY = actualPose.getY(DistanceUnit.MM) / 25.4;  // Convert MM to INCH  
-            lastRawHeading = actualPose.getHeading(AngleUnit.DEGREES);
-            firstUpdate = false;  // We have a valid starting position
-            
-            // Reset health tracking
-            consecutiveInvalidReadings = 0;
-            sensorHealthy = true;
-            lastErrorMessage = "Reset to field origin";
-            lastValidUpdate.reset();
-            
-        } catch (Exception e) {
-            sensorHealthy = false;
-            lastErrorMessage = "Reset failed: " + e.getMessage();
-        }
+    public void resetToFieldOrigin(Pose2D fieldOrigin) {
+         resetToPose(fieldOrigin);
     }
     
     /**
-     * Resets odometry to a specific pose
-     * 
+     * Resets odometry to a specific pose vision - localizaton
+     *
      * @param pose Target pose to reset to
      */
     public void resetToPose(Pose2D pose) {
         try {
-            // Reset hardware - this resets pose and recalibrates IMU (~0.25s)
-            pinpoint.resetPosAndIMU();
-            
-            // Wait for IMU recalibration
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            
+            // Directly set Pinpoint hardware to the specified pose
             pinpoint.setPosition(pose);
-            
-            // Update and read actual position from Pinpoint
+
+            // Update and sync current pose
             pinpoint.update();
-            Pose2D actualPose = pinpoint.getPosition();
-            
-            currentPose = pose;
-            lastValidPose = pose;
-            
-            // Initialize incremental tracking with ACTUAL raw values from Pinpoint
-            lastRawX = actualPose.getX(DistanceUnit.MM) / 25.4;
-            lastRawY = actualPose.getY(DistanceUnit.MM) / 25.4;
-            lastRawHeading = actualPose.getHeading(AngleUnit.DEGREES);
-            firstUpdate = false;  // We have a valid starting position
-            
+            currentPose = pinpoint.getPosition();
+            lastValidPose = currentPose;
+
             consecutiveInvalidReadings = 0;
             sensorHealthy = true;
             lastErrorMessage = "Reset to custom pose";
             lastValidUpdate.reset();
-            
+
         } catch (Exception e) {
             sensorHealthy = false;
             lastErrorMessage = "Custom reset failed: " + e.getMessage();
         }
     }
-    
+
     /**
      * Resets only position, keeping current heading
      * 
@@ -595,8 +358,7 @@ public class OdometryManager {
                            "  Last Valid Update: %.1fs ago\n" +
                            "  Status: %s\n" +
                            "  Current Pose: (%.2f, %.2f, %.1f degrees)\n" +
-                           "  Calibration Mode: Incremental (CORRECTED)\n" +
-                           "  Last Raw Position: (%.2f, %.2f, %.1f degrees)\n" +
+                           "  Tracking Mode: Direct Hardware Read\n" +
                            "  Calibration Factors: X=%.4f, Y=%.4f, H=%.4f",
                            health.isHealthy ? "HEALTHY" : "UNHEALTHY",
                            health.updateRate,
@@ -607,36 +369,12 @@ public class OdometryManager {
                            currentPose.getX(DistanceUnit.INCH),
                            currentPose.getY(DistanceUnit.INCH),
                            currentPose.getHeading(AngleUnit.DEGREES),
-                           lastRawX, lastRawY, lastRawHeading,
                            CalibrationCoefficients.ODOMETRY_X_SCALE,
                            CalibrationCoefficients.ODOMETRY_Y_SCALE,
                            CalibrationCoefficients.ODOMETRY_HEADING_SCALE);
     }
     
-    // ========== CONFIGURATION ==========
-    
-    /**
-     * Sets validation thresholds for pose filtering
-     * 
-     * @param maxVelocity Maximum reasonable velocity (inches/sec)
-     * @param maxAcceleration Maximum reasonable acceleration (inches/sec^2)
-     * @param maxHeadingRate Maximum heading change rate (degrees/sec)
-     */
-    public void setValidationThresholds(double maxVelocity, double maxAcceleration, double maxHeadingRate) {
-        this.maxVelocityThreshold = Math.abs(maxVelocity);
-        this.maxAccelerationThreshold = Math.abs(maxAcceleration);
-        this.maxHeadingChangeRate = Math.abs(maxHeadingRate);
-    }
-    
-    /**
-     * Sets the maximum number of consecutive invalid readings before marking sensor unhealthy
-     * 
-     * @param maxInvalid Maximum consecutive invalid readings
-     */
-    public void setMaxInvalidReadings(int maxInvalid) {
-        this.maxInvalidReadings = Math.max(1, maxInvalid);
-    }
-    
+
     // ========== UTILITY METHODS ==========
     
     /**
