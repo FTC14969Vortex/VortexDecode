@@ -25,4 +25,8 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
+    
+    // EJML - Efficient Java Matrix Library for robust SVD calculations
+    implementation 'org.ejml:ejml-ddense:0.44.0'  // Dense double matrices (~200KB)
+    implementation 'org.ejml:ejml-core:0.44.0'    // Core functionality (~100KB)
 }
