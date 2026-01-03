@@ -43,7 +43,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.26", group = "Debug")
+@Autonomous(name = "Full Auto Operate Test 0.29", group = "Debug")
 public class FullAutoOperateTest extends LinearOpMode {
     
     // ========== SUBSYSTEMS ==========
@@ -60,7 +60,7 @@ public class FullAutoOperateTest extends LinearOpMode {
     
     // ========== MOTION PARAMETERS ==========
     private static final double TRAVEL_VELOCITY = 50.0; // inches/sec for movement
-    private static final double INTAKE_VELOCITY = 28.0; // inches/sec during intake
+    private static final double INTAKE_VELOCITY = 35.0; // inches/sec during intake
     
     // ========== SHOOTING PARAMETERS ==========
     private static final int NUM_SHOTS = 3;
@@ -73,7 +73,7 @@ public class FullAutoOperateTest extends LinearOpMode {
     
     // ========== INTAKE PARAMETERS ==========
     private static final double INTAKE_FULL_POWER = 1.0;
-    private static final double INTAKE_TRAVEL_POWER = 0.5;
+    private static final double INTAKE_TRAVEL_POWER = 1.0;
     
     // ========== FLYWHEEL PARAMETERS ==========
     private static final long FLYWHEEL_SPINUP_TIMEOUT = 3000; // ms
@@ -189,7 +189,7 @@ public class FullAutoOperateTest extends LinearOpMode {
                 cameraServo.update();
                 
                 // Get shooting velocity from CameraServo (uses either detected or predicted distance)
-                double shootingVelocity = cameraServo.getFlywheelVelocity();
+                double shootingVelocity = 1200;//cameraServo.getFlywheelVelocity();
                 
 //                telemetry.addData("🚁 Ramping flywheel", "%.0f RPM", shootingVelocity);
 //                telemetry.update();
@@ -240,7 +240,7 @@ public class FullAutoOperateTest extends LinearOpMode {
         
         // Update camera servo and get shooting velocity
         cameraServo.update();
-        double shootingVelocity = cameraServo.getFlywheelVelocity();
+        double shootingVelocity = 1200;//cameraServo.getFlywheelVelocity();
         
         // Step 1: Close gate and reduce intake power
         kicker.setGatePosition(Kicker.GATE_CLOSE);
@@ -325,18 +325,18 @@ public class FullAutoOperateTest extends LinearOpMode {
         
         switch (intakeNumber) {
             case 1:
-                intakeTime = 1;
+                intakeTime = 0.8;
                 intakeStart = FieldPositions.INTAKE_1_START;
                 intakeFinish = FieldPositions.INTAKE_1_FINISH;
                 break;
             case 2:
-                 intakeTime = 1.2;
+                intakeTime = 1.05;
 
                 intakeStart = FieldPositions.INTAKE_2_START;
                 intakeFinish = FieldPositions.INTAKE_2_FINISH;
                 break;
             case 3:
-                intakeTime = 1.2;
+                intakeTime = 1.05;
 
                 intakeStart = FieldPositions.INTAKE_3_START;
                 intakeFinish = FieldPositions.INTAKE_3_FINISH;

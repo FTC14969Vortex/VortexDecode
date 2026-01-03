@@ -124,7 +124,7 @@ public class CameraServo {
 
     /** Linear flywheel velocity dependence on distance */
     private static final double FLYWHEEL_VELOCITY_SLOPE = 8.0;      // RPM per inch
-    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 800.0; // Base RPM
+    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 1200.0; // Base RPM
 
     /** Minimum flywheel velocity (RPM) */
     private static final double MIN_FLYWHEEL_VELOCITY = 800.0;
