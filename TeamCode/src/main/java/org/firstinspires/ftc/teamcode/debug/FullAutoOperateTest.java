@@ -43,7 +43,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.17", group = "Debug")
+@Autonomous(name = "Full Auto Operate Test 0.26", group = "Debug")
 public class FullAutoOperateTest extends LinearOpMode {
     
     // ========== SUBSYSTEMS ==========
@@ -59,8 +59,8 @@ public class FullAutoOperateTest extends LinearOpMode {
     private AprilTagProcessor aprilTagProcessor;
     
     // ========== MOTION PARAMETERS ==========
-    private static final double TRAVEL_VELOCITY = 40.0; // inches/sec for movement
-    private static final double INTAKE_VELOCITY = 20.0; // inches/sec during intake
+    private static final double TRAVEL_VELOCITY = 50.0; // inches/sec for movement
+    private static final double INTAKE_VELOCITY = 28.0; // inches/sec during intake
     
     // ========== SHOOTING PARAMETERS ==========
     private static final int NUM_SHOTS = 3;
@@ -316,19 +316,28 @@ public class FullAutoOperateTest extends LinearOpMode {
      */
     private void intakeAndShoot(int intakeNumber) throws InterruptedException {
         telemetryCurrentPose("Intake and Shoot");
+
+
+        double intakeTime = 1;
+
         // Get intake positions based on number
         FieldPose intakeStart, intakeFinish;
         
         switch (intakeNumber) {
             case 1:
+                intakeTime = 1;
                 intakeStart = FieldPositions.INTAKE_1_START;
                 intakeFinish = FieldPositions.INTAKE_1_FINISH;
                 break;
             case 2:
+                 intakeTime = 1.2;
+
                 intakeStart = FieldPositions.INTAKE_2_START;
                 intakeFinish = FieldPositions.INTAKE_2_FINISH;
                 break;
             case 3:
+                intakeTime = 1.2;
+
                 intakeStart = FieldPositions.INTAKE_3_START;
                 intakeFinish = FieldPositions.INTAKE_3_FINISH;
                 break;
@@ -352,13 +361,13 @@ public class FullAutoOperateTest extends LinearOpMode {
         
         // Start intake at full power and move to finish position
 //        telemetry.addLine("🍃 Intaking at full power...");
-//        telemetry.update();
+//        telemetry.update();2
         
         kicker.setGatePosition(Kicker.GATE_INTAKE);
         intake.setIntakePower(INTAKE_FULL_POWER);
         
        // baseMotion.moveToPose(intakeFinish, INTAKE_VELOCITY);
-        baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY,1);
+        baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY,intakeTime);
         
 //        telemetry.addLine("✅ Intake completed");
 //        telemetry.update();

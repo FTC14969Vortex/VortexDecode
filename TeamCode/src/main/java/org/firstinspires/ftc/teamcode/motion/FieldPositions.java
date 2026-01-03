@@ -42,7 +42,7 @@ public class FieldPositions {
 
 
     // Artifact intake positions (3 rows of coral)
-    public static final FieldPose INTAKE_1_START = new FieldPose(-18.5, -19.5, -90.0);
+    public static final FieldPose INTAKE_1_START = new FieldPose(-18.5, -14.5, -90.0);
     public static final FieldPose INTAKE_1_FINISH = INTAKE_1_START.offset(0, INTAKE_OFFSET_Y, 0);
     public static final FieldPose INTAKE_2_START = INTAKE_1_START.offset(INTAKE_OFFSET_X, 0, 0);
     public static final FieldPose INTAKE_2_FINISH = INTAKE_2_START.offset(0, INTAKE_OFFSET_Y, 0);
