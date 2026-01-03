@@ -43,7 +43,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test", group = "Debug")
+@Autonomous(name = "Full Auto Operate Test 0.17", group = "Debug")
 public class FullAutoOperateTest extends LinearOpMode {
     
     // ========== SUBSYSTEMS ==========
@@ -59,7 +59,7 @@ public class FullAutoOperateTest extends LinearOpMode {
     private AprilTagProcessor aprilTagProcessor;
     
     // ========== MOTION PARAMETERS ==========
-    private static final double TRAVEL_VELOCITY = 30.0; // inches/sec for movement
+    private static final double TRAVEL_VELOCITY = 40.0; // inches/sec for movement
     private static final double INTAKE_VELOCITY = 20.0; // inches/sec during intake
     
     // ========== SHOOTING PARAMETERS ==========
@@ -82,8 +82,8 @@ public class FullAutoOperateTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         
         // ========== INITIALIZATION ==========
-        telemetry.addLine("🤖 Initializing Full Auto Operate Test...");
-        telemetry.update();
+        //telemetry.addLine("🤖 Initializing Full Auto Operate Test...");
+        //telemetry.update();
         
         // Initialize vision system
         initVisionSystem();
@@ -117,41 +117,43 @@ public class FullAutoOperateTest extends LinearOpMode {
         // Set reference point to START_NEAR position
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
         baseMotion.setReferencePointToPosition(FieldPositions.START_NEAR);
-        
-        telemetry.addLine("✅ All systems initialized!");
-        telemetry.addLine("");
-        telemetry.addLine("📍 Robot positioned at START_NEAR");
-        telemetry.addLine("🎯 Ready to run full autonomous sequence");
-        telemetry.addLine("");
-        telemetry.addLine("Press START to begin!");
-        telemetry.update();
+
+        telemetryCurrentPose("Initializing");
+//        telemetry.addLine("✅ All systems initialized!");
+//        telemetry.addLine("");
+//        telemetry.addLine("📍 Robot positioned at START_NEAR");
+//        telemetry.addLine("🎯 Ready to run full autonomous sequence");
+//        telemetry.addLine("");
+//        telemetry.addLine("Press START to begin!");
+//        telemetry.update();
         
         waitForStart();
-        
+
         if (isStopRequested()) return;
         
         // ========== AUTONOMOUS SEQUENCE ==========
         
         try {
             // Step 1: Move to shooting position and shoot preloaded samples
-            telemetry.addLine("📍 Phase 1: Initial shooting position");
-            telemetry.update();
+//            telemetry.addLine("📍 Phase 1: Initial shooting position");
+//            telemetry.update();
             moveToShootingPosition(); // Now includes shooting at the end
-            
+            telemetryCurrentPose("After Shooting");
             // Step 2-4: Intake and shoot for positions 1, 2, 3
             for (int i = 1; i <= 3; i++) {
-                telemetry.addLine("📍 Phase " + (i + 1) + ": Intake " + i + " and shoot");
-                telemetry.update();
+//                telemetry.addLine("📍 Phase " + (i + 1) + ": Intake " + i + " and shoot");
+//                telemetry.update();
                 intakeAndShoot(i);
+                telemetryCurrentPose("After Intake and Shoot");
             }
             
             // Step 5: Park
-            telemetry.addLine("📍 Phase 5: Parking");
-            telemetry.update();
+//            telemetry.addLine("📍 Phase 5: Parking");
+//            telemetry.update();
             park();
             
-            telemetry.addLine("✅ AUTONOMOUS COMPLETE!");
-            telemetry.update();
+//            telemetry.addLine("✅ AUTONOMOUS COMPLETE!");
+//            telemetry.update();
             
         } catch (InterruptedException e) {
             telemetry.addLine("❌ Autonomous interrupted!");
@@ -170,8 +172,9 @@ public class FullAutoOperateTest extends LinearOpMode {
      * - When movement complete: immediately shoot
      */
     private void moveToShootingPosition() throws InterruptedException {
-        telemetry.addLine("🚗 Moving to SHOOTING_NEAR with preparation...");
-        telemetry.update();
+        telemetryCurrentPose("Moving to Shooting Position");
+//        telemetry.addLine("🚗 Moving to SHOOTING_NEAR with preparation...");
+//        telemetry.update();
         
         // Set intake to travel power
         intake.setIntakePower(INTAKE_TRAVEL_POWER);
@@ -188,8 +191,8 @@ public class FullAutoOperateTest extends LinearOpMode {
                 // Get shooting velocity from CameraServo (uses either detected or predicted distance)
                 double shootingVelocity = cameraServo.getFlywheelVelocity();
                 
-                telemetry.addData("🚁 Ramping flywheel", "%.0f RPM", shootingVelocity);
-                telemetry.update();
+//                telemetry.addData("🚁 Ramping flywheel", "%.0f RPM", shootingVelocity);
+//                telemetry.update();
                 
                 // Ramp up flywheel to target velocity
                 FlyWheel.FlyWheelSpinUpResult result = flyWheel.setToShootingVelocity(shootingVelocity, FLYWHEEL_SPINUP_TIMEOUT);
@@ -215,15 +218,14 @@ public class FullAutoOperateTest extends LinearOpMode {
         // Wait for preparation to complete
         preparationThread.join();
         
-        telemetry.addLine("✅ Arrived at shooting position - preparation complete");
-        telemetry.update();
+//        telemetry.addLine("✅ Arrived at shooting position - preparation complete");
+//        telemetry.update();
         
         // Final alignment to shooting angle from CameraServo
-        alignToShootingAngle();
+      //  alignToShootingAngle();
         
         // Brief settle time before shooting
-        sleep(200);
-        
+    //    sleep(200);
         // Immediately shoot
         shoot();
     }
@@ -232,8 +234,9 @@ public class FullAutoOperateTest extends LinearOpMode {
      * Execute full shooting sequence (based on FlywheelVelocityTest)
      */
     private void shoot() throws InterruptedException {
-        telemetry.addLine("🚀 Starting shooting sequence...");
-        telemetry.update();
+        telemetryCurrentPose("Shooting");
+//        telemetry.addLine("🚀 Starting shooting sequence...");
+//        telemetry.update();
         
         // Update camera servo and get shooting velocity
         cameraServo.update();
@@ -242,18 +245,18 @@ public class FullAutoOperateTest extends LinearOpMode {
         // Step 1: Close gate and reduce intake power
         kicker.setGatePosition(Kicker.GATE_CLOSE);
         intake.setIntakePower(INTAKE_TRAVEL_POWER);
-        sleep(200);
+       // sleep(200);
         
         // Step 2: Ensure flywheel is at target velocity
-        telemetry.addData("🚁 Spinning up flywheel", "%.0f RPM", shootingVelocity);
-        telemetry.update();
+//        telemetry.addData("🚁 Spinning up flywheel", "%.0f RPM", shootingVelocity);
+//        telemetry.update();
         FlyWheel.FlyWheelSpinUpResult result = flyWheel.setToShootingVelocity(shootingVelocity, FLYWHEEL_SPINUP_TIMEOUT);
         
         if (!result.success) {
             telemetry.addLine("⚠️ Flywheel failed to reach target velocity");
             telemetry.addData("Achieved", "%.0f RPM", result.achievedVelocity);
             telemetry.update();
-            sleep(500);
+           // sleep(500);
         }
         
         // Step 3: Open gate for shooting
@@ -265,8 +268,8 @@ public class FullAutoOperateTest extends LinearOpMode {
             // Calculate flipper angle for this shot (120°, 150°, 180°)
             double currentFlipperAngle = INITIAL_FLIPPER_ANGLE + (shotNumber * ANGLE_INCREMENT);
             
-            telemetry.addData("Shot", "%d/%d at %.0f°", shotNumber + 1, NUM_SHOTS, currentFlipperAngle);
-            telemetry.update();
+//            telemetry.addData("Shot", "%d/%d at %.0f°", shotNumber + 1, NUM_SHOTS, currentFlipperAngle);
+//            telemetry.update();
             
             // Ramp up flywheel before each shot to maintain velocity
             flyWheel.setToShootingVelocity(shootingVelocity, FLYWHEEL_SPINUP_TIMEOUT);
@@ -284,8 +287,8 @@ public class FullAutoOperateTest extends LinearOpMode {
         }
         
         // Step 5: Cleanup - return to intake mode
-        telemetry.addLine("🧹 Cleaning up after shooting...");
-        telemetry.update();
+//        telemetry.addLine("🧹 Cleaning up after shooting...");
+//        telemetry.update();
         
         // Reset flipper
         flipper.resetFlipper();
@@ -303,15 +306,16 @@ public class FullAutoOperateTest extends LinearOpMode {
         // Set gate to intake position
         kicker.setGatePosition(Kicker.GATE_INTAKE);
         
-        telemetry.addLine("✅ Shooting sequence completed!");
-        telemetry.update();
-        sleep(200);
+//        telemetry.addLine("✅ Shooting sequence completed!");
+//        telemetry.update();
+       // sleep(200);
     }
     
     /**
      * Intake and shoot sequence for a specific intake position (1, 2, or 3)
      */
     private void intakeAndShoot(int intakeNumber) throws InterruptedException {
+        telemetryCurrentPose("Intake and Shoot");
         // Get intake positions based on number
         FieldPose intakeStart, intakeFinish;
         
@@ -335,29 +339,30 @@ public class FullAutoOperateTest extends LinearOpMode {
         }
         
         // Move to intake start position
-        telemetry.addLine("🚗 Moving to INTAKE_" + intakeNumber + "_START...");
-        telemetry.update();
+//        telemetry.addLine("🚗 Moving to INTAKE_" + intakeNumber + "_START...");
+//        telemetry.update();
         
         // Keep intake off during travel
-        intake.stopIntake();
+       // intake.stopIntake();
         baseMotion.moveToPose(intakeStart, TRAVEL_VELOCITY);
         
-        telemetry.addLine("✅ Arrived at intake start");
-        telemetry.update();
-        sleep(200);
+//        telemetry.addLine("✅ Arrived at intake start");
+//        telemetry.update();
+       // sleep(200);
         
         // Start intake at full power and move to finish position
-        telemetry.addLine("🍃 Intaking at full power...");
-        telemetry.update();
+//        telemetry.addLine("🍃 Intaking at full power...");
+//        telemetry.update();
         
         kicker.setGatePosition(Kicker.GATE_INTAKE);
         intake.setIntakePower(INTAKE_FULL_POWER);
         
-        baseMotion.moveToPose(intakeFinish, INTAKE_VELOCITY);
+       // baseMotion.moveToPose(intakeFinish, INTAKE_VELOCITY);
+        baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY,1);
         
-        telemetry.addLine("✅ Intake completed");
-        telemetry.update();
-        sleep(200);
+//        telemetry.addLine("✅ Intake completed");
+//        telemetry.update();
+        //sleep(200);
         
         // Move to shooting position and shoot (moveToShootingPosition now includes shooting)
         moveToShootingPosition();
@@ -384,8 +389,8 @@ public class FullAutoOperateTest extends LinearOpMode {
      * Uses the shooting angle from AprilTag detection or predicted angle
      */
     private void alignToShootingAngle() throws InterruptedException {
-        telemetry.addLine("🎯 Aligning to shooting angle...");
-        telemetry.update();
+//        telemetry.addLine("🎯 Aligning to shooting angle...");
+//        telemetry.update();
         
         // Update CameraServo to get latest shooting angle
         cameraServo.update();
@@ -402,10 +407,10 @@ public class FullAutoOperateTest extends LinearOpMode {
         telemetry.addData("Current heading", "%.1f°", currentPose.heading);
         telemetry.addData("Target shooting angle", "%.1f°", targetAngle);
         telemetry.addData("Angle adjustment", "%.1f°", angleDifference);
-        telemetry.update();
+       // telemetry.update();
         
         // Use rotate for more efficient alignment (only changes heading)
-        baseMotion.rotate(angleDifference, TRAVEL_VELOCITY);
+       // baseMotion.rotate(angleDifference, TRAVEL_VELOCITY);
         
         telemetry.addLine("✅ Aligned to shooting angle");
         telemetry.update();
@@ -469,5 +474,11 @@ public class FullAutoOperateTest extends LinearOpMode {
         if (visionPortal != null) {
             visionPortal.close();
         }
+    }
+    private void telemetryCurrentPose(String message){
+        telemetry.addData("",message);
+        FieldPose currPose = baseMotion.getCurrentPose();
+        telemetry.addData("x: " + String.format("%.2f",currPose.x)  +", y: "+ String.format("%.2f",currPose.y) +", h" + String.format("%.2f",currPose.heading),"");
+        telemetry.update();
     }
 }

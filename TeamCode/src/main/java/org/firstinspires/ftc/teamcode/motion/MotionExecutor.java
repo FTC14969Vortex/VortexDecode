@@ -135,7 +135,7 @@ public class MotionExecutor {
 
     // ========== CONTROL MODE MANAGEMENT ==========
 
-    private ControlMode currentControlMode = ControlMode.HYBRID;
+    private ControlMode currentControlMode = ControlMode.PURE_FEEDBACK;
     private ControlMode defaultControlMode = ControlMode.HYBRID;
 
     // ========== VELOCITY RAMPING ==========

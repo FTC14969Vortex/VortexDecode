@@ -82,7 +82,7 @@ public class CalibrationCoefficients {
      * Current calculation: Based on motor specs and wheel geometry
      * Future: Will be determined through slip detection and performance testing
      */
-    public static final double CALIBRATED_MAX_LINEAR_VELOCITY = 40; //RobotConstants.MAX_THEORETICAL_LINEAR_VELOCITY * 0.7;  // Conservative 70% of theoretical ~ 47 in/s
+    public static final double CALIBRATED_MAX_LINEAR_VELOCITY =  RobotConstants.MAX_THEORETICAL_LINEAR_VELOCITY;  // Conservative 70% of theoretical ~ 47 in/s
     
     /**
      * Maximum angular velocity (degrees/sec)     
@@ -90,7 +90,7 @@ public class CalibrationCoefficients {
      * Current calculation: Based on linear velocity and drivetrain geometry
      * Future: Will be determined through rotation testing and stability analysis
      */
-    public static final double CALIBRATED_MAX_ANGULAR_VELOCITY = RobotConstants.MAX_THEORETICAL_ANGULAR_VELOCITY * 0.2;
+    public static final double CALIBRATED_MAX_ANGULAR_VELOCITY = RobotConstants.MAX_THEORETICAL_ANGULAR_VELOCITY;
     
     /**
      * Maximum linear acceleration (inches/sec^2)

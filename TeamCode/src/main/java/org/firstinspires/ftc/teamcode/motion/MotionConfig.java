@@ -106,7 +106,7 @@ public class MotionConfig {
     public static final double MAX_LINEAR_ACCELERATION = CalibrationCoefficients.CALIBRATED_MAX_LINEAR_ACCELERATION;
     
     /** Maximum angular velocity (degrees/sec) - derived from MAX_LINEAR_VELOCITY / TURNING_RADIUS */
-    public static final double MAX_ANGULAR_VELOCITY = CalibrationCoefficients.CALIBRATED_MAX_ANGULAR_VELOCITY;
+    public static final double MAX_ANGULAR_VELOCITY = 0.3*CalibrationCoefficients.CALIBRATED_MAX_ANGULAR_VELOCITY;
     
     /** Maximum angular acceleration (degrees/sec^2) - derived from MAX_LINEAR_ACCELERATION / TURNING_RADIUS */
     public static final double MAX_ANGULAR_ACCELERATION = CalibrationCoefficients.CALIBRATED_MAX_ANGULAR_ACCELERATION;
@@ -150,14 +150,14 @@ public class MotionConfig {
     
     
     // Distance controller (2-PID architecture: unified linear motion control)
-    public static final double DISTANCE_KP = 2.5;   // Proportional gain for distance control (unified X/Y)
+    public static final double DISTANCE_KP = 2.2;   // Proportional gain for distance control (unified X/Y)
     public static final double DISTANCE_KI = 0.1;   // Integral gain for distance control
     public static final double DISTANCE_KD = 0.0;   // Derivative gain for distance control
     
     // Heading controller (rotation)
-    public static final double HEADING_KP = 1.8;    // Increased for better heading control
-    public static final double HEADING_KI = 0.3;   // Slightly increased integral gain
-    public static final double HEADING_KD = 0.1;    // Derivative gain disabled for PID tuning
+    public static final double HEADING_KP = 2.0;    // Increased for better heading control
+    public static final double HEADING_KI = 0.35;   // Slightly increased integral gain
+    public static final double HEADING_KD = 0.0;    // Derivative gain disabled for PID tuning
     
     
     
@@ -250,13 +250,13 @@ public class MotionConfig {
     // ========== SAFETY LIMITS ==========
     
     /** Default timeout for motion commands (milliseconds) */
-    public static final int MOTION_TIMEOUT_MS = 5000;  // Increased for more reliable motion execution
+    public static final int MOTION_TIMEOUT_MS = 6000;  // Increased for more reliable motion execution
     
     /** Safety factor for timeout calculations (multiplier for estimated time) */
-    public static final double TIMEOUT_SAFETY_FACTOR = 1.5;  // 50% extra time for acceleration/deceleration
+    public static final double TIMEOUT_SAFETY_FACTOR = 20.0;  // 50% extra time for acceleration/deceleration
     
     /** Stall detection time - no progress for this duration = stalled (milliseconds) */
-    public static final int STALL_DETECTION_TIME_MS = 500;
+    public static final int STALL_DETECTION_TIME_MS = 1000;
     
     /** Minimum motor power to overcome static friction */
     
