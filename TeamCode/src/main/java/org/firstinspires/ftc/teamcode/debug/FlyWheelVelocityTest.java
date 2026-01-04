@@ -214,7 +214,7 @@ public class FlyWheelVelocityTest extends OpMode {
                     telemetry.update();
                     
                     // Ramp up flywheel before each shot to maintain velocity
-                    flyWheel.setToShootingVelocity(3000);
+                    flyWheel.setToShootingVelocity(targetVelocity, 3000);
                     
                     // Turn flipper to calculated angle
                     flipper.turnFlipper(currentFlipperAngle);

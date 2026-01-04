@@ -135,7 +135,7 @@ public class MotionExecutor {
 
     // ========== CONTROL MODE MANAGEMENT ==========
 
-    private ControlMode currentControlMode = ControlMode.PURE_FEEDBACK;
+    private ControlMode currentControlMode = ControlMode.HYBRID;
     private ControlMode defaultControlMode = ControlMode.HYBRID;
 
     // ========== VELOCITY RAMPING ==========
@@ -429,7 +429,7 @@ public class MotionExecutor {
         // while simultaneously rotating to the target heading
         // Note: moveToPose always operates in field-centric coordinates
         // Calculate estimated timeout: distance/velocity * safety factor (with margin for acceleration/deceleration)
-        int estimatedTimeoutMs = (int) Math.max((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, 2000);
+        int estimatedTimeoutMs = (int) Math.min((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
         return moveToPose(targetX, targetY, targetHeading, maxVelocity, acceleration, estimatedTimeoutMs);
     }
 
@@ -702,7 +702,7 @@ public class MotionExecutor {
         double distance = Math.sqrt(Math.pow(targetX - currentX, 2) + Math.pow(targetY - currentY, 2));
 
         // Calculate estimated timeout: distance/velocity * safety factor (with margin for acceleration/deceleration)
-        int estimatedTimeoutMs = (int) Math.max((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, 2000);
+        int estimatedTimeoutMs = (int) Math.min((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
         return moveToPose(targetX, targetY, targetHeading, maxVelocity, 0.0, estimatedTimeoutMs);
     }
 
@@ -1437,6 +1437,26 @@ public class MotionExecutor {
     public void resetToDefaultControlMode() {
         this.currentControlMode = defaultControlMode;
     }
+
+    /**
+     * Set the hybrid gain for HYBRID control mode
+     *
+     * @param gain Hybrid gain (0.0 = 100% feedback, 1.0 = 100% feedforward)
+     */
+    public void setHybridGain(double gain) {
+        // Clamp gain to valid range [0.0, 1.0]
+        this.positionFeedforwardGain = Math.max(0.0, Math.min(1.0, gain));
+    }
+
+    /**
+     * Get the current hybrid gain
+     *
+     * @return Current hybrid gain value (0.0 = 100% feedback, 1.0 = 100% feedforward)
+     */
+    public double getHybridGain() {
+        return positionFeedforwardGain;
+    }
+
 
     /**
      * Gets the DriveHardware instance for direct hardware access

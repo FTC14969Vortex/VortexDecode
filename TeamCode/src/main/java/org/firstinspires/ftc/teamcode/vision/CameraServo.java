@@ -124,7 +124,7 @@ public class CameraServo {
 
     /** Linear flywheel velocity dependence on distance */
     private static final double FLYWHEEL_VELOCITY_SLOPE = 8.0;      // RPM per inch
-    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 1200.0; // Base RPM
+    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 800.0; // Base RPM
 
     /** Minimum flywheel velocity (RPM) */
     private static final double MIN_FLYWHEEL_VELOCITY = 800.0;
@@ -135,11 +135,11 @@ public class CameraServo {
     // ========== POSE FUSION PARAMETERS ==========
 
     /** Vision weight for pose fusion (0.0 = odometry only, 1.0 = vision only) */
-    private static final double VISION_FUSION_WEIGHT = 0.0;
+    private static final double VISION_FUSION_WEIGHT = 0.3;
 
     /** Maximum distance for pose correction (inches) */
-    private static final double MAX_CORRECTION_DISTANCE = 5.0;
-    private static final double MAX_CORRECTION_Angle = 10.0;
+    private static final double MAX_CORRECTION_DISTANCE = 60.0;
+    private static final double MAX_CORRECTION_Angle = 80.0;
 
     // ========== DETECTION DISTANCE LIMITS ==========
 
@@ -166,8 +166,8 @@ public class CameraServo {
 
     // ========== STATE TRACKING ==========
 
-    private double currentAngle = 0.0;      // Current servo angle = Delta_heading from robot head to tag in field frame in degrees
-    private double targetAngle = 0.0;       // Target servo angle in degrees
+    private double currentAngle = 0.0;      // Current servo angle
+    private double targetAngle = 0.0;       // Target servo angle in degrees based on prediction
     private boolean isInitialized = false;
     private boolean isSearching = false;
     private int searchStep = 0;
@@ -434,7 +434,7 @@ public class CameraServo {
             // Calculate and update flywheel velocity
             lastFlywheelVelocity = calculateFlywheelVelocity(lastDetectedDistance);
 
-            lastShootingAngle = normalizeAngle(targetDetection.ftcPose.bearing + currentAngle + 180) ; // robot back facing tag, robot need to rotate
+            lastShootingAngle = normalizeAngle(targetDetection.ftcPose.bearing + currentAngle + CAMERA_OFFSET_HEADING) ; // robot back facing tag, robot need to rotate
 
             // Perform automatic odometry correction using ACTUAL detection distance
             // This ensures correction works even when odometry is wrong (e.g., robot lifted)
@@ -629,7 +629,7 @@ public class CameraServo {
 
         double robotCenterX = fieldFrameCameraX -(CAMERA_OFFSET_X*Math.cos(servoAngleRad) - CAMERA_OFFSET_Y*Math.sin(servoAngleRad));
         double robotCenterY = fieldFrameCameraY - (CAMERA_OFFSET_X*Math.sin(servoAngleRad) + CAMERA_OFFSET_Y*Math.cos(servoAngleRad));
-        double robotHeading = Math.toDegrees(robotCurrentHeading - bearingRad);   // robot heading correction
+        double robotHeading = Math.toDegrees(robotCurrentHeading - bearingRad - (currentAngle-targetAngle));   // robot heading correction
 
         Pose2D robotPose = new Pose2D(DistanceUnit.INCH, robotCenterX, robotCenterY, AngleUnit.DEGREES, robotHeading);
 
@@ -707,9 +707,6 @@ public class CameraServo {
         targetAngle = clampServoAngle(angle);
     }
     public void aimAtTag(FieldPose robotPose, int tagId) {
-        if (coordinateTransformer == null) {
-            return; // Cannot aim without coordinate transformer
-        }
 
         FieldPose tagPose = getAprilTagPosition(tagId);
         if (tagPose == null) {
@@ -736,8 +733,8 @@ public class CameraServo {
         double dy = tagPose.y - cameraPos.y;
         double angleToTag = Math.toDegrees(Math.atan2(dy, dx));
 
-        // Convert to servo angle which is relative to robot heading
-        double servoAngle = normalizeAngle(angleToTag - robotPose.heading);
+        // Convert to servo angle which is relative to robot heading, and need remove camera offset
+        double servoAngle = normalizeAngle(angleToTag - robotPose.heading - CAMERA_OFFSET_HEADING);
 
         // Check if target is within servo usage range
         if (Math.abs(servoAngle) <= SERVO_USAGE_MAX_ANGLE) {
@@ -973,7 +970,7 @@ public class CameraServo {
 
     // ========== PRIVATE UTILITY METHODS ==========
     private static double angleToServoPosition(double angle) {
-        angle = angle - CAMERA_OFFSET_HEADING; // Remove camera offset
+        //angle = angle + CAMERA_OFFSET_HEADING; // Remove camera offset
 
         angle = Math.max(SERVO_MIN_ANGLE, Math.min(SERVO_MAX_ANGLE, angle));
 

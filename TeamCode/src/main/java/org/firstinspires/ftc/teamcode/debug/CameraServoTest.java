@@ -82,7 +82,8 @@ public class CameraServoTest extends OpMode {
             motionExecutor
         );
         cameraServo.setTargetTag(20); // Set target to blue GOAL (tag 20)
-        
+        cameraServo.setAutoOdometryCorrection(true);
+
         telemetry.addLine("✅ Systems Ready!");
         telemetry.addLine("");
         telemetry.addLine("Controls:");
