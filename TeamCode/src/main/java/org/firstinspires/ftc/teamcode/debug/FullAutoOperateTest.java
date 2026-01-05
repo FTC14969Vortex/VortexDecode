@@ -43,7 +43,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.31", group = "Debug")
+@Autonomous(name = "Full Auto Operate Test 0.38", group = "Debug")
 public class FullAutoOperateTest extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -64,14 +64,14 @@ public class FullAutoOperateTest extends LinearOpMode {
     private static final double TRAVEL_VELOCITY = 50.0; // inches/sec for movement
     private static final double INTAKE_VELOCITY = 35.0; // inches/sec during intake
 
-    private static final double SHOOTING_VELOCITY = 1150.0; // RPM for shooting
+    private static final double SHOOTING_VELOCITY = 1100.0; // RPM for shooting
 
     // ========== SHOOTING PARAMETERS ==========
     private static final int NUM_SHOTS = 3;
     private static final double INITIAL_FLIPPER_ANGLE = 120.0;
     private static final double ANGLE_INCREMENT = 30.0;
     private static final int KICKER_OPEN_DELAY_MS = 100; //was 300
-    private static final int BASE_FLIPPER_DELAY_MS = 150;
+    private static final int BASE_FLIPPER_DELAY_MS = 200;
     private static final int FLIPPER_DELAY_INCREMENT_MS = 50;
     private static final int FLIPPER_RESET_DELAY_MS = 200;
 
@@ -170,7 +170,7 @@ public class FullAutoOperateTest extends LinearOpMode {
         preparationThread.join();
 
         // flywheel should be ready
-        sleep(100);
+      //  sleep(100);
         shoot();
     }
 
@@ -204,7 +204,7 @@ public class FullAutoOperateTest extends LinearOpMode {
         try {
             // Open gate for shooting
             kicker.setGatePosition(Kicker.GATE_SHOOT);
-            sleep(KICKER_OPEN_DELAY_MS);
+            //sleep(KICKER_OPEN_DELAY_MS);
 
             // Execute 3 flipper shots
             for (int shotNumber = 0; shotNumber < NUM_SHOTS; shotNumber++) {
