@@ -329,7 +329,12 @@ public class RobotOperations {
                 
                 // Reset flipper to starting position
                 flipper.resetFlipper();
-                Thread.sleep(flipperWaitTime);
+                if (shotNumber == 1){
+                    Thread.sleep(flipperWaitTime+100);
+                }else{
+                    Thread.sleep(flipperWaitTime);
+                }
+
             }
             
         } finally {
