@@ -47,7 +47,7 @@ public class RobotOperations {
 
     // ========== SHOOTING PARAMETERS ==========
     private static final int NUM_SHOTS = 3;
-    private static final double INITIAL_FLIPPER_ANGLE = 100.0; //was 120. reduced to avoid jam at 2nd
+    private static final double INITIAL_FLIPPER_ANGLE = 120.0; //was 120. reduced to avoid jam at 2nd
     private static final double ANGLE_INCREMENT = 30.0;
     private static final int KICKER_OPEN_DELAY_MS = 200;
     private static final int BASE_FLIPPER_DELAY_MS = 150;

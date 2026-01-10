@@ -45,7 +45,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.41", group = "Debug")
+@Autonomous(name = "Full Auto Operate Test 0.42", group = "Debug")
 public class FullAutoOperateTest extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
