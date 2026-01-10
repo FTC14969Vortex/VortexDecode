@@ -13,6 +13,8 @@ import org.firstinspires.ftc.teamcode.motion.CoordinateTransformer;
 import org.firstinspires.ftc.teamcode.calibration.RobotConstants;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -117,20 +119,27 @@ public class CameraServo {
      */
     private static final double CAMERA_OFFSET_X = RobotConstants.BACK_CAMERA.x;    // Forward/backward from robot center
     private static final double CAMERA_OFFSET_Y = RobotConstants.BACK_CAMERA.y;    // Left/right from robot center
-    private static final double CAMERA_OFFSET_HEADING = RobotConstants.BACK_CAMERA.yaw; // Rotation offset from robot heading (should be 0° for forward-facing)
-                                                                                        // only use for servo angle control
+    private static final double CAMERA_OFFSET_HEADING = RobotConstants.BACK_CAMERA.yaw; // Rotation offset from robot heading (camera facing )
+
+    // Servo offset from robot center (inches)
+    private static final double SERVO_OFFSET_X = RobotConstants.BACK_CAMERA_SERVO.x;
+    private static final double SERVO_OFFSET_Y = RobotConstants.BACK_CAMERA_SERVO.y;
+
+    // camera offset from servo center (inches)
+    private static final double CAMERA_SERVO_OFFSET_X = CAMERA_OFFSET_X - SERVO_OFFSET_X;
+    private static final double CAMERA_SERVO_OFFSET_Y = CAMERA_OFFSET_Y - SERVO_OFFSET_Y;
 
     // ========== FLYWHEEL VELOCITY PARAMETERS ==========
 
     /** Linear flywheel velocity dependence on distance */
-    private static final double FLYWHEEL_VELOCITY_SLOPE = 8.0;      // RPM per inch
+    private static final double FLYWHEEL_VELOCITY_SLOPE = 6.51;      // RPM per inch
     private static final double FLYWHEEL_VELOCITY_INTERCEPT = 800.0; // Base RPM
 
     /** Minimum flywheel velocity (RPM) */
-    private static final double MIN_FLYWHEEL_VELOCITY = 800.0;
+    private static final double MIN_FLYWHEEL_VELOCITY = 799;
 
     /** Maximum flywheel velocity (RPM) */
-    private static final double MAX_FLYWHEEL_VELOCITY = 1500.0;
+    private static final double MAX_FLYWHEEL_VELOCITY = 2000;
 
     // ========== POSE FUSION PARAMETERS ==========
 
@@ -138,8 +147,8 @@ public class CameraServo {
     private static final double VISION_FUSION_WEIGHT = 0.3;
 
     /** Maximum distance for pose correction (inches) */
-    private static final double MAX_CORRECTION_DISTANCE = 60.0;
-    private static final double MAX_CORRECTION_Angle = 80.0;
+    private static final double MAX_CORRECTION_DISTANCE = 80.0;
+    private static final double MAX_CORRECTION_Angle = 90.0;
 
     // ========== DETECTION DISTANCE LIMITS ==========
 
@@ -157,6 +166,7 @@ public class CameraServo {
     // ========== HARDWARE ==========
 
     private Servo panServo;
+    private VisionPortal visionPortal;
     private AprilTagProcessor aprilTagProcessor;
     private OdometryManager odometryManager;
     private CoordinateTransformer coordinateTransformer;
@@ -177,8 +187,22 @@ public class CameraServo {
     private long lastDetectionTime = 0;
     private int lastDetectedTagId = -1;
     private double lastDetectedDistance = 0.0;
+    private AprilTagDetection lastDetection = null;
 
     private double lastShootingAngle = 0; // robot rotation angle for shooting, in degree
+
+    // Additional detection data for diagnostics
+    private double lastDetectedBearing = 0.0;   // bearing angle to tag (degrees)
+    private double lastDetectedYaw = 0.0;       // yaw angle of tag (degrees)  
+    private double lastDetectedElevation = 0.0; // elevation angle to tag (degrees)
+    private double lastFtcPoseX = 0.0;          // ftcPose.x from last detection (camera frame lateral)
+    private double lastFtcPoseY = 0.0;          // ftcPose.y from last detection (camera frame forward)
+
+
+    // Enhanced diagnostics
+
+    private FieldPose lastCameraPosition = new FieldPose(0, 0, 0);  // camera position when last detection occurred
+    private FieldPose lastServoPosition = new FieldPose(0, 0, 0);   // servo position in field coordinates when last detection occurred
 
     private boolean hasInitializedPosition = false;
 
@@ -196,16 +220,16 @@ public class CameraServo {
      * Initializes the AprilTag servo system
      *
      * @param hardwareMap Robot hardware map
-     * @param aprilTagProcessor AprilTag processor from vision portal
      * @param odometryManager Odometry manager for automatic pose corrections (optional)
      * @param coordinateTransformer Coordinate transformer for pose calculations (optional)
      * @param motionExecutor Motion executor for robot rotation during shooting alignment (optional)
      */
-    public void init(HardwareMap hardwareMap, AprilTagProcessor aprilTagProcessor, OdometryManager odometryManager, CoordinateTransformer coordinateTransformer, MotionExecutor motionExecutor) {
+    public void init(HardwareMap hardwareMap, OdometryManager odometryManager, CoordinateTransformer coordinateTransformer, MotionExecutor motionExecutor) {
         try {
             // Initialize servo hardware
             panServo = hardwareMap.get(Servo.class, CAMERA_SERVO_NAME);
-            this.aprilTagProcessor = aprilTagProcessor;
+            // Initialize vision system internally
+            initVisionSystem(hardwareMap);
             this.odometryManager = odometryManager;
             this.coordinateTransformer = coordinateTransformer;
             this.motionExecutor = motionExecutor;
@@ -227,10 +251,30 @@ public class CameraServo {
      * Initializes the AprilTag servo system (without automatic odometry correction)
      *
      * @param hardwareMap Robot hardware map
-     * @param aprilTagProcessor AprilTag processor from vision portal
      */
-    public void init(HardwareMap hardwareMap, AprilTagProcessor aprilTagProcessor) {
-        init(hardwareMap, aprilTagProcessor, null, null, null);
+    public void init(HardwareMap hardwareMap) {
+        init(hardwareMap, null, null, null);
+    }
+    /**
+     * Initialize vision system internally
+     *
+     * @param hardwareMap Robot hardware map
+     */
+    private void initVisionSystem(HardwareMap hardwareMap) {
+        // Initialize AprilTag processor
+        aprilTagProcessor = new AprilTagProcessor.Builder()
+                .setDrawAxes(true)
+                .setDrawCubeProjection(true)
+                .setDrawTagOutline(true)
+                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+                .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+                .build();
+
+        // Initialize vision portal
+        visionPortal = new VisionPortal.Builder()
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .addProcessor(aprilTagProcessor)
+                .build();
     }
 
     // ========== TARGET TAG SELECTION ==========
@@ -287,13 +331,13 @@ public class CameraServo {
         if (!isInitialized) return;
 
         // Get current robot pose for prediction
-        if (coordinateTransformer != null) {
-            Pose2D robotCenterPose2D = coordinateTransformer.getCurrentRobotCenterPose();
-            // Convert robot center to reference point for aimAtTag (which expects reference point)
-            FieldPose referencePointPose = coordinateTransformer.convertRobotCenterToReferencePoint(robotCenterPose2D);
+        if (motionExecutor != null) {
+            Pose2D referencePointPose2D = motionExecutor.getMotionState().getCurrentPose();
+            FieldPose currentPose = new FieldPose(referencePointPose2D.getX(DistanceUnit.INCH),
+                    referencePointPose2D.getY(DistanceUnit.INCH),
+                    referencePointPose2D.getHeading(AngleUnit.DEGREES));
 
-            // Always aim camera at predicted target tag position
-            aimAtTag(referencePointPose, targetTagId);
+            aimAtTag(currentPose, targetTagId);
         }
 
         // Update search pattern if active
@@ -418,8 +462,8 @@ public class CameraServo {
             FieldPose tagPose = getAprilTagPosition(targetTagId);
             if (tagPose != null) {
                 // Calculate distance from camera to tag (not robot center to tag)
-                FieldPose cameraPos = calculateCameraPositionFromRobot(robotCenterPose);
-                predictedDistance = calculateDistance(cameraPos, tagPose);
+                // Use robot center position directly for flywheel velocity calculation
+                predictedDistance = calculateDistance(robotCenterPose, tagPose);
                 withinReliableRange = (predictedDistance >= MIN_DETECTION_DISTANCE &&
                         predictedDistance <= MAX_DETECTION_DISTANCE);
             }
@@ -430,14 +474,23 @@ public class CameraServo {
             lastDetectionTime = System.currentTimeMillis();
             lastDetectedTagId = targetDetection.id;
             lastDetectedDistance = calculateDistance(targetDetection);
+            lastDetection = targetDetection; // Store detection for vision-based position calculation
 
             // Calculate and update flywheel velocity
             lastFlywheelVelocity = calculateFlywheelVelocity(lastDetectedDistance);
 
-            lastShootingAngle = normalizeAngle(targetDetection.ftcPose.bearing + currentAngle + CAMERA_OFFSET_HEADING) ; // robot back facing tag, robot need to rotate
+            // Shooting angle is now calculated in getVisionPoseFromDetection() using proper odometry
 
-            // Perform automatic odometry correction using ACTUAL detection distance
-            // This ensures correction works even when odometry is wrong (e.g., robot lifted)
+            // Capture additional detection data for diagnostics
+            lastDetectedBearing = targetDetection.ftcPose.bearing;
+            lastDetectedYaw = targetDetection.ftcPose.yaw;
+            lastDetectedElevation = targetDetection.ftcPose.elevation;
+
+
+            // Always populate enhanced diagnostics (camera/servo positions) when we have a detection
+            // This ensures diagnostics are available regardless of auto correction settings
+            getVisionPoseFromDetection(targetDetection);
+
             boolean detectionWithinReliableRange = (lastDetectedDistance >= MIN_DETECTION_DISTANCE &&
                     lastDetectedDistance <= MAX_DETECTION_DISTANCE);
 
@@ -452,6 +505,21 @@ public class CameraServo {
         } else {
             // Tag not detected calculate flywheel velocity from predicted odometry
             lastFlywheelVelocity = calculateFlywheelVelocity(predictedDistance);
+
+            // Calculate shooting angle using odometry when no detection
+            if (coordinateTransformer != null) {
+                Pose2D robotCenterPose2D = coordinateTransformer.getCurrentRobotCenterPose();
+                FieldPose tagPose = getAprilTagPosition(targetTagId);
+                if (tagPose != null) {
+                    // Calculate angle from robot center to tag
+                    double robotX = robotCenterPose2D.getX(DistanceUnit.INCH);
+                    double robotY = robotCenterPose2D.getY(DistanceUnit.INCH);
+                    double robotHeading = robotCenterPose2D.getHeading(AngleUnit.DEGREES);
+
+                    double angleToTag = Math.toDegrees(Math.atan2(tagPose.y - robotY, tagPose.x - robotX));
+                    lastShootingAngle = normalizeAngle(angleToTag - robotHeading - 180.0);
+                }
+            }
             if (!isSearching) {
                 // Start search pattern around current predicted angle
                 startSearch(targetAngle);
@@ -480,6 +548,17 @@ public class CameraServo {
     private double calculateDistance(AprilTagDetection detection) {
         // PREFERRED: Use detection.ftcPose.range if available (direct tag-to-camera distance from SDK)
         if (detection.ftcPose != null && detection.ftcPose.range > 0) {
+            // OLD: return detection.ftcPose.range; // This was camera-to-tag distance
+            // NEW: Calculate robot center-to-tag distance for accurate flywheel velocity
+            FieldPose tagPose = getAprilTagPosition(detection.id);
+            if (tagPose != null && lastDetection != null) {
+                // Get robot center position from vision calculation
+                FieldPose visionRobotPose = getVisionPoseFromDetection(detection);
+                if (visionRobotPose != null) {
+                    return calculateDistance(tagPose, visionRobotPose);
+                }
+            }
+            // Fallback to camera-to-tag distance if vision calculation fails
             return detection.ftcPose.range;
         }
 
@@ -495,8 +574,8 @@ public class CameraServo {
             );
 
             // Calculate camera position using camera offset
-            FieldPose cameraPose = calculateCameraPositionFromRobot(robotPose);
-            return calculateDistance(tagPose, cameraPose);
+            // Use robot center position directly (not camera position)
+            return calculateDistance(tagPose, robotPose);
         }
 
         // No reliable distance available
@@ -589,52 +668,75 @@ public class CameraServo {
 
     /**
      * Calculates robot pose from camera detection using mathematically correct transformation
-     * COORDINATE SYSTEM UNDERSTANDING:
-     * - detection.ftcPose.x,y,bearing = Tag position/orientation relative to camera (in camera frame)
-     * - We need to find robot center position in field frame
-     *
-     * TRANSFORMATION CHAIN:
-     * 1. Invert detection: Camera position relative to tag (tag frame)
-     * 2. Transform camera to robot center (account for servo, mounting, offset)
-     * 3. Transform robot center to reference point (unified coordinate system)
-     * 4. Transform reference point position from tag frame to field frame
+     * tagpose - camera pose - servo pose - robot pose
+     * detection.ftc.pose.x: side, detection.ftc.pose.y: forward -- needed to be reversed for robot coordinate system
      */
     private FieldPose getVisionPoseFromDetection(AprilTagDetection detection) {
-        if (detection.ftcPose == null) {
-            return null;
-        }
-
-        // Get known tag position in field coordinates
+        // 1. Known tag pose in field
         FieldPose tagPose = getAprilTagPosition(detection.id);
-        if (tagPose == null) {
-            return null;
-        }
+        if (tagPose == null) return null;
 
-        if ( odometryManager == null) {
-            return null;
-        }
+        // 2. Extract FTC measurements
 
-        double robotCurrentHeading = odometryManager.getCurrentPose().getHeading(AngleUnit.RADIANS);
-        // in tag frame
-        // FTC camera pose: y - forward, x- side, bearing = atan(x/y) - different with robot frame, need to rotate 90 degree
-        double bearingRad = Math.toRadians(detection.ftcPose.bearing); // tag rotated CCW when viewed by the camera
-        double dx_tag = -detection.ftcPose.range*Math.cos(bearingRad);
-        double dy_tag = detection.ftcPose.range*Math.sin(bearingRad);
+        // Tag in camera frame pos with robot coordinate convention: x-forward, y-side
+        double x_camTag = detection.ftcPose.y;
+        double y_camTag = -detection.ftcPose.x;
 
-        double fieldFrameCameraX = dx_tag + tagPose.x;
-        double fieldFrameCameraY = dy_tag + tagPose.y;
+        // Cache raw ftcPose values for telemetry (SDK camera-frame axes)
+        lastFtcPoseX = detection.ftcPose.x;
+        lastFtcPoseY = detection.ftcPose.y;
 
-        // camera to robot center transformation
-        double servoAngleRad = Math.toRadians(currentAngle); //predicted current robot heading rotation in CCW
+        //ftcpose.yaw: camera + at tag left side, - at tag right side
 
-        double robotCenterX = fieldFrameCameraX -(CAMERA_OFFSET_X*Math.cos(servoAngleRad) - CAMERA_OFFSET_Y*Math.sin(servoAngleRad));
-        double robotCenterY = fieldFrameCameraY - (CAMERA_OFFSET_X*Math.sin(servoAngleRad) + CAMERA_OFFSET_Y*Math.cos(servoAngleRad));
-        double robotHeading = Math.toDegrees(robotCurrentHeading - bearingRad - (currentAngle-targetAngle));   // robot heading correction
+        // 3. camera heading
+        //camera heading in field, looking from the front of camera to back, tag - view of cam
+        // camera heading in field, looking from the back of camera to front
+        double camFieldHeading = tagPose.heading - detection.ftcPose.yaw;
 
-        Pose2D robotPose = new Pose2D(DistanceUnit.INCH, robotCenterX, robotCenterY, AngleUnit.DEGREES, robotHeading);
 
-        // Convert robot center to reference point
-        return CoordinateTransformer.convertRobotCenterToReferencePoint(robotPose);
+        // 4. Robot heading
+        //camera heading in robot, looking from back of camera to front
+        double camToRobotHeading = currentAngle + CAMERA_OFFSET_HEADING;
+        double robotHeading = normalizeAngle(camFieldHeading - camToRobotHeading);
+
+        // 5. camera position in field frame
+        double cosC = Math.cos(Math.toRadians(camFieldHeading));
+        double sinC = Math.sin(Math.toRadians(camFieldHeading));
+        double camFieldX = tagPose.x - (x_camTag * cosC - y_camTag * sinC);
+        double camFieldY = tagPose.y - (x_camTag * sinC + y_camTag * cosC);
+
+        // 6. Servo positon in field: subtract camera offset to get servo pos in field
+        double servoFieldX = camFieldX - (CAMERA_SERVO_OFFSET_X * cosC - CAMERA_SERVO_OFFSET_Y * sinC);
+        double servoFieldY = camFieldY - (CAMERA_SERVO_OFFSET_X * sinC + CAMERA_SERVO_OFFSET_Y * cosC);
+
+        // 7. Robot center position in field:  subtract servo offset to get robot center in field
+        // NOTE: servo offset is not rotated with servo
+        double cosR = Math.cos(Math.toRadians(robotHeading));
+        double sinR = Math.sin(Math.toRadians(robotHeading));
+        double robotX = servoFieldX - (SERVO_OFFSET_X * cosR - SERVO_OFFSET_Y * sinR);
+        double robotY = servoFieldY - (SERVO_OFFSET_X * sinR + SERVO_OFFSET_Y * cosR);
+
+        // 7. Convert robot center → reference point
+        Pose2D robotCenterPose = new Pose2D(
+                DistanceUnit.INCH,
+                robotX,
+                robotY,
+                AngleUnit.DEGREES,
+                robotHeading
+        );
+
+        // Store enhanced diagnostics from the vision calculation chain
+        lastCameraPosition = new FieldPose(camFieldX, camFieldY, camFieldHeading);
+        lastServoPosition = new FieldPose(servoFieldX, servoFieldY, robotHeading); // servo heading = robot heading
+
+        // Calculate shooting angle using odometry-based calculation
+        // This is the angle the robot needs to rotate so its back faces the tag center
+        double dx = tagPose.x - robotX;
+        double dy = tagPose.y - robotY;
+        double angleToTag = Math.toDegrees(Math.atan2(dy, dx));
+        lastShootingAngle = normalizeAngle(angleToTag - robotHeading - 180.0);
+
+        return CoordinateTransformer.convertRobotCenterToReferencePoint(robotCenterPose);
 
     }
 
@@ -876,6 +978,88 @@ public class CameraServo {
         return lastDetectedDistance;
     }
 
+    public double getLastDetectedBearing() {
+        return lastDetectedBearing;
+    }
+
+    public double getLastDetectedYaw() {
+        return lastDetectedYaw;
+    }
+
+    public double getLastDetectedElevation() {
+        return lastDetectedElevation;
+    }
+
+    public double getLastFtcPoseX() {
+        return lastFtcPoseX;
+    }
+
+    public double getLastFtcPoseY() {
+        return lastFtcPoseY;
+    }
+
+
+
+    /**
+     * Get camera position from last detection
+     */
+    public FieldPose getLastCameraPosition() {
+        return lastCameraPosition;
+    }
+
+    /**
+     * Get servo position from last detection
+     */
+    public FieldPose getLastServoPosition() {
+        return lastServoPosition;
+    }
+
+    /**
+     * Get current camera position based on robot pose and servo angle
+     */
+    public FieldPose getCurrentCameraPosition() {
+        if (coordinateTransformer == null) {
+            return new FieldPose(0, 0, 0);
+        }
+        Pose2D robotPose2D = coordinateTransformer.getCurrentRobotCenterPose();
+        FieldPose robotPose = new FieldPose(
+                robotPose2D.getX(DistanceUnit.INCH),
+                robotPose2D.getY(DistanceUnit.INCH),
+                robotPose2D.getHeading(AngleUnit.DEGREES)
+        );
+        return calculateCameraPositionFromRobot(robotPose);
+    }
+
+    /**
+     * Get reference point position from raw odometry (no vision correction)
+     * This is what the encoders/IMU think the robot position is
+     */
+    public FieldPose getOdometryReferencePoint() {
+        if (odometryManager == null) {
+            return new FieldPose(0, 0, 0);
+        }
+        Pose2D refPointPose2D = odometryManager.getCurrentPose();
+        if (refPointPose2D != null) {
+            return new FieldPose(
+                    refPointPose2D.getX(DistanceUnit.INCH),
+                    refPointPose2D.getY(DistanceUnit.INCH),
+                    refPointPose2D.getHeading(AngleUnit.DEGREES)
+            );
+        }
+        return new FieldPose(0, 0, 0);
+    }
+
+    /**
+     * Get vision-based robot position from last AprilTag detection (pure vision, no fusion)
+     * This is what the camera/AprilTag system calculates the robot position should be
+     */
+    public FieldPose getVisionBasedPosition() {
+        if (lastDetection == null || getTimeSinceLastDetection() > 3000) {
+            return null; // No recent detection available
+        }
+        return getVisionPoseFromDetection(lastDetection);
+    }
+
 
 
     /**
@@ -968,6 +1152,7 @@ public class CameraServo {
     }
 
 
+
     // ========== PRIVATE UTILITY METHODS ==========
     private static double angleToServoPosition(double angle) {
         //angle = angle + CAMERA_OFFSET_HEADING; // Remove camera offset
@@ -1004,5 +1189,16 @@ public class CameraServo {
         while (angle > 180) angle -= 360;
         while (angle < -180) angle += 360;
         return angle;
+    }
+    /**
+     * Cleanup method to properly close vision system resources
+     * Should be called when the OpMode ends
+     */
+    public void cleanup() {
+        if (visionPortal != null) {
+            visionPortal.close();
+            visionPortal = null;
+        }
+        aprilTagProcessor = null;
     }
 }

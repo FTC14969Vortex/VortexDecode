@@ -14,8 +14,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Kicker;
 import org.firstinspires.ftc.teamcode.subsystems.Flipper;
 import org.firstinspires.ftc.teamcode.vision.CameraServo;
 import org.firstinspires.ftc.teamcode.utils.RobotOperations;
-import org.firstinspires.ftc.vision.VisionPortal;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
 
 /**
  * Full Auto Operate Test - Blue Alliance Near Start
@@ -45,7 +44,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.42", group = "Debug")
+@Autonomous(name = "Full Auto Operate Test 0.4x", group = "Debug")
 public class FullAutoOperateTest extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -57,29 +56,23 @@ public class FullAutoOperateTest extends LinearOpMode {
     private CameraServo cameraServo;
     private RobotOperations robotOperations;
 
-    // ========== VISION SYSTEM ==========
-    private VisionPortal visionPortal;
-    private AprilTagProcessor aprilTagProcessor;
+
 
     // ========== MOTION PARAMETERS ==========
     private static final double TRAVEL_VELOCITY = 50.0; // inches/sec for movement
     private static final double INTAKE_VELOCITY = 35.0; // inches/sec during intake
+    private static final double HYBRID_GAIN = 0.5; //default in motiontExcutor
 
     // ========== INTAKE PARAMETERS ==========
     private static final double INTAKE_FULL_POWER = 1.0;
 
 
+
     @Override
     public void runOpMode() throws InterruptedException {
 
-        initVisionSystem();
-
         cameraServo = new CameraServo();
-        cameraServo.init(hardwareMap, aprilTagProcessor);
-        cameraServo.setTargetTag(20); // Blue AprilTag
-        cameraServo.moveToCenter(); // Keep servo at center position for this auto
-        cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for pure odometry-based calculation
-
+        
         // Initialize subsystems
         baseMotion = new BaseMotion();
         baseMotion.init(this);
@@ -99,13 +92,28 @@ public class FullAutoOperateTest extends LinearOpMode {
         flipper.init(hardwareMap);
         flipper.resetFlipper();
 
+        // Initialize CameraServo with full motion integration for proper pose-based aiming
+        cameraServo.init(
+            hardwareMap, 
+            baseMotion.getMotionExecutor().getMotionState().getOdometryManager(),
+            baseMotion.getMotionExecutor().getCoordinateTransformer(),
+            baseMotion.getMotionExecutor()
+        );
+        cameraServo.moveToCenter(); // Keep servo at center position for this auto
+        cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for pure odometry-based calculation
+        cameraServo.update();
+
         // Initialize RobotOperations utility
         robotOperations = new RobotOperations();
         robotOperations.init(baseMotion, flyWheel, intake, kicker, flipper, cameraServo,
                 baseMotion.getMotionExecutor().getCoordinateTransformer(), this);
+
+        // set blue alliance - true; red alliance - false
         robotOperations.setAlliance(true); // Blue alliance
 
         // Set reference point to START_NEAR position
+        baseMotion.setControlMode(MotionExecutor.ControlMode.HYBRID);
+        baseMotion.setHybridGain(HYBRID_GAIN);
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
         baseMotion.setReferencePointToPosition(FieldPositions.START_NEAR);
 
@@ -116,6 +124,8 @@ public class FullAutoOperateTest extends LinearOpMode {
         if (isStopRequested()) return;
 
         // ========== AUTONOMOUS SEQUENCE ==========
+
+        boolean autoCompletedSuccessfully = false;
 
         try {
 
@@ -133,11 +143,21 @@ public class FullAutoOperateTest extends LinearOpMode {
             // Park at end position
             robotOperations.moveToLocation("parking_near");
 
+            // If we reach here, autonomous completed successfully
+            autoCompletedSuccessfully = true;
+
         } catch (InterruptedException e) {
             telemetry.addLine("❌ Autonomous interrupted!");
             telemetry.update();
             Thread.currentThread().interrupt();
         } finally {
+            // Save odometry position for TeleOp to use
+            // autoCompletedSuccessfully = true only if we completed all steps
+            // If we timed out or were interrupted, it will be false
+            RobotOperations.saveOdometryAtAutoEnd(hardwareMap, baseMotion, autoCompletedSuccessfully);
+
+            String completionStatus = autoCompletedSuccessfully ? "Completed" : "Timed Out/Interrupted";
+            telemetryCurrentPose("Auto End - " + completionStatus + " - Saved for TeleOp");
 
             cleanupSubsystems();
         }
@@ -161,12 +181,12 @@ public class FullAutoOperateTest extends LinearOpMode {
                 intakeFinish = FieldPositions.INTAKE_1_FINISH;
                 break;
             case 2:
-                intakeTime = 1.0;
+                intakeTime = 0.9;
                 intakeStart = FieldPositions.INTAKE_2_START;
                 intakeFinish = FieldPositions.INTAKE_2_FINISH;
                 break;
             case 3:
-                intakeTime = 1.0;
+                intakeTime = 0.9;
                 intakeStart = FieldPositions.INTAKE_3_START;
                 intakeFinish = FieldPositions.INTAKE_3_FINISH;
                 break;
@@ -177,7 +197,15 @@ public class FullAutoOperateTest extends LinearOpMode {
         }
 
         // Move to intake start position
-        baseMotion.moveToPose(intakeStart, TRAVEL_VELOCITY);
+        MotionExecutor.MotionResult result = baseMotion.moveToPose(intakeStart, TRAVEL_VELOCITY);
+
+        // Display motion results for debugging
+        telemetry.addData("Motion Success", result.success);
+        telemetry.addData("Position Error", "%.2f inches", result.finalPositionError);
+        telemetry.addData("Heading Error", "%.1f degrees", result.finalHeadingError);
+        telemetry.addData("Motion Duration", "%.0f ms", result.executionTimeMs);
+        telemetry.addData("Motion Status", result.failureReason);
+        telemetry.update();
 
         // Start intake at full power and move forward for specified time
 
@@ -188,31 +216,20 @@ public class FullAutoOperateTest extends LinearOpMode {
         baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
 
         // Move to shooting position and shoot
-        robotOperations.moveToLocation("shooting_near");
+
+        MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near");
+        // Display motion results for debugging
+        telemetry.addData("Motion Success", result1.success);
+        telemetry.addData("Position Error", "%.2f inches", result1.finalPositionError);
+        telemetry.addData("Heading Error", "%.1f degrees", result1.finalHeadingError);
+        telemetry.addData("Motion Duration", "%.0f ms", result1.executionTimeMs);
+        telemetry.addData("Motion Status", result1.failureReason);
+        telemetry.update();
+
+        //cameraServo.update(); // at shooting position - update camera servo
+
         robotOperations.shoot(); // use distance based velocity + alignment
 
-    }
-
-
-    /**
-     * Initialize vision system (AprilTag processor and VisionPortal)
-     */
-    private void initVisionSystem() {
-        // Initialize AprilTag processor
-        aprilTagProcessor = new AprilTagProcessor.Builder()
-                .setDrawAxes(true)
-                .setDrawCubeProjection(true)
-                .setDrawTagOutline(true)
-                .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                .setOutputUnits(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH,
-                        org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES)
-                .build();
-
-        // Initialize vision portal
-        visionPortal = new VisionPortal.Builder()
-                .setCamera(hardwareMap.get(org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName.class, "Webcam 1"))
-                .addProcessor(aprilTagProcessor)
-                .build();
     }
 
     private void cleanupSubsystems() {
@@ -223,8 +240,8 @@ public class FullAutoOperateTest extends LinearOpMode {
         if (intake != null) {
             intake.stopIntake();
         }
-        if (visionPortal != null) {
-            visionPortal.close();
+        if (cameraServo != null) {
+            cameraServo.cleanup();
         }
     }
     private void telemetryCurrentPose(String message) {

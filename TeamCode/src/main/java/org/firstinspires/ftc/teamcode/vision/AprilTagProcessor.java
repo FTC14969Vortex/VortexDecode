@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode.vision;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -123,13 +122,11 @@ public class AprilTagProcessor {
     private ArrayList<String> telemetryMsgList = new ArrayList<>();
     private boolean printMsg = false;
 
-    //private LinearOpMode opChassis;
-    private OpMode opMode;
+    private LinearOpMode opChassis;
     //construct class
-    public AprilTagProcessor(OpMode chassis) {
+    public AprilTagProcessor(LinearOpMode chassis) {
         //could use camera type, turn on/off telemetry line, eg
-        //opChassis = chassis;
-        opMode = chassis;
+        opChassis = chassis;
     }
 
     public void initCamera() {
@@ -194,12 +191,9 @@ public class AprilTagProcessor {
 
     private void outTelemetry() {
         for (String msg : telemetryMsgList) {
-            //opChassis.telemetry.addLine(msg);
-            opMode.telemetry.addLine(msg);
+            opChassis.telemetry.addLine(msg);
         }
-        //opChassis.telemetry.update();
-        opMode.telemetry.update();
-
+        opChassis.telemetry.update();
         telemetryMsgList.clear();
     }
 
@@ -243,8 +237,7 @@ public class AprilTagProcessor {
 
         // Set the camera (webcam vs. built-in RC phone camera).
         if (USE_WEBCAM) {
-            //builder.setCamera(opChassis.hardwareMap.get(WebcamName.class, "Webcam 1"));
-            builder.setCamera(opMode.hardwareMap.get(WebcamName.class, "Webcam 1"));
+            builder.setCamera(opChassis.hardwareMap.get(WebcamName.class, "Webcam 1"));
         } else {
             builder.setCamera(BuiltinCameraDirection.BACK);
         }

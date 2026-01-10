@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.debug;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -28,6 +29,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  * 
  * NO calibration, NO validation - just raw Pinpoint data
  */
+@Disabled
 @Autonomous(name = "Simple Auto Test", group = "Debug")
 public class SimpleAutoTest extends LinearOpMode {
     

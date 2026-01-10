@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.debug;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -14,7 +15,8 @@ import java.text.FieldPosition;
 /**
  * Test OpMode to validate FieldPositions refactor and BaseMotion functionality
  */
-@Autonomous(name = "BaseMotion Test", group = "Debug")
+@Disabled
+@Autonomous(name = "BaseMotion Test-0.1", group = "Debug")
 public class BaseMotionTest extends LinearOpMode {
     
     private BaseMotion baseMotion;
@@ -132,10 +134,12 @@ public class BaseMotionTest extends LinearOpMode {
     private void testMoveToPoseWithBluePositions() {
         telemetry.clear();
         telemetry.addData("=== TESTING MOVE TO POSE ===", "");
+
+        baseMotion.rotate(90, 10, 2000);
         
         // Get Blue positions using getBluePosition method
-        FieldPose blueStartNear = FieldPositions.getBluePosition("START_NEAR");
-        FieldPose blueShootingNear = FieldPositions.getBluePosition("SHOOTING_CLOSE");
+        FieldPose blueStartNear = FieldPositions.START_NEAR;
+        FieldPose blueShootingNear = FieldPositions.SHOOTING_NEAR;
         
         if (blueStartNear == null || blueShootingNear == null) {
             telemetry.addData("ERROR", "Could not get Blue positions");
@@ -168,5 +172,7 @@ public class BaseMotionTest extends LinearOpMode {
         telemetry.addData("Final Position", baseMotion.getCurrentPose().toCompactString());
         telemetry.update();
         sleep(3000);
+
+
     }
 }

@@ -23,7 +23,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
 
-@TeleOp(name = "Teleop Red 0.01", group = "TeleOp")
+@TeleOp(name = "DecodeTeleopRedV4.24 Alaqmar", group = "TeleOp")
 
 public class TeleopRed extends LinearOpMode {
 
@@ -39,7 +39,9 @@ public class TeleopRed extends LinearOpMode {
     WebcamName webcamName;
     private Limelight3A limelight;
 
+
     String currentAprilTagName = AprilTagProcessor.RED_APRIL_TAG;
+
 
     @Override
     public void runOpMode() throws InterruptedException {

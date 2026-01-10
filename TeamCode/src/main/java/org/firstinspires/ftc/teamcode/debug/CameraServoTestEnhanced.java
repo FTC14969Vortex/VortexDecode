@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -47,6 +48,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  * - Vision correction indicators
  * - Camera servo angle visualization
  */
+@Disabled
 @Config
 @TeleOp(name = "Camera Servo Test Enhanced", group = "Debug")
 public class CameraServoTestEnhanced extends OpMode {
@@ -145,7 +147,6 @@ public class CameraServoTestEnhanced extends OpMode {
         cameraServo = new CameraServo();
         cameraServo.init(
             hardwareMap, 
-            aprilTagProcessor, 
             motionExecutor.getMotionState().getOdometryManager(),
             motionExecutor.getCoordinateTransformer(),
             motionExecutor
