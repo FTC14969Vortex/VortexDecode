@@ -183,12 +183,12 @@ public class FullAutoOperateTest extends LinearOpMode {
                 intakeFinish = FieldPositions.INTAKE_1_FINISH;
                 break;
             case 2:
-                intakeTime = 0.9;
+                intakeTime = 1.0;
                 intakeStart = FieldPositions.INTAKE_2_START;
                 intakeFinish = FieldPositions.INTAKE_2_FINISH;
                 break;
             case 3:
-                intakeTime = 0.9;
+                intakeTime = 1.0;
                 intakeStart = FieldPositions.INTAKE_3_START;
                 intakeFinish = FieldPositions.INTAKE_3_FINISH;
                 break;

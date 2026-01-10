@@ -63,7 +63,7 @@ public class TeleopBlue extends LinearOpMode {
 
     // ========== CONTROL PARAMETERS ==========
     private static final double DRIVE_SPEED_MULTIPLIER = 1.0;  // Full speed for translation
-    private static final double ROTATION_SPEED_MULTIPLIER = 0.6;  // Reduced speed for rotation precision
+    private static final double ROTATION_SPEED_MULTIPLIER = 1.0;  // Reduced speed for rotation precision
     private static final double BUTTON_DEBOUNCE_TIME = 0.3;    // seconds
 
     // ========== STATE TRACKING ==========
@@ -147,7 +147,7 @@ public class TeleopBlue extends LinearOpMode {
         // Initialize Intake
         intake = new Intake();
         intake.init(this);
-        intake.stopIntake();
+        intake.startIntake();
 
         // Initialize Kicker
         kicker = new Kicker();

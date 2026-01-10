@@ -63,7 +63,7 @@ public class FieldPositions {
 
 
     // Utility positions
-    public static final FieldPose LOADING_ZONE = new FieldPose(44, -52, -45);
+    public static final FieldPose LOADING_ZONE = new FieldPose(44, 52, 45);
     public static final FieldPose PARKING_END = new FieldPose(32, 41, -90);
 
     public static final FieldPose GOAL = new FieldPose(-72, -72.0, -135);    // blue goad corner
