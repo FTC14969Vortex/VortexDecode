@@ -105,7 +105,7 @@ public class CameraServo {
     private static final long SEARCH_DWELL_TIME_MS = 200;
 
     /** Update frequency (Hz) - CameraServo runs at 5 Hz */
-    private static final double UPDATE_FREQUENCY_HZ = 5.0;
+    private static final double UPDATE_FREQUENCY_HZ = 2.0;
 
     /** Update interval (milliseconds) - 200ms for 5 Hz */
     private static final long UPDATE_INTERVAL_MS = (long)(1000.0 / UPDATE_FREQUENCY_HZ);
@@ -144,7 +144,7 @@ public class CameraServo {
     // ========== POSE FUSION PARAMETERS ==========
 
     /** Vision weight for pose fusion (0.0 = odometry only, 1.0 = vision only) */
-    private static final double VISION_FUSION_WEIGHT = 0.3;
+    private static final double VISION_FUSION_WEIGHT = 0.0;
 
     /** Maximum distance for pose correction (inches) */
     private static final double MAX_CORRECTION_DISTANCE = 80.0;

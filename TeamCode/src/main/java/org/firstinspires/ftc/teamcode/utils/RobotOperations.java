@@ -225,6 +225,17 @@ public class RobotOperations {
         }
     }
 
+    public void prepareForShooting(){
+        if (intake != null) {
+            intake.setIntakePower(INTAKE_SHOOTING_POWER);
+        }
+        startDynamicFlywheelControl();
+    }
+
+    public void prepareForIntake(){
+        stopDynamicFlywheelControl();
+    }
+
     /**
      * Starts background thread for dynamic flywheel velocity control
      * Continuously monitors robot position and adjusts flywheel velocity

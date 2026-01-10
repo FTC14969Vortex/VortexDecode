@@ -47,7 +47,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - X: Toggle intake on/off
  * - Y: Emergency stop all operations
  */
-@TeleOp(name = "TeleopBlue - Smart Shooting", group = "Debug")
+@TeleOp(name = "TeleopBlue - Smart Shooting 0.02", group = "Debug")
 public class TeleopBlue extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -63,7 +63,7 @@ public class TeleopBlue extends LinearOpMode {
 
     // ========== CONTROL PARAMETERS ==========
     private static final double DRIVE_SPEED_MULTIPLIER = 1.0;  // Full speed for translation
-    private static final double ROTATION_SPEED_MULTIPLIER = 0.3;  // Reduced speed for rotation precision
+    private static final double ROTATION_SPEED_MULTIPLIER = 0.6;  // Reduced speed for rotation precision
     private static final double BUTTON_DEBOUNCE_TIME = 0.3;    // seconds
 
     // ========== STATE TRACKING ==========
@@ -203,7 +203,7 @@ public class TeleopBlue extends LinearOpMode {
         // ========== MANUAL DRIVING ==========
         
         // Get joystick inputs
-        double axial = -gamepad1.left_stick_y * DRIVE_SPEED_MULTIPLIER;   // Forward/backward
+        double axial = gamepad1.left_stick_y * DRIVE_SPEED_MULTIPLIER;   // Forward/backward
         double lateral = gamepad1.left_stick_x * DRIVE_SPEED_MULTIPLIER;  // Left/right strafe
         double yaw = gamepad1.right_stick_x * ROTATION_SPEED_MULTIPLIER;  // Rotation
 

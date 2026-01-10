@@ -226,9 +226,9 @@ public class BaseMotion {
         double maxLinearVelocity = RobotConstants.MAX_THEORETICAL_LINEAR_VELOCITY; // inches/sec
         double maxAngularVelocity = RobotConstants.MAX_THEORETICAL_ANGULAR_VELOCITY; // degrees/sec
 
-        double vy = leftX * maxLinearVelocity;
-        double vx = leftY * maxLinearVelocity; // Invert Y for intuitive control
-        double omega = rightX * maxAngularVelocity;
+        double vy = -leftX * maxLinearVelocity;
+        double vx = -leftY * maxLinearVelocity; // Invert Y for intuitive control
+        double omega = -rightX * maxAngularVelocity;
 
         // Apply velocity based on drive mode
         MotionState.CoordinateMode coordinateMode =
