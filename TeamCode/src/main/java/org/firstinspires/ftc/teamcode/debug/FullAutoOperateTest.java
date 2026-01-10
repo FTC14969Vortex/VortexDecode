@@ -61,9 +61,11 @@ public class FullAutoOperateTest extends LinearOpMode {
     // ========== MOTION PARAMETERS ==========
     private static final double TRAVEL_VELOCITY = 50.0; // inches/sec for movement
     private static final double INTAKE_VELOCITY = 35.0; // inches/sec during intake
+    private static final double HYBRID_GAIN = 0.5; //default in motiontExcutor
 
     // ========== INTAKE PARAMETERS ==========
     private static final double INTAKE_FULL_POWER = 1.0;
+
 
 
     @Override
@@ -110,7 +112,8 @@ public class FullAutoOperateTest extends LinearOpMode {
         robotOperations.setAlliance(true); // Blue alliance
 
         // Set reference point to START_NEAR position
-        baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
+        baseMotion.setControlMode(MotionExecutor.ControlMode.HYBRID);
+        baseMotion.setHybridGain(HYBRID_GAIN);
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
         baseMotion.setReferencePointToPosition(FieldPositions.START_NEAR);
 
@@ -223,7 +226,7 @@ public class FullAutoOperateTest extends LinearOpMode {
         telemetry.addData("Motion Status", result1.failureReason);
         telemetry.update();
 
-        cameraServo.update(); // at shooting position - update camera servo
+        //cameraServo.update(); // at shooting position - update camera servo
 
         robotOperations.shoot(); // use distance based velocity + alignment
 
