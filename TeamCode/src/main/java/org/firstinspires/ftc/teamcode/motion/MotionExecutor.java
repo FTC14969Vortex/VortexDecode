@@ -429,7 +429,7 @@ public class MotionExecutor {
         // while simultaneously rotating to the target heading
         // Note: moveToPose always operates in field-centric coordinates
         // Calculate estimated timeout: distance/velocity * safety factor (with margin for acceleration/deceleration)
-        int estimatedTimeoutMs = (int) Math.min((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
+        int estimatedTimeoutMs = (int) Math.max((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
         return moveToPose(targetX, targetY, targetHeading, maxVelocity, acceleration, estimatedTimeoutMs);
     }
 
@@ -702,7 +702,7 @@ public class MotionExecutor {
         double distance = Math.sqrt(Math.pow(targetX - currentX, 2) + Math.pow(targetY - currentY, 2));
 
         // Calculate estimated timeout: distance/velocity * safety factor (with margin for acceleration/deceleration)
-        int estimatedTimeoutMs = (int) Math.min((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
+        int estimatedTimeoutMs = (int) Math.max((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
         return moveToPose(targetX, targetY, targetHeading, maxVelocity, 0.0, estimatedTimeoutMs);
     }
 
@@ -758,6 +758,8 @@ public class MotionExecutor {
         updateState();
         // ROBOT CENTER MOTION CONTROL:
         // Convert reference point target to robot center target for efficient motion control
+        // smooth operation!
+
         Pose2D robotCenterTarget = coordinateTransformer.convertReferencePointToRobotCenter(
                 targetX, targetY, targetHeading);
 
@@ -804,29 +806,27 @@ public class MotionExecutor {
                         timer.milliseconds(), "Success");
             }
 
-            // Check for stall (no progress on position)
-            if (Math.abs(lastPositionError - positionError) < MotionConfig.STALL_VELOCITY_THRESHOLD * 0.02) {
+            // Check for stall (no progress on position AND heading)
+            double loopTimeSec = MotionConfig.CONTROL_LOOP_PERIOD_MS / 1000.0;
+            boolean positionStalled = Math.abs(lastPositionError - positionError) < MotionConfig.STALL_VELOCITY_THRESHOLD * loopTimeSec;
+            boolean headingStalled = Math.abs(lastHeadingError - headingError) < MotionConfig.STALL_HEADING_THRESHOLD * loopTimeSec;
+
+            if (positionStalled && headingStalled) {
                 if (stallTimer.milliseconds() > MotionConfig.STALL_DETECTION_TIME_MS) {
                     stop();
                     return new MotionResult(false, positionError, headingError,
-                            timer.milliseconds(), "Stalled");
+                            timer.milliseconds(), "Stalled - no progress on position and heading");
                 }
             } else {
                 stallTimer.reset();
             }
+
             lastPositionError = positionError;
             lastHeadingError = headingError;
 
-            // ROBOT CENTER MOTION CONTROL:
-            // Control robot center position for efficient rotation around robot center
-            // Get current robot center position
+
             Pose2D currentRobotCenter = coordinateTransformer.getCurrentRobotCenterPose();
 
-            // Calculate velocity using distance-based control (2-PID architecture)
-
-
-            // Distance controller provides the magnitude of velocity toward target
-            // Use robot center coordinates for position control
             double robotCenterTargetX = robotCenterTarget.getX(DistanceUnit.INCH);
             double robotCenterTargetY = robotCenterTarget.getY(DistanceUnit.INCH);
             double currentRobotCenterX = currentRobotCenter.getX(DistanceUnit.INCH);
@@ -1052,13 +1052,20 @@ public class MotionExecutor {
         return rotate(targetAngle, MotionConfig.MAX_ANGULAR_VELOCITY);
     }
 
-    private MotionResult rotate(double targetAngle, double maxAngularVelocity) {
+    public MotionResult rotate(double targetAngle, double angularVelocity) {
+        return rotate(targetAngle, angularVelocity, MotionConfig.MOTION_TIMEOUT_MS);
+    }
+
+      public MotionResult rotate(double targetAngle, double angularVelocity, int timeoutMs) {
         // Validate inputs
-        if (Math.abs(maxAngularVelocity) > MotionConfig.MAX_ANGULAR_VELOCITY) {
-            return new MotionResult(false, 0, 0, 0, "Angular velocity exceeds maximum");
+        if (Math.abs(angularVelocity) > MotionConfig.MAX_ANGULAR_VELOCITY) {
+            angularVelocity = Math.signum(angularVelocity) * MotionConfig.MAX_ANGULAR_VELOCITY;
         }
         if (targetAngle == 0) {
             return new MotionResult(true, 0, 0, 0, "No rotation needed");
+        }
+        if (timeoutMs <= 0) {
+            return new MotionResult(false, 0, 0, 0, "Timeout must be positive");
         }
 
         // Get current heading and calculate target
@@ -1066,15 +1073,24 @@ public class MotionExecutor {
         double startHeading = motionState.getHeading();
         double targetHeading = startHeading + targetAngle;
 
-        // Normalize target heading to [-180, 180]
-        while (targetHeading > 180) targetHeading -= 360;
-        while (targetHeading <= -180) targetHeading += 360;
+        targetHeading = MecanumKinematics.normalizeAngle(targetHeading);
 
-        // Use linearMove with distance=0 and robot-centric mode for pure rotation
-        // This rotates around robot center while keeping reference point stationary
-        return linearMove(0.0, 0.0, targetHeading, maxAngularVelocity, 0.0, MotionState.CoordinateMode.ROBOT_CENTRIC);
+        // Calculate where reference point should be after rotating around robot center
+        // Get current robot center position
+        Pose2D currentRobotCenter = coordinateTransformer.getCurrentRobotCenterPose();
+        double robotCenterX = currentRobotCenter.getX(DistanceUnit.INCH);
+        double robotCenterY = currentRobotCenter.getY(DistanceUnit.INCH);
+
+        // Create target robot center pose with new heading but same position
+        Pose2D targetRobotCenterPose = new Pose2D(DistanceUnit.INCH, robotCenterX, robotCenterY, AngleUnit.DEGREES, targetHeading);
+
+        // Use CoordinateTransformer to convert robot center pose to reference point
+        FieldPose targetRefPoint = CoordinateTransformer.convertRobotCenterToReferencePoint(targetRobotCenterPose);
+
+        // Use moveToPose to move reference point to new position with new heading
+        // This achieves rotation around robot center
+        return moveToPose(targetRefPoint.x, targetRefPoint.y, targetHeading, angularVelocity, 0, timeoutMs);
     }
-
 
     // ========== COORDINATE SYSTEM MANAGEMENT ==========
     /**
@@ -1084,20 +1100,6 @@ public class MotionExecutor {
 
         // Set reference point to field origin
         resetToFieldOrigin(new Pose2D(DistanceUnit.INCH,0, 0, AngleUnit.DEGREES, 0 ));
-
-        /*
-        pose2D fieldOrigin = new Pose2D(
-                DistanceUnit.INCH,
-                MotionConfig.FIELD_ORIGIN_X,
-                MotionConfig.FIELD_ORIGIN_Y,
-                AngleUnit.DEGREES,
-                MotionConfig.FIELD_ORIGIN_HEADING
-        );
-
-        */
-
-
-
 
     }
     public void resetToFieldOrigin(Pose2D fieldOrigin) {

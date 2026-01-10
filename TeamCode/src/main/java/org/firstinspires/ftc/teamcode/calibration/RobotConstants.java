@@ -264,14 +264,18 @@ public class RobotConstants {
     /* odometry setup -- CRITICAL
      for odometry: X is the pod-x offset, Y is the pod-y offset.
      */
-    public static final double ODOMETRY_DX = 0.5; // x_pod center - y_pod center in x direction of our robot coordinate
-    public static final double ODOMETRY_DY = -2.5; // y_pod center - x_pod center in y direction of our robot coordinate
-    public static final ComponentPosition ODOMETRY_SENSOR_REF = BACK_RIGHT_WHEEL_REF.translate(-1, 7.87, 0);  // -24/25.4, 200/25.4
+   // public static final double ODOMETRY_DX = 0.5; // x_pod center - y_pod center in x direction of our robot coordinate
+   // public static final double ODOMETRY_DY = -2.5; // y_pod center - x_pod center in y direction of our robot coordinate
+   // public static final ComponentPosition ODOMETRY_SENSOR_REF = BACK_RIGHT_WHEEL_REF.translate(-1.5, 7.87, 0);  // -24/25.4, 200/25.4
+
+    //deltax: y-pod x direction, deltay:x-pod y direction
+    public static final ComponentPosition ODOMETRY_SENSOR_REF = BACK_RIGHT_WHEEL_REF.translate(-1., 4.5, 0);  //
 
 
     public static final ComponentPosition BACK_RIGHT_CORNER_REF = BACK_RIGHT_WHEEL_REF.translate(-3.75, -1,0); //
 
-    public static final ComponentPosition BACK_CAMERA_REF = new ComponentPosition (8, 5.98,0, 0, 0, 180); // 96/25.4, 152/25.4             // looking back initially
+    public static final ComponentPosition BACK_CAMERA_REF = new ComponentPosition (0, 5.98,0, 0, 0, 180);  // looking back initially
+    public static final ComponentPosition BACK_CAMERA_SERVO_REF = BACK_CAMERA_REF.translate(2, 0, 0); // servo offset
     public static final ComponentPosition FRONT_CAMERA_REF = FRONT_RIGHT_WHEEL_REF.translate(1.0, -TRACK_WIDTH/2,0); // To be implemented in the middle of the front side.         
     
     public static final ComponentPosition INTAKE_POINT_REF = BACK_RIGHT_WHEEL_REF.translate(14, TRACK_WIDTH/2,  0.0);
@@ -362,7 +366,10 @@ public class RobotConstants {
         convertToRobotCenter(ODOMETRY_SENSOR_REF);    
   
     public static final ComponentPosition BACK_CAMERA = 
-        convertToRobotCenter(BACK_CAMERA_REF);    
+        convertToRobotCenter(BACK_CAMERA_REF);
+
+    public static final ComponentPosition BACK_CAMERA_SERVO =
+        convertToRobotCenter(BACK_CAMERA_SERVO_REF);
    
     public static final ComponentPosition FRONT_CAMERA = 
         convertToRobotCenter(FRONT_CAMERA_REF);

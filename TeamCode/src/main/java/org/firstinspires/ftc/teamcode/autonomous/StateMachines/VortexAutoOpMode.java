@@ -72,7 +72,7 @@ public class VortexAutoOpMode extends LinearOpMode {
         
         // Initialize CameraServo with CoordinateTransformer for odometry fallback
         cameraServo = new CameraServo();
-        cameraServo.init(hardwareMap, aprilTagProcessor,
+        cameraServo.init(hardwareMap, 
                          null, // odometryManager (optional - can be null)
                          driveManager.getCoordinateTransformer(),
                          driveManager.getMotionExecutor());

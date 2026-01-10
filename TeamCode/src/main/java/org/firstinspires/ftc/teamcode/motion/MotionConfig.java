@@ -150,14 +150,14 @@ public class MotionConfig {
     
     
     // Distance controller (2-PID architecture: unified linear motion control)
-    public static final double DISTANCE_KP = 3.5;   // Proportional gain for distance control (unified X/Y)
-    public static final double DISTANCE_KI = 0.2;   // Integral gain for distance control
+    public static final double DISTANCE_KP = 2.0;   // was 2.8, but oscillation sometime.
+    public static final double DISTANCE_KI = 0.2;   //0.2 is good.
     public static final double DISTANCE_KD = 1.5;   // Derivative gain for distance control
     
     // Heading controller (rotation)
-    public static final double HEADING_KP = 6.0;    // Increased for better heading control
-    public static final double HEADING_KI = 2.5;   // Slightly increased integral gain
-    public static final double HEADING_KD = 1.0;    // Derivative gain disabled for PID tuning
+    public static final double HEADING_KP = 5.0;    // Increased for better heading control
+    public static final double HEADING_KI = 0.2;   // Slightly increased integral gain
+    public static final double HEADING_KD = 1.0;    // Derivative gain
     
     
     
@@ -241,19 +241,17 @@ public class MotionConfig {
     // ========== HYBRID CONTROL CALIBRATION CONSTANTS ==========
     
     /** Position feedforward gain for hybrid control calibration */
-    public static final double POSITION_FEEDFORWARD_GAIN = 0.5;  // TODO: CALIBRATE THIS VALUE!
-    
-    
-    
+    public static final double POSITION_FEEDFORWARD_GAIN = 0.5;
+
     /** Acceleration limit for motion control (inches/sec²) */
-    public static final double ACCELERATION_LIMIT = CalibrationCoefficients.CALIBRATED_MAX_LINEAR_ACCELERATION;  // TODO: CALIBRATE THIS VALUE!
+    public static final double ACCELERATION_LIMIT = CalibrationCoefficients.CALIBRATED_MAX_LINEAR_ACCELERATION;
     // ========== SAFETY LIMITS ==========
     
     /** Default timeout for motion commands (milliseconds) */
     public static final int MOTION_TIMEOUT_MS = 5000;  // Increased for more reliable motion execution
     
     /** Safety factor for timeout calculations (multiplier for estimated time) */
-    public static final double TIMEOUT_SAFETY_FACTOR = 10.0;  // 50% extra time for acceleration/deceleration
+    public static final double TIMEOUT_SAFETY_FACTOR = 5.0;  // extra time for acceleration/deceleration
     
     /** Stall detection time - no progress for this duration = stalled (milliseconds) */
     public static final int STALL_DETECTION_TIME_MS = 1000;
@@ -263,7 +261,9 @@ public class MotionConfig {
     
     /** Velocity threshold for stall detection (inches/sec) */
     public static final double STALL_VELOCITY_THRESHOLD = 1.0;
-    
+
+    /** Heading progress threshold for stall detection (degrees/sec) */
+    public static final double STALL_HEADING_THRESHOLD = 5.0;
 
     // Prevent instantiation
     private MotionConfig() {}

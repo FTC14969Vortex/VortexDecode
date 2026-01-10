@@ -22,45 +22,62 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 //Imports LimeLight
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
-@TeleOp(name = "Teleop Blue 0.01", group = "TeleOp")
+
+@TeleOp(name = "DecodeTeleopBlueV4.24 Alaqmar", group = "TeleOp")
 
 public class TeleopBlue extends LinearOpMode {
 
-    // Subsystems
-    private Chassis chassis;
-    private FlyWheel flyWheel;
-    private Intake intake;
-    private Kicker kicker;
-    private Flipper flipper;
-
-    // Vision
-    private WebcamName webcamName;
-    private Limelight3A limelight;
-    private AprilTagProcessor aprilTag;
-    private final String currentAprilTagName = AprilTagProcessor.BLUE_APRIL_TAG;
-
-    // Threading
-    private Thread driveThread;
+    Chassis chassis;
+    VoltageSensor voltageSensor;
     private volatile boolean threadIsRunning = true;
+    double flyWheelVelocity = 0.0;
+    long maxLoopTimeout = 2000;
+    private Thread driveThread;
+    AprilTagProcessor aprilTag;
+
+
+    WebcamName webcamName;
+    private Limelight3A limelight;
+
+
+    String currentAprilTagName = AprilTagProcessor.BLUE_APRIL_TAG;
 
 
     @Override
     public void runOpMode() throws InterruptedException {
+        chassis = new Chassis();
+        chassis.init(this);
 
-        initializeSubsystems();
+        //voltageSensor = hardwareMap.voltageSensor.get("Motor Controller 1");
+        //   chassis.setDriveMode(Chassis.DriveMode.ROBOT_CENTRIC);
 
-        // Setup drive control thread
+        FlyWheel flyWheel = new FlyWheel();
+        flyWheel.init(this);
+
+        Intake intake =new Intake();
+        intake.init(this);
+
+        Kicker kicker = new Kicker();
+        kicker.init(hardwareMap);
+
+        aprilTag  = new AprilTagProcessor(this);
+        aprilTag.initCamera();
+
+        Flipper flipper = new Flipper();
+        flipper.init(hardwareMap);
+
+
+
+        chassis.odo.resetPosAndIMU();
+
+        // Define and start the drive thread
         driveThread = new Thread(new DriveTask());
-
-        telemetry.addData("Status", "Initialized - Waiting for Start");
-        telemetry.update();
 
         waitForStart();
 
-        if (opModeIsActive()) {
-            driveThread.start(); // Start the concurrent task
-        }
+        driveThread.start(); // Start the concurrent task
 
+        //telemetry.addData("Status", "Initialized");
 
         //RobotUtil.prepareFlyWheelToShoot(flyWheel, kicker, intake, channelSensor, 1100, telemetry);
 
@@ -220,29 +237,4 @@ public class TeleopBlue extends LinearOpMode {
             }
         }
     }
-
-    private void initializeSubsystems() {
-        chassis = new Chassis();
-        chassis.init(this);
-        chassis.odo.resetPosAndIMU();
-
-        flyWheel = new FlyWheel();
-        flyWheel.init(this);
-
-        intake = new Intake();
-        intake.init(this);
-
-        kicker = new Kicker();
-        kicker.init(hardwareMap);
-
-        flipper = new Flipper();
-        flipper.init(hardwareMap);
-
-        aprilTag = new AprilTagProcessor(this);
-        aprilTag.initCamera();
-
-        aprilTag  = new AprilTagProcessor(this);
-        aprilTag.initCamera();
-    }
-
 }

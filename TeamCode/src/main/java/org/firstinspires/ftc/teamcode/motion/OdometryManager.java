@@ -140,10 +140,13 @@ public class OdometryManager {
             // plus the internal r_ref = r_odometry - r_offset_rotated, r_offset_rotated = r_offset*e^(i*(theta+pi/2)), pi/2 is coordinate system rotation, very confusing
             // and we have two odo-pod, they have offset in different direction, so we just hardcode the offset here for simplicity
 
-            double offsetX =  FieldPositions.getActiveReferencePoint().x - (RobotConstants.ODOMETRY_SENSOR.x + RobotConstants.ODOMETRY_DX);
-            double offsetY =  FieldPositions.getActiveReferencePoint().y - (RobotConstants.ODOMETRY_SENSOR.y + RobotConstants.ODOMETRY_DY);
+         //   double offsetX =  FieldPositions.getActiveReferencePoint().x - (RobotConstants.ODOMETRY_SENSOR.x + RobotConstants.ODOMETRY_DX);
+          //  double offsetY =  FieldPositions.getActiveReferencePoint().y - (RobotConstants.ODOMETRY_SENSOR.y + RobotConstants.ODOMETRY_DY);
 
-            pinpoint.setOffsets(-offsetY, -offsetX, DistanceUnit.INCH); // gobilda's convention
+            double YpodOffsetX =  RobotConstants.ODOMETRY_SENSOR.x - FieldPositions.getActiveReferencePoint().x;
+            double XpodOffsetY =  RobotConstants.ODOMETRY_SENSOR.y - FieldPositions.getActiveReferencePoint().y;
+
+            pinpoint.setOffsets(XpodOffsetY, YpodOffsetX, DistanceUnit.INCH); // gobilda's convention
 
             
             // Set encoder resolution for GoBilda 4-bar pods

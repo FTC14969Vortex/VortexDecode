@@ -1,4 +1,392 @@
 package org.firstinspires.ftc.teamcode.debug;
 
-public class TeleopBlue {
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+
+import org.firstinspires.ftc.teamcode.calibration.RobotConstants;
+import org.firstinspires.ftc.teamcode.motion.FieldPose;
+import org.firstinspires.ftc.teamcode.motion.FieldPositions;
+import org.firstinspires.ftc.teamcode.motion.MotionExecutor;
+import org.firstinspires.ftc.teamcode.subsystems.BaseMotion;
+import org.firstinspires.ftc.teamcode.subsystems.FlyWheel;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Kicker;
+import org.firstinspires.ftc.teamcode.subsystems.Flipper;
+import org.firstinspires.ftc.teamcode.utils.RobotOperations;
+import org.firstinspires.ftc.teamcode.vision.CameraServo;
+
+
+/**
+ * TeleopBlue - Enhanced Blue Alliance Teleop with Smart Shooting Logic
+ * 
+ * Features:
+ * 1. Manual driving with gamepad1 (left stick = translation, right stick = rotation)
+ * 2. Special movements with gamepad1: open_gate, loading, parking_end
+ * 3. Smart shooting system with gamepad2:
+ *    - Move to shooting positions: shooting_near, shooting_far
+ *    - Intelligent shooting logic:
+ *      * Successful movement → auto shoot
+ *      * Interrupted but in zone → auto shoot
+ *      * Interrupted not in zone → manual positioning required
+ *    - Right bumper always available for manual shooting override
+ * 
+ * Controls:
+ * GAMEPAD 1 (Driver):
+ * - Left Stick: Robot translation (strafe)
+ * - Right Stick X: Robot rotation
+ * - A: Move to open_gate
+ * - B: Move to loading
+ * - Y: Move to parking_end
+ * 
+ * GAMEPAD 2 (Shooter):
+ * - A: Move to shooting_near (with smart shooting)
+ * - B: Move to shooting_far (with smart shooting)
+ * - Right Bumper: Manual shoot (always available)
+ * - X: Toggle intake on/off
+ * - Y: Emergency stop all operations
+ */
+@TeleOp(name = "TeleopBlue - Smart Shooting", group = "Debug")
+public class TeleopBlue extends LinearOpMode {
+
+    // ========== SUBSYSTEMS ==========
+    private BaseMotion baseMotion;
+    private FlyWheel flyWheel;
+    private Intake intake;
+    private Kicker kicker;
+    private Flipper flipper;
+    private CameraServo cameraServo;
+    private RobotOperations robotOperations;
+
+
+
+    // ========== CONTROL PARAMETERS ==========
+    private static final double DRIVE_SPEED_MULTIPLIER = 1.0;  // Full speed for translation
+    private static final double ROTATION_SPEED_MULTIPLIER = 0.3;  // Reduced speed for rotation precision
+    private static final double BUTTON_DEBOUNCE_TIME = 0.3;    // seconds
+
+    // ========== STATE TRACKING ==========
+    private ElapsedTime buttonTimer = new ElapsedTime();
+    private boolean intakeOn = false;
+    private String lastOperation = "None";
+    private boolean isMovingToShoot = false;  // Track if we're in a shooting movement
+
+    // ========== BUTTON DEBOUNCING ==========
+    private boolean lastGamepad1A = false;
+    private boolean lastGamepad1B = false;
+    private boolean lastGamepad1Y = false;
+    private boolean lastGamepad2A = false;
+    private boolean lastGamepad2B = false;
+    private boolean lastGamepad2X = false;
+    private boolean lastGamepad2Y = false;
+    private boolean lastGamepad2RightBumper = false;
+
+    @Override
+    public void runOpMode() throws InterruptedException {
+        
+        // ========== INITIALIZATION ==========
+        
+        telemetry.addLine("🔧 Initializing TeleopBlue...");
+        telemetry.update();
+
+        initSubsystems();
+        initRobotOperations();
+
+        telemetry.addLine("✅ Initialization complete!");
+        telemetry.addLine("🎮 Ready for teleop control");
+        telemetry.addLine("");
+        telemetry.addLine("GAMEPAD 1 (Driver):");
+        telemetry.addLine("  Left Stick: Translation");
+        telemetry.addLine("  Right Stick X: Rotation");
+        telemetry.addLine("  A: Open Gate  B: Loading  Y: Parking");
+        telemetry.addLine("");
+        telemetry.addLine("GAMEPAD 2 (Shooter):");
+        telemetry.addLine("  A: Shoot Near  B: Shoot Far");
+        telemetry.addLine("  Right Bumper: Manual Shoot");
+        telemetry.addLine("  X: Toggle Intake  Y: Emergency Stop");
+        telemetry.update();
+
+        waitForStart();
+
+        if (isStopRequested()) return;
+
+        // ========== MAIN TELEOP LOOP ==========
+        
+        buttonTimer.reset();
+        
+        while (opModeIsActive()) {
+
+            handleDriverControls();           //game pad1 - driver
+
+            handleShooterControls();          //game pad2 - shooter
+            
+            updateTelemetry();
+
+            updateButtonStates();
+            sleep(20);
+        }
+
+        // ========== CLEANUP ==========
+        
+        cleanupSubsystems();
+
+
+    }
+
+
+    private void initSubsystems() {
+        // Initialize BaseMotion
+        baseMotion = new BaseMotion();
+        baseMotion.init(this);
+
+        // Initialize FlyWheel
+        flyWheel = new FlyWheel();
+        flyWheel.init(this);
+
+        // Initialize Intake
+        intake = new Intake();
+        intake.init(this);
+        intake.stopIntake();
+
+        // Initialize Kicker
+        kicker = new Kicker();
+        kicker.init(hardwareMap);
+        kicker.setGatePosition(Kicker.GATE_INTAKE); // Start in intake position
+
+        // Initialize Flipper
+        flipper = new Flipper();
+        flipper.init(hardwareMap);
+        flipper.resetFlipper();
+
+        // Initialize CameraServo
+        cameraServo = new CameraServo();
+        cameraServo.init(hardwareMap);
+        cameraServo.moveToCenter(); // Keep servo at center position
+        cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for teleop
+    }
+
+    /**
+     * Initialize RobotOperations with all subsystems
+     */
+    private void initRobotOperations() {
+        robotOperations = new RobotOperations();
+        robotOperations.init(baseMotion, flyWheel, intake, kicker, flipper, cameraServo,
+                baseMotion.getMotionExecutor().getCoordinateTransformer(), this);
+        robotOperations.setAlliance(true); // Blue alliance
+
+        // Set reference point to match autonomous setup
+        baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
+        baseMotion.setReferencePointToPosition(FieldPositions.START_NEAR);
+
+        // Try to restore odometry from autonomous
+        RobotOperations.OdometryRestoreResult restoreResult = 
+            RobotOperations.loadOdometryFromAuto(hardwareMap, baseMotion);
+
+        if (restoreResult.success) {
+            telemetry.addLine("✅ Odometry Restored from Auto!");
+            telemetry.addData("Message", restoreResult.message);
+            telemetry.addData("Position", "x: %.2f, y: %.2f, h: %.2f°", 
+                restoreResult.restoredPose.x, restoreResult.restoredPose.y, restoreResult.restoredPose.heading);
+        } else {
+            telemetry.addLine("⚠️ Odometry Restore Failed");
+            telemetry.addData("Reason", restoreResult.message);
+            telemetry.addLine("Starting from default position");
+        }
+        telemetry.update();
+    }
+
+    /**
+     * Handle driver controls (gamepad1)
+     */
+    private void handleDriverControls() {
+        // ========== MANUAL DRIVING ==========
+        
+        // Get joystick inputs
+        double axial = -gamepad1.left_stick_y * DRIVE_SPEED_MULTIPLIER;   // Forward/backward
+        double lateral = gamepad1.left_stick_x * DRIVE_SPEED_MULTIPLIER;  // Left/right strafe
+        double yaw = gamepad1.right_stick_x * ROTATION_SPEED_MULTIPLIER;  // Rotation
+
+        // Apply manual driving (only if not in autonomous movement)
+        if (!isMovingToShoot && (Math.abs(axial) > 0.1 || Math.abs(lateral) > 0.1 || Math.abs(yaw) > 0.1)) {
+            baseMotion.setMotorPowers(lateral, axial, yaw);  // leftX, leftY, rightX
+            lastOperation = "Manual Drive";
+        } else if (!isMovingToShoot) {
+            // Stop motors when joystick is released (within deadzone)
+            baseMotion.setMotorPowers(0, 0, 0);
+        }
+
+        // ========== SPECIAL MOVEMENTS ==========
+        
+        // A Button: Move to open_gate
+        if (gamepad1.a && !lastGamepad1A && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            lastOperation = "Moving to open_gate";
+            try {
+                MotionExecutor.MotionResult result = robotOperations.moveToLocation("open_gate");
+                lastOperation = result.success ? "Reached open_gate" : "Failed to reach open_gate: " + result.failureReason;
+            } catch (Exception e) {
+                lastOperation = "Error moving to open_gate: " + e.getMessage();
+            }
+            buttonTimer.reset();
+        }
+
+        // B Button: Move to loading
+        if (gamepad1.b && !lastGamepad1B && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            lastOperation = "Moving to loading";
+            try {
+                MotionExecutor.MotionResult result = robotOperations.moveToLocation("loading");
+                lastOperation = result.success ? "Reached loading" : "Failed to reach loading: " + result.failureReason;
+            } catch (Exception e) {
+                lastOperation = "Error moving to loading: " + e.getMessage();
+            }
+            buttonTimer.reset();
+        }
+
+        // Y Button: Move to parking_end
+        if (gamepad1.y && !lastGamepad1Y && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            lastOperation = "Moving to parking_end";
+            try {
+                MotionExecutor.MotionResult result = robotOperations.moveToLocation("parking_end");
+                lastOperation = result.success ? "Reached parking_end" : "Failed to reach parking_end: " + result.failureReason;
+            } catch (Exception e) {
+                lastOperation = "Error moving to parking_end: " + e.getMessage();
+            }
+            buttonTimer.reset();
+        }
+    }
+
+    /**
+     * Handle shooter controls (gamepad2)
+     */
+    private void handleShooterControls() {
+        // ========== SMART SHOOTING MOVEMENTS ==========
+        
+        // A Button: Move to shooting_near with smart shooting
+        if (gamepad2.a && !lastGamepad2A && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            isMovingToShoot = true;
+            lastOperation = robotOperations.executeSmartShooting("shooting_near");
+            isMovingToShoot = false;
+            buttonTimer.reset();
+        }
+
+        // B Button: Move to shooting_far with smart shooting
+        if (gamepad2.b && !lastGamepad2B && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            isMovingToShoot = true;
+            lastOperation = robotOperations.executeSmartShooting("shooting_far");
+            isMovingToShoot = false;
+            buttonTimer.reset();
+        }
+
+        // ========== MANUAL SHOOTING ==========
+        
+        // Right Bumper: Manual shoot (always available)
+        if (gamepad2.right_bumper && !lastGamepad2RightBumper && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            lastOperation = "Manual shooting";
+            try {
+                robotOperations.shoot();  // shoot() already includes alignment
+                lastOperation = "Manual shooting completed";
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                lastOperation = "Manual shooting interrupted";
+            } catch (Exception e) {
+                lastOperation = "Manual shooting error: " + e.getMessage();
+            }
+            buttonTimer.reset();
+        }
+
+        // ========== INTAKE CONTROL ==========
+        
+        // X Button: Toggle intake
+        if (gamepad2.x && !lastGamepad2X && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            intakeOn = !intakeOn;
+            if (intakeOn) {
+                intake.startIntake();
+                lastOperation = "Intake ON";
+            } else {
+                intake.stopIntake();
+                lastOperation = "Intake OFF";
+            }
+            buttonTimer.reset();
+        }
+
+        // ========== EMERGENCY STOP ==========
+        
+        // Y Button: Emergency stop
+        if (gamepad2.y && !lastGamepad2Y && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            robotOperations.emergencyStop();  // This now includes intake stop
+            intakeOn = false;
+            isMovingToShoot = false;
+            lastOperation = "EMERGENCY STOP";
+            buttonTimer.reset();
+        }
+    }
+
+
+
+    /**
+     * Update telemetry display
+     */
+    private void updateTelemetry() {
+        // Current robot position
+        FieldPose currentPose = baseMotion.getCurrentPose();
+        telemetry.addData("🤖 Robot Position", "X: %.1f, Y: %.1f, H: %.1f°", 
+            currentPose.x, currentPose.y, currentPose.heading);
+        
+        // Last operation status
+        telemetry.addData("🔧 Last Operation", lastOperation);
+        
+        // Movement result status
+        String moveStatus = robotOperations.getLastMoveResultStatus();
+        telemetry.addData("📊 Move Status", moveStatus);
+        
+        // Shooting zone status
+        boolean inShootingZone = robotOperations.isInShootingZone();
+        telemetry.addData("🎯 In Shooting Zone", inShootingZone ? "YES" : "NO");
+        
+        // Intake status
+        telemetry.addData("🔄 Intake", intakeOn ? "ON" : "OFF");
+        
+        // Dynamic flywheel status
+        telemetry.addData("🌪️ Flywheel", robotOperations.isDynamicFlywheelActive() ? 
+            String.format("Dynamic (%.0f RPM)", robotOperations.getCurrentTargetVelocity()) : "Idle");
+        
+        // Control hints
+        telemetry.addLine("");
+        telemetry.addLine("🎮 GP1: A=Gate B=Load Y=Park | GP2: A=Near B=Far RB=Shoot X=Intake Y=Stop");
+        
+        telemetry.update();
+    }
+
+    /**
+     * Update button states for debouncing
+     */
+    private void updateButtonStates() {
+        lastGamepad1A = gamepad1.a;
+        lastGamepad1B = gamepad1.b;
+        lastGamepad1Y = gamepad1.y;
+        lastGamepad2A = gamepad2.a;
+        lastGamepad2B = gamepad2.b;
+        lastGamepad2X = gamepad2.x;
+        lastGamepad2Y = gamepad2.y;
+        lastGamepad2RightBumper = gamepad2.right_bumper;
+    }
+
+    /**
+     * Clean up all subsystems
+     */
+    private void cleanupSubsystems() {
+        telemetry.addLine("🧹 Cleaning up subsystems...");
+        telemetry.update();
+        
+        if (robotOperations != null) {
+            robotOperations.emergencyStop();
+        }
+
+        if (cameraServo != null) {
+            cameraServo.cleanup();
+        }
+        
+        telemetry.addLine("✅ Cleanup complete");
+        telemetry.update();
+    }
 }

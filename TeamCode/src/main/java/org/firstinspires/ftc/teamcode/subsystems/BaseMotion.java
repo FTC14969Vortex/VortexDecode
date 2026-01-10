@@ -143,17 +143,10 @@ public class BaseMotion {
         return motionExecutor.linearMove(angle, distance, targetHeading, velocity);
     }
 
-    /**
-     * Rotates robot to target heading
-     *
-     * @param targetHeading Target heading (degrees)
-     * @param angularVelocity Maximum angular velocity (degrees/sec)
-     * @return MotionResult indicating success/failure
-     */
-    public MotionExecutor.MotionResult rotate(double targetHeading, double angularVelocity) {
-        // Note: MotionExecutor.rotate() only takes targetHeading, angularVelocity is handled internally
-        return motionExecutor.rotate(targetHeading);
+    public MotionExecutor.MotionResult rotate(double targetAngle, double angularVelocity, int timeoutMs) {
+        return motionExecutor.rotate(targetAngle, angularVelocity, timeoutMs);
     }
+
 
     // ========== TIME-BASED MOTION ==========
 

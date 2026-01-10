@@ -69,7 +69,7 @@ public class FieldPositions {
     public static final FieldPose GOAL = new FieldPose(-72, -72.0, -135);    // blue goad corner
 
     // GOAL AprilTags (for shooting targeting) AprilTag Detection: Blue GOAL tagID (Tag 20), Red GOAL (Tag 24)
-    public static final FieldPose GOAL_APRILTAG = new FieldPose(-56, -56, -135.0);   // Tag 20
+    public static final FieldPose GOAL_APRILTAG = new FieldPose(-58, -55, -124.3);   // Tag 20
 
     // OBELISK AprilTags
     public static final FieldPose OBELISK_POSITION = new FieldPose(-72, 0, 0.0);

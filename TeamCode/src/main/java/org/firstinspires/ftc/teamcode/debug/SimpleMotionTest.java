@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.debug;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -30,6 +31,7 @@ import java.text.FieldPosition;
  * 
  * NO calibration, NO validation - just raw Pinpoint data
  */
+@Disabled
 @Autonomous(name = "Simple Motion Test -2", group = "Debug")
 public class SimpleMotionTest extends LinearOpMode {
     
@@ -133,8 +135,8 @@ public class SimpleMotionTest extends LinearOpMode {
         telemetry.update();
         
         // Calculate target position: move 24 inches forward from current position
-        double targetX = initialPose.getX(DistanceUnit.INCH) + 72;
-        double targetY = initialPose.getY(DistanceUnit.INCH)+43;
+        double targetX = initialPose.getX(DistanceUnit.INCH) + 48;
+        double targetY = initialPose.getY(DistanceUnit.INCH)+24;
         double targetHeading = initialPose.getHeading(AngleUnit.DEGREES) + 90;
         
         // Execute motion
