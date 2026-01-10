@@ -44,7 +44,9 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.4x", group = "Debug")
+
+@Autonomous(name = "Full Auto Operate Test 0.42", group = "Debug")
+
 public class FullAutoOperateTest extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
