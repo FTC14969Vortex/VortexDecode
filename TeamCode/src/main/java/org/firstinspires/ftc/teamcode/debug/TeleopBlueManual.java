@@ -111,18 +111,7 @@ public class TeleopBlueManual extends LinearOpMode {
         while (opModeIsActive()) {
 
 
-        if (gamepad2.x){
-            robotOperations.prepareForIntake();
-            intake.startIntake();
-        }
-//
-//        if (gamepad2.y){
-//                intake.stopIntake();
-//            }
-//        }
-//        if (gamepad2.right_bumper){
-//            robotOperations.shoot();
-//        }
+            gamepad2Controls();
 
 
             // Clean up the thread
@@ -163,12 +152,17 @@ public class TeleopBlueManual extends LinearOpMode {
             }
         }
 
-        private void activeSingleControlTeleOp(){
+        private void gamepad2Controls() throws InterruptedException{
 
-            if (gamepad1.x){
+            if (gamepad2.x){
                 robotOperations.prepareForIntake();
                 intake.startIntake();
+            }else if (gamepad2.left_bumper) {
+                robotOperations.prepareForShooting();
+            } else if (gamepad2.right_bumper) {
+                robotOperations.shoot();
             }
+        }
 
         }
 
