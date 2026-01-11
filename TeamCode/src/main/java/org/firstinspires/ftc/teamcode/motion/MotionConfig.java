@@ -152,7 +152,7 @@ public class MotionConfig {
     // Distance controller (2-PID architecture: unified linear motion control)
     public static final double DISTANCE_KP = 2.8;   // was 2.8, but oscillation sometime.
     public static final double DISTANCE_KI = 0.2;   //0.2 is good.
-    public static final double DISTANCE_KD = 1.2;   // 1.5 is good Derivative gain for distance control
+    public static final double DISTANCE_KD = 1.5;   // Derivative gain for distance control
     
     // Heading controller (rotation)
     public static final double HEADING_KP = 5.0;    // Increased for better heading control

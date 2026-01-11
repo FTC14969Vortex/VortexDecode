@@ -17,18 +17,18 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
 
 
 /**
- * Full Auto Operate Test - Blue Alliance Near Start
+ * Blue Auto Far - Blue Alliance Far Start Autonomous
  *
- * Complete autonomous routine for Blue Alliance starting near the goal:
- * 1. Start at START_NEAR
- * 2. Move to SHOOTING_NEAR and shoot (3 preloaded samples)
- * 3. Move to INTAKE_1_START → INTAKE_1_FINISH (intake coral)
- * 4. Return to SHOOTING_NEAR and shoot
- * 5. Move to INTAKE_2_START → INTAKE_2_FINISH (intake coral)
- * 6. Return to SHOOTING_NEAR and shoot
- * 7. Move to INTAKE_3_START → INTAKE_3_FINISH (intake coral)
- * 8. Return to SHOOTING_NEAR and shoot
- * 9. Park at PARKING_NEAR
+ * Complete autonomous routine for Blue Alliance starting far from the goal:
+ * 1. Start at START_FAR
+ * 2. Move to SHOOTING_FAR and shoot (3 preloaded samples)
+ * 3. Move to INTAKE_LOADING_START
+ * 4. Drive forward 1 sec for intake
+ * 5. Return to SHOOTING_FAR and shoot
+ * 6. Move to INTAKE_LOADING_START
+ * 7. Drive forward 1 sec for intake
+ * 8. Return to SHOOTING_FAR and shoot
+ * 9. Stop and dump odometry coordinates
  *
  * INTAKE BEHAVIOR:
  * - Full power (1.0) when actively intaking
@@ -40,12 +40,12 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - At shooting position: execute full shooting sequence
  *
  * REFERENCE:
- * - Uses FlywheelVelocityTest shooting sequence
- * - Uses BaseMotion for all movements
+ * - Based on FullAutoOperateTest structure
+ * - Uses RobotOperations for all smart movement (shooting_far, intake_loading_start)
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.5x", group = "Debug")
-public class FullAutoOperateTest extends LinearOpMode {
+@Autonomous(name = "Blue Auto Far 0.1", group = "Debug")
+public class BlueAutoFar extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
     private BaseMotion baseMotion;
@@ -55,15 +55,11 @@ public class FullAutoOperateTest extends LinearOpMode {
     private Flipper flipper;
     private CameraServo cameraServo;
     private RobotOperations robotOperations;
-
-
-
-    // ========== MOTION PARAMETERS ==========
-    private static final double TRAVEL_VELOCITY = 50.0; // inches/sec for movement
     private static final double INTAKE_VELOCITY = 35.0; // inches/sec during intake
 
     // ========== INTAKE PARAMETERS ==========
     private static final double INTAKE_FULL_POWER = 1.0;
+    private static final double INTAKE_TIME = 1.0; // 1 second intake time
 
 
     @Override
@@ -100,24 +96,23 @@ public class FullAutoOperateTest extends LinearOpMode {
         cameraServo.moveToCenter(); // Keep servo at center position for this auto
         cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for pure odometry-based calculation
 
-
         // Initialize RobotOperations utility
         robotOperations = new RobotOperations();
         robotOperations.init(baseMotion, flyWheel, intake, kicker, flipper, cameraServo,
                 baseMotion.getMotionExecutor().getCoordinateTransformer(), this);
 
-        // set blue alliance - true; red alliance - false
+        // Set blue alliance
         robotOperations.setAlliance(true); // Blue alliance
 
-        // Set reference point to START_NEAR position
+        // Set reference point to START_FAR position
         baseMotion.setControlMode(MotionExecutor.ControlMode.HYBRID);
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
-        baseMotion.setReferencePointToPosition(FieldPositions.START_NEAR);
+        baseMotion.setReferencePointToPosition(FieldPositions.START_FAR);
 
         cameraServo.update();
-        cameraServo.startThread(); // start cameraservo background thread
+        cameraServo.startThread();
 
-        telemetryCurrentPose("Initializing");
+        telemetryCurrentPose("Initializing at START_FAR");
 
         waitForStart();
 
@@ -129,19 +124,18 @@ public class FullAutoOperateTest extends LinearOpMode {
 
         try {
 
-            // Initial shooting with preloaded balls
-            robotOperations.moveToLocation("shooting_near");
+            // Step 1: Initial shooting with preloaded balls from START_FAR
+            robotOperations.moveToLocation("shooting_far");
             robotOperations.shoot();
-            telemetryCurrentPose("After Shooting");
+            telemetryCurrentPose("After Initial Shooting");
 
-            // Step 2-4: Intake and shoot for positions 1, 2, 3
-            for (int i = 1; i <= 3; i++) {
-                intakeAndShoot(i);
-                telemetryCurrentPose("After Intake and Shoot");
-            }
+            // Step 2-3: First intake and shoot cycle
+            intakeAndShoot();
+            telemetryCurrentPose("After First Intake and Shoot");
 
-            // Park at end position
-            robotOperations.moveToLocation("parking_near");
+            // Step 4-5: Second intake and shoot cycle
+            intakeAndShoot();
+            telemetryCurrentPose("After Second Intake and Shoot");
 
             // If we reach here, autonomous completed successfully
             autoCompletedSuccessfully = true;
@@ -164,70 +158,46 @@ public class FullAutoOperateTest extends LinearOpMode {
     }
 
     /**
-     * Intake and shoot sequence for a specific intake position (1, 2, or 3)
+     * Intake and shoot sequence
+     * 1. Move to INTAKE_LOADING_START
+     * 2. Drive forward 1 sec for intake
+     * 3. Return to SHOOTING_FAR and shoot
      */
-    private void intakeAndShoot(int intakeNumber) throws InterruptedException {
-        telemetryCurrentPose("Intake and Shoot");
+    private void intakeAndShoot() throws InterruptedException {
+        telemetryCurrentPose("Starting Intake and Shoot Cycle");
 
-        double intakeTime = 1.0;
-
-        // Get intake positions based on number
-        FieldPose intakeStart, intakeFinish;
-
-        switch (intakeNumber) {
-            case 1:
-                intakeTime = 0.8;
-                intakeStart = FieldPositions.INTAKE_1_START;
-                intakeFinish = FieldPositions.INTAKE_1_FINISH;
-                break;
-            case 2:
-                intakeTime = 1.0;
-                intakeStart = FieldPositions.INTAKE_2_START;
-                intakeFinish = FieldPositions.INTAKE_2_FINISH;
-                break;
-            case 3:
-                intakeTime = 1.0;
-                intakeStart = FieldPositions.INTAKE_3_START;
-                intakeFinish = FieldPositions.INTAKE_3_FINISH;
-                break;
-            default:
-                telemetry.addLine("❌ Invalid intake number: " + intakeNumber);
-                telemetry.update();
-                return;
-        }
-
-        // Move to intake start position
-        MotionExecutor.MotionResult result = baseMotion.moveToPose(intakeStart, TRAVEL_VELOCITY);
+        // Move to intake loading start position using smart movement
+        MotionExecutor.MotionResult result = robotOperations.moveToLocation("intake_loading_start");
 
         // Display motion results for debugging
-        telemetry.addData("Motion Success", result.success);
+        telemetry.addData("Motion to Intake", "Success: %s", result.success);
         telemetry.addData("Position Error", "%.2f inches", result.finalPositionError);
         telemetry.addData("Heading Error", "%.1f degrees", result.finalHeadingError);
         telemetry.addData("Motion Duration", "%.0f ms", result.executionTimeMs);
         telemetry.addData("Motion Status", result.failureReason);
         telemetry.update();
 
-        // Start intake at full power and move forward for specified time
-
+        // Start intake at full power and move forward for 1 second
         kicker.setGatePosition(Kicker.GATE_INTAKE);
         intake.setIntakePower(INTAKE_FULL_POWER);
 
-        // Move forward while intaking for specified time
-        baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
+        // Move forward while intaking for 1 second
+        baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, INTAKE_TIME);
 
         // Move to shooting position and shoot
-
-        MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near");
+        MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_far");
+        
         // Display motion results for debugging
-        telemetry.addData("Motion Success", result1.success);
+        telemetry.addData("Motion to Shooting", "Success: %s", result1.success);
         telemetry.addData("Position Error", "%.2f inches", result1.finalPositionError);
         telemetry.addData("Heading Error", "%.1f degrees", result1.finalHeadingError);
         telemetry.addData("Motion Duration", "%.0f ms", result1.executionTimeMs);
         telemetry.addData("Motion Status", result1.failureReason);
         telemetry.update();
 
-        robotOperations.shoot(); // use distance based velocity + alignment
+        cameraServo.update(); // at shooting position - update camera servo
 
+        robotOperations.shoot(); // use distance based velocity + alignment
     }
 
     private void cleanupSubsystems() {
@@ -239,10 +209,11 @@ public class FullAutoOperateTest extends LinearOpMode {
             intake.stopIntake();
         }
         if (cameraServo != null) {
-            cameraServo.stopSearch(); //stop background thread
+            cameraServo.stopThread();
             cameraServo.cleanup();
         }
     }
+
     private void telemetryCurrentPose(String message) {
         telemetry.addData("", message);
         FieldPose currPose = baseMotion.getCurrentPose();
