@@ -1,5 +1,6 @@
 //imports
 package org.firstinspires.ftc.teamcode.teleop;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -22,7 +23,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 //Imports LimeLight
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
-
+@Disabled
 @TeleOp(name = "DecodeTeleopRedV4.24 Alaqmar", group = "TeleOp")
 
 public class TeleopRed extends LinearOpMode {

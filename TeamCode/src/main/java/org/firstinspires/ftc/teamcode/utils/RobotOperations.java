@@ -388,9 +388,14 @@ public class RobotOperations {
                         Thread.sleep(flipperWaitTime + 100);
                         break;
                     case 2:
+                        Thread.sleep(flipperWaitTime);
                         break; // no delay for last shot
+                    case 3:
+                        break;
                 }
             }
+            // Cleanup - close gate
+            kicker.setGatePosition(Kicker.GATE_CLOSE);
 
 
         } finally {
@@ -404,8 +409,6 @@ public class RobotOperations {
                 Thread.currentThread().interrupt();
             }
 
-            // Cleanup - close gate
-            kicker.setGatePosition(Kicker.GATE_CLOSE);
 
             // NON-BLOCKING flywheel stop - robot can move immediately
             Thread flywheelStopThread = new Thread(() -> {

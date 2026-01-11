@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.autonomous;
 import static org.firstinspires.ftc.teamcode.autonomous.VisionUtil.*;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.subsystems.Chassis;
@@ -15,6 +16,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Kicker;
 import org.firstinspires.ftc.teamcode.utils.RobotUtil;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 
+@Disabled
 @Autonomous(name = "Red Near Auto 4.63", group = "Autonomous")
 
 public class RedNearAuto extends LinearOpMode {

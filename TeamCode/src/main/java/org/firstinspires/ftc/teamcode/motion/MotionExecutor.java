@@ -429,7 +429,7 @@ public class MotionExecutor {
         // while simultaneously rotating to the target heading
         // Note: moveToPose always operates in field-centric coordinates
         // Calculate estimated timeout: distance/velocity * safety factor (with margin for acceleration/deceleration)
-        int estimatedTimeoutMs = (int) Math.max((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
+        int estimatedTimeoutMs = (int) Math.min((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
         return moveToPose(targetX, targetY, targetHeading, maxVelocity, acceleration, estimatedTimeoutMs);
     }
 
@@ -702,7 +702,7 @@ public class MotionExecutor {
         double distance = Math.sqrt(Math.pow(targetX - currentX, 2) + Math.pow(targetY - currentY, 2));
 
         // Calculate estimated timeout: distance/velocity * safety factor (with margin for acceleration/deceleration)
-        int estimatedTimeoutMs = (int) Math.max((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
+        int estimatedTimeoutMs = (int) Math.min((distance / maxVelocity) * MotionConfig.TIMEOUT_SAFETY_FACTOR * 1000, MotionConfig.MOTION_TIMEOUT_MS);
         return moveToPose(targetX, targetY, targetHeading, maxVelocity, 0.0, estimatedTimeoutMs);
     }
 

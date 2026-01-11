@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotUtil;
 import org.firstinspires.ftc.teamcode.vision.CameraServo;
 
 
-@TeleOp(name = "TeleOpBlueNearManual 0.03", group = "TeleOp")
+@TeleOp(name = "TeleOpBlueNearManual 0.06", group = "TeleOp")
 
 public class TeleopBlueManual extends LinearOpMode {
     BaseMotion baseMotion;
@@ -111,60 +111,60 @@ public class TeleopBlueManual extends LinearOpMode {
         while (opModeIsActive()) {
 
 
-            gamepad2Controls();
-
-
-            // Clean up the thread
-            threadIsRunning = false;
-            sleep(2000);
-            driveThread.interrupt();
-            try {
-                driveThread.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
+            //gamepad2Controls();
         }
+
+        // Clean up the thread
+        threadIsRunning = false;
+        sleep(2000);
+        driveThread.interrupt();
+        try {
+            driveThread.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
     }
 
-        private class DriveTask implements Runnable {
+    private class DriveTask implements Runnable {
 
-            @Override
-            public void run() {
-                while (threadIsRunning && !Thread.currentThread().isInterrupted()) {
+        @Override
+        public void run() {
+            while (threadIsRunning && !Thread.currentThread().isInterrupted()) {
 
 
-                    // Read gamepad input and set drive motor power
-                    float axial = -gamepad1.left_stick_y;
-                    float lateral = -gamepad1.left_stick_x;
-                    float yaw = -gamepad1.right_stick_x; // Note: positive yaw is clockwise, previously was negative
-                    RobotUtil.setMotorPower(chassis.frontLeftDrive, chassis.backLeftDrive,
-                            chassis.frontRightDrive, chassis.backRightDrive,
-                            axial, lateral, yaw);
+                // Read gamepad input and set drive motor power
+                float axial = gamepad1.left_stick_y;
+                float lateral = gamepad1.left_stick_x;
+                float yaw = gamepad1.right_stick_x; // Note: positive yaw is clockwise, previously was negative
+                RobotUtil.setMotorPower(chassis.frontLeftDrive, chassis.backLeftDrive,
+                        chassis.frontRightDrive, chassis.backRightDrive,
+                        axial, lateral, yaw);
 
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
                 }
             }
         }
-
-        private void gamepad2Controls() throws InterruptedException{
-
-            if (gamepad2.x){
-                robotOperations.prepareForIntake();
-                intake.startIntake();
-            }else if (gamepad2.left_bumper) {
-                robotOperations.prepareForShooting();
-            } else if (gamepad2.right_bumper) {
-                robotOperations.shoot();
-            }
-        }
-
-        }
-
     }
+
+    private void gamepad2Controls() throws InterruptedException{
+
+        if (gamepad2.x){
+            robotOperations.prepareForIntake();
+            intake.startIntake();
+        }else if (gamepad2.left_bumper) {
+            robotOperations.prepareForShooting();
+        } else if (gamepad2.right_bumper) {
+            robotOperations.shoot();
+        }
+    }
+}
+
+
+
+
 
