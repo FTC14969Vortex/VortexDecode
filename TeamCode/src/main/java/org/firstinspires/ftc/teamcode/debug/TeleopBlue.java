@@ -20,7 +20,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
 
 /**
  * TeleopBlue - Enhanced Blue Alliance Teleop with Smart Shooting Logic
- * 
+ *
  * Features:
  * 1. Manual driving with gamepad1 (left stick = translation, right stick = rotation)
  * 2. Special movements with gamepad1: open_gate, loading, parking_end
@@ -31,7 +31,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  *      * Interrupted but in zone → auto shoot
  *      * Interrupted not in zone → manual positioning required
  *    - Right bumper always available for manual shooting override
- * 
+ *
  * Controls:
  * GAMEPAD 1 (Driver):
  * - Left Stick: Robot translation (strafe)
@@ -39,7 +39,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - A: Move to open_gate
  * - B: Move to loading
  * - Y: Move to parking_end
- * 
+ *
  * GAMEPAD 2 (Shooter):
  * - A: Move to shooting_near (with smart shooting)
  * - B: Move to shooting_far (with smart shooting)
@@ -47,7 +47,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - X: Toggle intake on/off
  * - Y: Emergency stop all operations
  */
-@TeleOp(name = "TeleopBlue - Smart Shooting", group = "Debug")
+@TeleOp(name = "A-TeleopBlue -0.47x", group = "Debug")
 public class TeleopBlue extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -76,6 +76,7 @@ public class TeleopBlue extends LinearOpMode {
     private boolean lastGamepad1A = false;
     private boolean lastGamepad1B = false;
     private boolean lastGamepad1Y = false;
+    private boolean lastGamepad1RightBumper = false;
     private boolean lastGamepad2A = false;
     private boolean lastGamepad2B = false;
     private boolean lastGamepad2X = false;
@@ -84,9 +85,9 @@ public class TeleopBlue extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        
+
         // ========== INITIALIZATION ==========
-        
+
         telemetry.addLine("🔧 Initializing TeleopBlue...");
         telemetry.update();
 
@@ -112,23 +113,22 @@ public class TeleopBlue extends LinearOpMode {
         if (isStopRequested()) return;
 
         // ========== MAIN TELEOP LOOP ==========
-        
+
         buttonTimer.reset();
-        
+
         while (opModeIsActive()) {
 
             handleDriverControls();           //game pad1 - driver
 
             handleShooterControls();          //game pad2 - shooter
-            
+
             updateTelemetry();
 
             updateButtonStates();
             sleep(20);
         }
 
-        // ========== CLEANUP ==========
-        
+
         cleanupSubsystems();
 
 
@@ -147,7 +147,7 @@ public class TeleopBlue extends LinearOpMode {
         // Initialize Intake
         intake = new Intake();
         intake.init(this);
-        intake.startIntake();
+        intake.stopIntake();
 
         // Initialize Kicker
         kicker = new Kicker();
@@ -161,11 +161,16 @@ public class TeleopBlue extends LinearOpMode {
 
         // Initialize CameraServo
         cameraServo = new CameraServo();
-        cameraServo.init(hardwareMap);
+        // Initialize CameraServo with full motion integration for proper pose-based aiming
+        cameraServo.init(
+                hardwareMap,
+                baseMotion.getMotionExecutor().getMotionState().getOdometryManager(),
+                baseMotion.getMotionExecutor().getCoordinateTransformer(),
+                baseMotion.getMotionExecutor()
+        );
         cameraServo.moveToCenter(); // Keep servo at center position
         cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for teleop
-
-        cameraServo.update();
+        cameraServo.setServoMovementEnabled(false); // Disable servo movement - keep stationary for teleop
         cameraServo.startThread(); // start cameraservo background thread
     }
 
@@ -183,14 +188,16 @@ public class TeleopBlue extends LinearOpMode {
         baseMotion.setReferencePointToPosition(FieldPositions.PARKING_NEAR);
 
         // Try to restore odometry from autonomous
-        RobotOperations.OdometryRestoreResult restoreResult = 
-            RobotOperations.loadOdometryFromAuto(hardwareMap, baseMotion);
+        RobotOperations.OdometryRestoreResult restoreResult =
+                RobotOperations.loadOdometryFromAuto(hardwareMap, baseMotion);
+
+        robotOperations.setVisionCorrection(true); //turn on vision correction
 
         if (restoreResult.success) {
             telemetry.addLine("✅ Odometry Restored from Auto!");
             telemetry.addData("Message", restoreResult.message);
-            telemetry.addData("Position", "x: %.2f, y: %.2f, h: %.2f°", 
-                restoreResult.restoredPose.x, restoreResult.restoredPose.y, restoreResult.restoredPose.heading);
+            telemetry.addData("Position", "x: %.2f, y: %.2f, h: %.2f°",
+                    restoreResult.restoredPose.x, restoreResult.restoredPose.y, restoreResult.restoredPose.heading);
         } else {
             telemetry.addLine("⚠️ Odometry Restore Failed");
             telemetry.addData("Reason", restoreResult.message);
@@ -204,28 +211,28 @@ public class TeleopBlue extends LinearOpMode {
      */
     private void handleDriverControls() {
         // ========== MANUAL DRIVING ==========
-        
+
         // Get joystick inputs
-        double axial = gamepad1.left_stick_y * DRIVE_SPEED_MULTIPLIER;   // Forward/backward
+        double axial = -gamepad1.left_stick_y * DRIVE_SPEED_MULTIPLIER;   // Forward/backward
         double lateral = gamepad1.left_stick_x * DRIVE_SPEED_MULTIPLIER;  // Left/right strafe
         double yaw = gamepad1.right_stick_x * ROTATION_SPEED_MULTIPLIER;  // Rotation
 
         // Apply manual driving (only if not in autonomous movement)
-        if (!isMovingToShoot && (Math.abs(axial) > 0.1 || Math.abs(lateral) > 0.1 || Math.abs(yaw) > 0.1)) {
+        if ( (Math.abs(axial) > 0.1 || Math.abs(lateral) > 0.1 || Math.abs(yaw) > 0.1)) {
             baseMotion.setMotorPowers(lateral, axial, yaw);  // leftX, leftY, rightX
             lastOperation = "Manual Drive";
-        } else if (!isMovingToShoot) {
+        } else {
             // Stop motors when joystick is released (within deadzone)
             baseMotion.setMotorPowers(0, 0, 0);
         }
 
         // ========== SPECIAL MOVEMENTS ==========
-        
+
         // A Button: Move to open_gate
         if (gamepad1.a && !lastGamepad1A && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
             lastOperation = "Moving to open_gate";
             try {
-                MotionExecutor.MotionResult result = robotOperations.moveToLocation("open_gate");
+                MotionExecutor.MotionResult result = robotOperations.moveToLocation("open_gate", 2000); //add timeout
                 lastOperation = result.success ? "Reached open_gate" : "Failed to reach open_gate: " + result.failureReason;
             } catch (Exception e) {
                 lastOperation = "Error moving to open_gate: " + e.getMessage();
@@ -237,7 +244,7 @@ public class TeleopBlue extends LinearOpMode {
         if (gamepad1.b && !lastGamepad1B && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
             lastOperation = "Moving to loading";
             try {
-                MotionExecutor.MotionResult result = robotOperations.moveToLocation("loading");
+                MotionExecutor.MotionResult result = robotOperations.moveToLocation("loading", 2000); // add timeout
                 lastOperation = result.success ? "Reached loading" : "Failed to reach loading: " + result.failureReason;
             } catch (Exception e) {
                 lastOperation = "Error moving to loading: " + e.getMessage();
@@ -249,12 +256,20 @@ public class TeleopBlue extends LinearOpMode {
         if (gamepad1.y && !lastGamepad1Y && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
             lastOperation = "Moving to parking_end";
             try {
-                MotionExecutor.MotionResult result = robotOperations.moveToLocation("parking_end");
+                MotionExecutor.MotionResult result = robotOperations.moveToLocation("parking_end", 2000); //2 s, if needed press button again
                 lastOperation = result.success ? "Reached parking_end" : "Failed to reach parking_end: " + result.failureReason;
             } catch (Exception e) {
                 lastOperation = "Error moving to parking_end: " + e.getMessage();
             }
             buttonTimer.reset();
+        }
+
+        // right bumper: move to shooting near and ramp up flywheel
+        // after that shooter need to manual shoot
+         if (gamepad1.right_bumper && !lastGamepad1RightBumper && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {            
+             MotionExecutor.MotionResult result = robotOperations.moveToLocation("shooting_near", 2000); //2s timeout,
+             lastOperation = result.success ? "Reached shooting_near" : "Failed to reach shooting_end: " + result.failureReason;
+             buttonTimer.reset();
         }
     }
 
@@ -263,30 +278,26 @@ public class TeleopBlue extends LinearOpMode {
      */
     private void handleShooterControls() {
         // ========== SMART SHOOTING MOVEMENTS ==========
-        
+
         // A Button: Move to shooting_near with smart shooting
-        if (gamepad2.a && !lastGamepad2A && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
-            isMovingToShoot = true;
-            lastOperation = robotOperations.executeSmartShooting("shooting_near");
-            isMovingToShoot = false;
+        if (gamepad2.a && !lastGamepad2A && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {            
+            lastOperation = robotOperations.executeSmartShooting("shooting_near", true, 3000); //2.5s timeout, then check if in shooting zone -> shoot                         
             buttonTimer.reset();
         }
 
         // B Button: Move to shooting_far with smart shooting
-        if (gamepad2.b && !lastGamepad2B && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
-            isMovingToShoot = true;
-            lastOperation = robotOperations.executeSmartShooting("shooting_far");
-            isMovingToShoot = false;
+        if (gamepad2.b && !lastGamepad2B && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {            
+            lastOperation = robotOperations.executeSmartShooting("shooting_far", true, 2000);            
             buttonTimer.reset();
         }
 
         // ========== MANUAL SHOOTING ==========
-        
+
         // Right Bumper: Manual shoot (always available)
         if (gamepad2.right_bumper && !lastGamepad2RightBumper && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
             lastOperation = "Manual shooting";
             try {
-                robotOperations.shoot();  // shoot() already includes alignment
+                robotOperations.shoot(true);  // true: use cameraservo for alignment and distance if apriltag detected
                 lastOperation = "Manual shooting completed";
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -298,7 +309,7 @@ public class TeleopBlue extends LinearOpMode {
         }
 
         // ========== INTAKE CONTROL ==========
-        
+
         // X Button: Toggle intake
         if (gamepad2.x && !lastGamepad2X && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
             intakeOn = !intakeOn;
@@ -311,17 +322,7 @@ public class TeleopBlue extends LinearOpMode {
             }
             buttonTimer.reset();
         }
-
-        // ========== EMERGENCY STOP ==========
-        
-        // Y Button: Emergency stop
-        if (gamepad2.y && !lastGamepad2Y && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
-            robotOperations.emergencyStop();  // This now includes intake stop
-            intakeOn = false;
-            isMovingToShoot = false;
-            lastOperation = "EMERGENCY STOP";
-            buttonTimer.reset();
-        }
+    
     }
 
 
@@ -332,31 +333,31 @@ public class TeleopBlue extends LinearOpMode {
     private void updateTelemetry() {
         // Current robot position
         FieldPose currentPose = baseMotion.getCurrentPose();
-        telemetry.addData("🤖 Robot Position", "X: %.1f, Y: %.1f, H: %.1f°", 
-            currentPose.x, currentPose.y, currentPose.heading);
-        
+        telemetry.addData("🤖 Robot Position", "X: %.1f, Y: %.1f, H: %.1f°",
+                currentPose.x, currentPose.y, currentPose.heading);
+
         // Last operation status
         telemetry.addData("🔧 Last Operation", lastOperation);
-        
+
         // Movement result status
         String moveStatus = robotOperations.getLastMoveResultStatus();
         telemetry.addData("📊 Move Status", moveStatus);
-        
+
         // Shooting zone status
         boolean inShootingZone = robotOperations.isInShootingZone();
         telemetry.addData("🎯 In Shooting Zone", inShootingZone ? "YES" : "NO");
-        
+
         // Intake status
         telemetry.addData("🔄 Intake", intakeOn ? "ON" : "OFF");
-        
+
         // Dynamic flywheel status
-        telemetry.addData("🌪️ Flywheel", robotOperations.isDynamicFlywheelActive() ? 
-            String.format("Dynamic (%.0f RPM)", robotOperations.getCurrentTargetVelocity()) : "Idle");
-        
+        telemetry.addData("🌪️ Flywheel", robotOperations.isDynamicFlywheelActive() ?
+                String.format("Dynamic (%.0f RPM)", robotOperations.getCurrentTargetVelocity()) : "Idle");
+
         // Control hints
         telemetry.addLine("");
         telemetry.addLine("🎮 GP1: A=Gate B=Load Y=Park | GP2: A=Near B=Far RB=Shoot X=Intake Y=Stop");
-        
+
         telemetry.update();
     }
 
@@ -367,6 +368,8 @@ public class TeleopBlue extends LinearOpMode {
         lastGamepad1A = gamepad1.a;
         lastGamepad1B = gamepad1.b;
         lastGamepad1Y = gamepad1.y;
+        lastGamepad1RightBumper = gamepad1.right_bumper;
+        
         lastGamepad2A = gamepad2.a;
         lastGamepad2B = gamepad2.b;
         lastGamepad2X = gamepad2.x;
@@ -378,9 +381,14 @@ public class TeleopBlue extends LinearOpMode {
      * Clean up all subsystems
      */
     private void cleanupSubsystems() {
+
+        RobotOperations.saveOdometryAtAutoEnd(hardwareMap, baseMotion, true);
+        telemetry.addLine("🧹 Save Odometry...");
+        telemetry.update();
+
         telemetry.addLine("🧹 Cleaning up subsystems...");
         telemetry.update();
-        
+
         if (robotOperations != null) {
             robotOperations.emergencyStop();
         }
@@ -389,7 +397,7 @@ public class TeleopBlue extends LinearOpMode {
             cameraServo.stopThread();
             cameraServo.cleanup();
         }
-        
+
         telemetry.addLine("✅ Cleanup complete");
         telemetry.update();
     }

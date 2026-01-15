@@ -95,6 +95,8 @@ public class BlueAutoFar extends LinearOpMode {
         );
         cameraServo.moveToCenter(); // Keep servo at center position for this auto
         cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for pure odometry-based calculation
+        cameraServo.update();
+        cameraServo.startThread();
 
         // Initialize RobotOperations utility
         robotOperations = new RobotOperations();
@@ -109,9 +111,6 @@ public class BlueAutoFar extends LinearOpMode {
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
         baseMotion.setReferencePointToPosition(FieldPositions.START_FAR);
 
-        cameraServo.update();
-        cameraServo.startThread();
-
         telemetryCurrentPose("Initializing at START_FAR");
 
         waitForStart();
@@ -125,8 +124,8 @@ public class BlueAutoFar extends LinearOpMode {
         try {
 
             // Step 1: Initial shooting with preloaded balls from START_FAR
-            robotOperations.moveToLocation("shooting_far");
-            robotOperations.shoot();
+            robotOperations.moveToLocation("shooting_far", 2000);
+            robotOperations.shoot(true);
             telemetryCurrentPose("After Initial Shooting");
 
             // Step 2-3: First intake and shoot cycle
@@ -185,7 +184,7 @@ public class BlueAutoFar extends LinearOpMode {
         baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, INTAKE_TIME);
 
         // Move to shooting position and shoot
-        MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_far");
+        MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_far", 2000);
         
         // Display motion results for debugging
         telemetry.addData("Motion to Shooting", "Success: %s", result1.success);
@@ -197,7 +196,7 @@ public class BlueAutoFar extends LinearOpMode {
 
         cameraServo.update(); // at shooting position - update camera servo
 
-        robotOperations.shoot(); // use distance based velocity + alignment
+        robotOperations.shoot(true); // use cameraservo for align + distance
     }
 
     private void cleanupSubsystems() {

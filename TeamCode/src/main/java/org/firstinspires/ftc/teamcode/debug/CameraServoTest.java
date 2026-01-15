@@ -28,6 +28,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
  *
  * Camera automatically aims at blue goal tag (Tag 20) when detected.
  */
+@Disabled
 @TeleOp(name = "Camera Servo Test", group = "Debug")
 public class CameraServoTest extends OpMode {
 
@@ -76,6 +77,8 @@ public class CameraServoTest extends OpMode {
         );
         cameraServo.setTargetTag(20); // Set target to blue GOAL (tag 20)
         cameraServo.setAutoOdometryCorrection(false);
+        cameraServo.setServoMovementEnabled(false);
+
 
         telemetry.addLine("✅ Systems Ready!");
         telemetry.addLine("");

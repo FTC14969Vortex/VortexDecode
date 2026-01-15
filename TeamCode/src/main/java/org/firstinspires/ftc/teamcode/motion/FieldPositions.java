@@ -48,7 +48,7 @@ public class FieldPositions {
     public static final FieldPose INTAKE_2_FINISH = INTAKE_2_START.offset(0, INTAKE_OFFSET_Y, 0);
     public static final FieldPose INTAKE_3_START = INTAKE_2_START.offset(INTAKE_OFFSET_X, 0, 0);
     public static final FieldPose INTAKE_3_FINISH = INTAKE_3_START.offset(0, INTAKE_OFFSET_Y, 0);
-    public static final FieldPose OPEN_GATE = new FieldPose(-13, -63, 0);      //  x coord was -18.2     open gate only
+    public static final FieldPose OPEN_GATE = new FieldPose(-8.2, -63, 0);      // open gate only
     public static final FieldPose OPEN_GATE_INTAKE = new FieldPose(10.3, -48, -122);   // open gate and intake
     public static final FieldPose PARKING_NEAR = new FieldPose(-8.2, -48, 0);     //
 

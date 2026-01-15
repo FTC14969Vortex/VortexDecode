@@ -33,7 +33,7 @@ public class Flipper {
     private static final double SERVO_1_TURN_DEGREES = 300.0;      // 300 degrees range
 
     // Starting position (0.0 to 1.0 servo position)
-    public static final double FLIPPER_START_POSITION = 1.0;  // Start at maximum position
+    public static final double FLIPPER_START_POSITION = 0.5;  // Start at center position
 
     // Calculated degrees per servo position unit (0.0-1.0 range)
     private final double degreesPerUnit;
@@ -78,7 +78,7 @@ public class Flipper {
     public void turnFlipper(double angle) {
         double targetPosition;
 
-        targetPosition = 1.0 - (angle / degreesPerUnit);
+        targetPosition = FLIPPER_START_POSITION - (angle / degreesPerUnit);
 
         // Clamp to valid range and set position
         setPosition(targetPosition);

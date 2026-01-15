@@ -44,8 +44,8 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.53.1", group = "Debug")
-public class FullAutoOperateTest extends LinearOpMode {
+@Autonomous(name = "Blue Auto Near 0.66x", group = "Debug")
+public class BlueAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
     private BaseMotion baseMotion;
@@ -99,7 +99,8 @@ public class FullAutoOperateTest extends LinearOpMode {
         );
         cameraServo.moveToCenter(); // Keep servo at center position for this auto
         cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for pure odometry-based calculation
-
+        cameraServo.setServoMovementEnabled(false); // Disable servo movement - keep stationary
+        cameraServo.startThread(); // start cameraservo background thread
 
         // Initialize RobotOperations utility
         robotOperations = new RobotOperations();
@@ -110,12 +111,9 @@ public class FullAutoOperateTest extends LinearOpMode {
         robotOperations.setAlliance(true); // Blue alliance
 
         // Set reference point to START_NEAR position
-        baseMotion.setControlMode(MotionExecutor.ControlMode.HYBRID);
+        baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
         baseMotion.setReferencePointToPosition(FieldPositions.START_NEAR);
-
-        cameraServo.update();
-       // cameraServo.startThread(); // start cameraservo background thread
 
         telemetryCurrentPose("Initializing");
 
@@ -130,9 +128,16 @@ public class FullAutoOperateTest extends LinearOpMode {
         try {
 
             // Initial shooting with preloaded balls
-            robotOperations.moveToLocation("shooting_near");
+            MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near", 2000);
+            // Display motion results for debugging
+            telemetry.addData("Motion Success", result1.success);
+            telemetry.addData("Position Error", "%.2f inches", result1.finalPositionError);
+            telemetry.addData("Heading Error", "%.1f degrees", result1.finalHeadingError);
+            telemetry.addData("Motion Duration", "%.0f ms", result1.executionTimeMs);
+            telemetry.addData("Motion Status", result1.failureReason);
+            telemetry.update();
+
             robotOperations.shoot();
-            telemetryCurrentPose("After Shooting");
 
             // Step 2-4: Intake and shoot for positions 1, 2, 3
             for (int i = 1; i <= 3; i++) {
@@ -170,23 +175,31 @@ public class FullAutoOperateTest extends LinearOpMode {
         telemetryCurrentPose("Intake and Shoot");
 
         double intakeTime = 1.0;
+        int moveTointake_timeoutMS = 2000; // travel time out
+        int moveToshoot_timeoutMS = 2000; // travel time out
 
         // Get intake positions based on number
         FieldPose intakeStart, intakeFinish;
 
         switch (intakeNumber) {
             case 1:
-                intakeTime = 0.8;
+                intakeTime = 0.9;
+                moveTointake_timeoutMS = 3000;
+                moveToshoot_timeoutMS = 3000;
                 intakeStart = FieldPositions.INTAKE_1_START;
                 intakeFinish = FieldPositions.INTAKE_1_FINISH;
                 break;
             case 2:
                 intakeTime = 1.0;
+                moveTointake_timeoutMS = 3200;
+                moveToshoot_timeoutMS = 3200;
                 intakeStart = FieldPositions.INTAKE_2_START;
                 intakeFinish = FieldPositions.INTAKE_2_FINISH;
                 break;
             case 3:
                 intakeTime = 1.0;
+                moveTointake_timeoutMS = 3500;
+                moveToshoot_timeoutMS = 3500;
                 intakeStart = FieldPositions.INTAKE_3_START;
                 intakeFinish = FieldPositions.INTAKE_3_FINISH;
                 break;
@@ -197,7 +210,7 @@ public class FullAutoOperateTest extends LinearOpMode {
         }
 
         // Move to intake start position
-        MotionExecutor.MotionResult result = baseMotion.moveToPose(intakeStart, TRAVEL_VELOCITY);
+        MotionExecutor.MotionResult result = baseMotion.moveToPose(intakeStart, TRAVEL_VELOCITY, moveTointake_timeoutMS);
 
         // Display motion results for debugging
         telemetry.addData("Motion Success", result.success);
@@ -217,7 +230,7 @@ public class FullAutoOperateTest extends LinearOpMode {
 
         // Move to shooting position and shoot
 
-        MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near");
+        MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near", moveToshoot_timeoutMS);
         // Display motion results for debugging
         telemetry.addData("Motion Success", result1.success);
         telemetry.addData("Position Error", "%.2f inches", result1.finalPositionError);

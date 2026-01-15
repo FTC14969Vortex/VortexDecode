@@ -38,7 +38,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Flywheel status
  * - Manual data recording prompts
  */
-@Disabled
+//@Disabled
 @TeleOp(name = "FlyWheel Velocity Test", group = "Debug")
 public class FlyWheelVelocityTest extends OpMode {
     
@@ -195,7 +195,10 @@ public class FlyWheelVelocityTest extends OpMode {
                 kicker.setGatePosition(kicker.GATE_CLOSE);
                 Thread.sleep(200); // Wait for gate to close
 
-                robotOperations.shoot(targetVelocity, false);
+                // do alignment, and use cameraservo for alignment
+                boolean alignment = true;
+                boolean useCameraServo = true;
+                robotOperations.shoot(targetVelocity, alignment, useCameraServo);
                 
                 telemetry.addLine("✅ Shooting test completed!");
                 telemetry.update();
@@ -307,4 +310,5 @@ public class FlyWheelVelocityTest extends OpMode {
                 .addProcessor(aprilTagProcessor)
                 .build();
     }
+
 }

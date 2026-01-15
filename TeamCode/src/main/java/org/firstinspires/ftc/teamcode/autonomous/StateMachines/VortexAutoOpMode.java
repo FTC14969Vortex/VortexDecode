@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.autonomous.StateMachines;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -18,7 +19,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Kicker;
 import org.firstinspires.ftc.teamcode.utils.StateMachineLogger;
 import org.firstinspires.ftc.teamcode.vision.CameraServo;
-
+@Disabled
 @Autonomous(name = " State Machines Auto 0.01" +
         "", group = "Autonomous")
 public class VortexAutoOpMode extends LinearOpMode {

@@ -105,7 +105,7 @@ public class CameraServo {
     private static final long SEARCH_DWELL_TIME_MS = 200;
 
     /** Update frequency (Hz) - CameraServo runs at 5 Hz */
-    private static final double UPDATE_FREQUENCY_HZ = 2.0;
+    private static final double UPDATE_FREQUENCY_HZ = 5.0;
 
     /** Update interval (milliseconds) - 200ms for 5 Hz */
     private static final long UPDATE_INTERVAL_MS = (long)(1000.0 / UPDATE_FREQUENCY_HZ);
@@ -162,6 +162,10 @@ public class CameraServo {
 
     /** Enable automatic odometry correction when AprilTags are detected */
     private boolean autoOdometryCorrection = false;
+    // ========== SERVO MOVEMENT CONTROL ==========
+
+    /** Enable servo movement (search, tracking, etc.) - when false, servo stays at center */
+    private boolean servoMovementEnabled = true;  // Default enabled for backward compatibility
 
     // ========== HARDWARE ==========
 
@@ -193,7 +197,7 @@ public class CameraServo {
 
     // Additional detection data for diagnostics
     private double lastDetectedBearing = 0.0;   // bearing angle to tag (degrees)
-    private double lastDetectedYaw = 0.0;       // yaw angle of tag (degrees)  
+    private double lastDetectedYaw = 0.0;       // yaw angle of tag (degrees)
     private double lastDetectedElevation = 0.0; // elevation angle to tag (degrees)
     private double lastFtcPoseX = 0.0;          // ftcPose.x from last detection (camera frame lateral)
     private double lastFtcPoseY = 0.0;          // ftcPose.y from last detection (camera frame forward)
@@ -311,6 +315,29 @@ public class CameraServo {
     public void setAutoOdometryCorrection(boolean enabled) {
         this.autoOdometryCorrection = enabled;
     }
+    /**
+     * Enable or disable servo movement (search, tracking, etc.)
+     * When disabled, servo stays at center position and only performs passive detection
+     *
+     * @param enabled True to enable servo movement, false to keep stationary at center
+     */
+    public void setServoMovementEnabled(boolean enabled) {
+        this.servoMovementEnabled = enabled;
+        if (!enabled) {
+            // When disabling movement, stop any active search and move to center
+            stopSearch();
+            moveToCenter();
+        }
+    }
+
+    /**
+     * Checks if servo movement is enabled
+     *
+     * @return True if servo movement is enabled
+     */
+    public boolean isServoMovementEnabled() {
+        return servoMovementEnabled;
+    }
 
     /**
      * Checks if automatic odometry correction is enabled
@@ -330,6 +357,16 @@ public class CameraServo {
     public void update() {
         if (!isInitialized) return;
 
+        motionExecutor.updateState(); // Update motion executor state, coordinates
+
+        // Always process AprilTag detections for passive detection
+        processAprilTagDetections();
+
+        // Skip all servo movement if movement is disabled (stationary mode)
+        if (!servoMovementEnabled) {
+            return;
+        }
+
         // Get current robot pose for prediction
         if (motionExecutor != null) {
             Pose2D referencePointPose2D = motionExecutor.getMotionState().getCurrentPose();
@@ -348,8 +385,6 @@ public class CameraServo {
         // Update servo position with velocity limiting
         updateServoPosition();
 
-        // Process AprilTag detections and update flywheel velocity
-        processAprilTagDetections();
 
 
     }
@@ -485,7 +520,6 @@ public class CameraServo {
             lastDetectedBearing = targetDetection.ftcPose.bearing;
             lastDetectedYaw = targetDetection.ftcPose.yaw;
             lastDetectedElevation = targetDetection.ftcPose.elevation;
-
 
             // Always populate enhanced diagnostics (camera/servo positions) when we have a detection
             // This ensures diagnostics are available regardless of auto correction settings
@@ -729,12 +763,16 @@ public class CameraServo {
         lastCameraPosition = new FieldPose(camFieldX, camFieldY, camFieldHeading);
         lastServoPosition = new FieldPose(servoFieldX, servoFieldY, robotHeading); // servo heading = robot heading
 
-        // Calculate shooting angle using odometry-based calculation
+        // Calculate shooting angle
         // This is the angle the robot needs to rotate so its back faces the tag center
         double dx = tagPose.x - robotX;
         double dy = tagPose.y - robotY;
         double angleToTag = Math.toDegrees(Math.atan2(dy, dx));
-        lastShootingAngle = normalizeAngle(angleToTag - robotHeading - 180.0);
+      
+        double ShootingAngle_yaw = normalizeAngle(angleToTag - robotHeading - 180.0); // from coordinates + ftc.pose.yaw        
+        double ShootingAngle_bearing =  detection.ftcPose.bearing; // camera bearing
+        
+        lastShootingAngle = (ShootingAngle_yaw + ShootingAngle_bearing)/2;
 
         return CoordinateTransformer.convertRobotCenterToReferencePoint(robotCenterPose);
 
@@ -794,8 +832,10 @@ public class CameraServo {
                     AngleUnit.DEGREES, fusedPose.heading
             );
 
-            // Apply the fused correction to odometry
-            odometryManager.resetToPose(correctionPose);
+            // use motionExecutor  
+            motionExecutor.resetToFieldOrigin(correctionPose);
+            
+          //  odometryManager.resetToPose(correctionPose);
 
         } catch (Exception e) {
             // Silently handle errors to avoid disrupting robot operation
@@ -1201,4 +1241,9 @@ public class CameraServo {
         }
         aprilTagProcessor = null;
     }
+
+
 }
+
+
+

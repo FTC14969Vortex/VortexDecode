@@ -1293,7 +1293,7 @@ public class MotionExecutor {
 
     // ========== LOW-LEVEL MOTOR CONTROL ==========
 
-    /**
+    /** directly control
      * Sets individual motor powers for calibration testing
      * @param frontLeft Front left motor power (-1.0 to 1.0)
      * @param frontRight Front right motor power (-1.0 to 1.0)
@@ -1302,6 +1302,7 @@ public class MotionExecutor {
      */
     public void setMotorPowers(double frontLeft, double frontRight, double backLeft, double backRight) {
         driveHardware.setMotorPowers(frontLeft, frontRight, backLeft, backRight);
+        updateState(); // update for manual drive
     }
 
     /**
@@ -1321,6 +1322,7 @@ public class MotionExecutor {
      */
     public void setMotorVelocities(double frontLeft, double frontRight, double backLeft, double backRight) {
         driveHardware.setMotorVelocities(frontLeft, frontRight, backLeft, backRight);
+        updateState();
     }
 
     /**
@@ -1334,6 +1336,7 @@ public class MotionExecutor {
      */
     public void setMotorVelocitiesPhysical(double frontLeft, double frontRight, double backLeft, double backRight) {
         driveHardware.setMotorVelocitiesPhysical(frontLeft, frontRight, backLeft, backRight);
+        updateState();
     }
 
 
@@ -1471,4 +1474,6 @@ public class MotionExecutor {
     public DriveHardware getDriveHardware() {
         return driveHardware;
     }
+
 }
+

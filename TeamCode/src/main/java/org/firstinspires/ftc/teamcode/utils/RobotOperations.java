@@ -54,10 +54,10 @@ public class RobotOperations {
 
     // ========== SHOOTING PARAMETERS ==========
     private static final int NUM_SHOTS = 3;
-    private static final double INITIAL_FLIPPER_ANGLE = 120.0; //was 120. reduced to avoid jam at 2nd
+    private static final double INITIAL_FLIPPER_ANGLE = 90; //was 120. reduced to avoid jam at 2nd
     private static final double ANGLE_INCREMENT = 30.0;
-    private static final int KICKER_OPEN_DELAY_MS = 200;
-    private static final int BASE_FLIPPER_DELAY_MS = 150;
+    private static final int KICKER_OPEN_DELAY_MS = 300; //was 200, need a little more to avoid run against flipper
+    private static final int BASE_FLIPPER_DELAY_MS = 100; // 60deg/55ms, for super speed gobuilda servo
     private static final int FLIPPER_DELAY_INCREMENT_MS = 50;
 
     // ========== FLYWHEEL PARAMETERS ==========
@@ -71,7 +71,7 @@ public class RobotOperations {
     // ========== ALIGNMENT PARAMETERS ==========
     private static final double MIN_ALIGNMENT_ANGLE = 5.0;        // degrees - only align if > 5 degrees
     private static final double TRAVEL_VELOCITY = 50.0;            // inches/sec for movement
-    private static final double ALIGNMENT_ANGULAR_VELOCITY = 10;      // inch/s
+    private static final double ALIGNMENT_ANGULAR_VELOCITY = 20;      // inch/s
     private static final int ALIGNMENT_TIMEOUT = 500;              // ms
 
 
@@ -81,6 +81,7 @@ public class RobotOperations {
 
     // ========== ALLIANCE CONFIGURATION ==========
     private boolean isBlueAlliance = true;  // Default to blue alliance
+    private boolean visioncorrectionON = false; // turn on auto correction
     private int targetTagId = 20;  // Default to blue alliance (Tag 20), red alliance uses Tag 24
 
     // ========== DYNAMIC FLYWHEEL CONTROL ==========
@@ -92,8 +93,7 @@ public class RobotOperations {
     // ========== MOVEMENT RESULT TRACKING ==========
     private MotionExecutor.MotionResult lastMoveResult = null;
 
-    // ========== SHOOTING ZONE PARAMETERS ==========
-    private static final double SHOOTING_ZONE_TOLERANCE = 12.0;  // inches - tolerance for shooting zone detection
+
 
     /**
      * Initializes RobotOperations with required subsystems
@@ -205,7 +205,7 @@ public class RobotOperations {
      * @param targetPos Target shooting position
      * @return MotionResult indicating success/failure of movement
      */
-    public MotionExecutor.MotionResult moveToShootingPosition(FieldPose targetPos) {
+    public MotionExecutor.MotionResult moveToShootingPosition(FieldPose targetPos, int timeoutMS) {
         // Set intake to shooting power for movement to shooting position
         if (intake != null) {
             intake.setIntakePower(INTAKE_SHOOTING_POWER);
@@ -216,7 +216,12 @@ public class RobotOperations {
 
         try {
             // Execute movement (this is blocking, but flywheel adjusts in parallel)
-            MotionExecutor.MotionResult result = baseMotion.moveToPose(targetPos, TRAVEL_VELOCITY);
+            MotionExecutor.MotionResult result;
+            if (timeoutMS > 0) {
+                result = baseMotion.moveToPose(targetPos, TRAVEL_VELOCITY, timeoutMS);
+            } else{
+                result = baseMotion.moveToPose(targetPos, TRAVEL_VELOCITY);
+            }
             lastMoveResult = result;  // Store result for teleop smart shooting logic
             return result;
         } finally {
@@ -315,15 +320,34 @@ public class RobotOperations {
     }
 
     // ========== 3. SHOOT ==========
-
-    public void shoot() throws InterruptedException {
-        // Use default behavior: align to shooting angle and calculate optimal velocity
-        shoot(getShootingVelocity(), true);
+   public void shoot() throws InterruptedException {
+        shoot(getShootingVelocity(), true, false); //use odo and do autoalignment - for autoop
+    }
+    
+    public void shoot(boolean useCameraServo) throws InterruptedException {
+        if (useCameraServo){
+            shoot(cameraServo.getFlywheelVelocity(), true, true);
+        } else {
+            shoot(getShootingVelocity(), true, false);
+        }
     }
 
-    public void shoot(double targetVelocity, boolean alignToShootingAngle) throws InterruptedException {
+    public void shoot(boolean useCameraServo, boolean alignToShootingAngle) throws InterruptedException {
+        if (useCameraServo){
+            shoot(cameraServo.getFlywheelVelocity(), alignToShootingAngle, true);
+        } else {
+            shoot(getShootingVelocity(), alignToShootingAngle, false);
+        }
+    }
+
+    public void shoot(double targetVelocity, boolean alignToShootingAngle, boolean useCameraServo) throws InterruptedException {
         // 1. Optionally align to shooting angle first
-        if (alignToShootingAngle) { alignToShootingAngle(); }
+        if (alignToShootingAngle) { alignToShootingAngle(useCameraServo); }
+
+        if (visioncorrectionON) {
+            cameraServo.setAutoOdometryCorrection(true);
+        }
+
         flyWheel.setToShootingVelocity(targetVelocity, FLYWHEEL_SPINUP_TIMEOUT); // set shooting velocity again - extra insurance
 
         // Create flywheel maintenance thread to continuously maintain target velocity
@@ -361,7 +385,8 @@ public class RobotOperations {
 
                 // Calculate flipper angle for this shot (120, 150, 180 degrees)
                 double currentFlipperAngle = INITIAL_FLIPPER_ANGLE + (shotNumber * ANGLE_INCREMENT);
-                int flipperWaitTime = BASE_FLIPPER_DELAY_MS + (shotNumber * FLIPPER_DELAY_INCREMENT_MS);
+               // int flipperWaitTime = BASE_FLIPPER_DELAY_MS + (shotNumber * FLIPPER_DELAY_INCREMENT_MS);
+                int flipperWaitTime = BASE_FLIPPER_DELAY_MS;
 
                 // Turn flipper
                 flipper.turnFlipper(currentFlipperAngle);
@@ -374,7 +399,7 @@ public class RobotOperations {
                         Thread.sleep(flipperWaitTime+100);
                         break;
                     case 1:
-                        Thread.sleep(flipperWaitTime + 100);
+                        Thread.sleep(flipperWaitTime+200); // was 100
                         break;
                     case 2:
                         break; // no delay for last shot
@@ -396,6 +421,10 @@ public class RobotOperations {
             // Cleanup - close gate
             kicker.setGatePosition(Kicker.GATE_CLOSE);
 
+            if(visioncorrectionON){
+                cameraServo.setAutoOdometryCorrection(false); // turn off auto correction
+            }
+
             // NON-BLOCKING flywheel stop - robot can move immediately
             Thread flywheelStopThread = new Thread(() -> {
                 try {
@@ -416,49 +445,45 @@ public class RobotOperations {
         }
     }
 
-    public static void manualShoot(){
-
-    }
     // ========== 4. ALIGN TO SHOOTING ANGLE ==========
 
-    /**
-     * Aligns robot to optimal shooting angle for AprilTag targeting
-     *
-     * Calculates the angle from robot center to AprilTag and rotates robot
-     * so that the back of the robot faces the tag (optimal shooting position).
-     * Only performs alignment if the angle difference is greater than 10 degrees.
-     *
-     * Uses MotionExecutor's built-in timeout mechanism for reliable rotation control.
-     *
-     * @return true if alignment was performed, false if already aligned
-     */
-    public boolean alignToShootingAngle() {
+    public boolean alignToShootingAngle(boolean useCameraServo) {
+        double angleDifference;
+        double currentHeading = 0;
+        double requiredHeading = 0;
 
-        // Get current robot center position
-        FieldPose currentRefPointPose = baseMotion.getCurrentPose();
+        if (!useCameraServo){
+            // Get current robot center position
+            FieldPose currentRefPointPose = baseMotion.getCurrentPose();
 
-        Pose2D robotCenterPose = coordinateTransformer.convertReferencePointToRobotCenter(
+            Pose2D robotCenterPose = coordinateTransformer.convertReferencePointToRobotCenter(
                 currentRefPointPose.x,
                 currentRefPointPose.y,
                 currentRefPointPose.heading);
 
-        FieldPose robotCenterFieldPose = new FieldPose(
+            FieldPose robotCenterFieldPose = new FieldPose(
                 robotCenterPose.getX(DistanceUnit.INCH),
                 robotCenterPose.getY(DistanceUnit.INCH),
                 robotCenterPose.getHeading(AngleUnit.DEGREES)
-        );
+            );
 
-        // Calculate angle from robot center to AprilTag
-        FieldPose aprilTagPose = getTargetAprilTagPose();
-        double angleToTag = calculateAngle(robotCenterFieldPose, aprilTagPose);
+            // Calculate angle from robot center to AprilTag
+            FieldPose aprilTagPose = getTargetAprilTagPose();
+            double angleToTag = calculateAngle(robotCenterFieldPose, aprilTagPose);
 
-        // Calculate required robot heading (robot back should face tag)
-        // Robot back faces opposite direction of robot front
-        double requiredHeading = normalizeAngle(angleToTag + 180.0);
+            // Calculate required robot heading (robot back should face tag)
+            // Robot back faces opposite direction of robot front
+            requiredHeading = normalizeAngle(angleToTag + 180.0);
 
-        // Calculate angle difference
-        double currentHeading = robotCenterFieldPose.heading;
-        double angleDifference = normalizeAngle(requiredHeading - currentHeading);
+            // Calculate angle difference
+            currentHeading = robotCenterFieldPose.heading;         
+            angleDifference = normalizeAngle(requiredHeading - currentHeading);
+        } else {
+            angleDifference = cameraServo.getShootingAngle();
+        }
+
+        // alignment timeout based rotation angle needed 
+        int alignment_timeoutMS = ALIGNMENT_TIMEOUT * (1 + (int)Math.round(Math.abs(angleDifference) / 45.0));        
 
         // Only align if difference is significant
         if (Math.abs(angleDifference) > MIN_ALIGNMENT_ANGLE) {
@@ -470,7 +495,7 @@ public class RobotOperations {
 
             // Use baseMotion.rotate() which leverages MotionExecutor's built-in timeout mechanism
             // MotionExecutor automatically calculates appropriate timeout based on angular distance
-            MotionExecutor.MotionResult result = baseMotion.rotate(angleDifference, ALIGNMENT_ANGULAR_VELOCITY, ALIGNMENT_TIMEOUT);
+            MotionExecutor.MotionResult result = baseMotion.rotate(angleDifference, ALIGNMENT_ANGULAR_VELOCITY, alignment_timeoutMS);
 
             if (opMode != null) {
                 if (result.success) {
@@ -504,7 +529,12 @@ public class RobotOperations {
      * @return MotionExecutor.MotionResult indicating success/failure of movement
      * @throws IllegalArgumentException if locationName is not recognized
      */
-    public MotionExecutor.MotionResult moveToLocation(String locationName) {
+
+    public MotionExecutor.MotionResult moveToLocation(String locationName){
+        return moveToLocation(locationName, 0);
+    }
+     
+    public MotionExecutor.MotionResult moveToLocation(String locationName, int timeoutMS) {
         // Get alliance-aware position
         FieldPose targetPosition = getLocationPosition(locationName);
 
@@ -523,7 +553,7 @@ public class RobotOperations {
             }
 
             // Delegate to moveToShootingPosition for shooting locations
-            return moveToShootingPosition(targetPosition);
+            return moveToShootingPosition(targetPosition, timeoutMS);
         }
 
         // Handle non-shooting locations with standard behavior system
@@ -537,7 +567,12 @@ public class RobotOperations {
         }
 
         // Execute movement
-        MotionExecutor.MotionResult result = baseMotion.moveToPose(targetPosition, TRAVEL_VELOCITY);
+        MotionExecutor.MotionResult result;        
+        if (timeoutMS > 0){
+            result = baseMotion.moveToPose(targetPosition, TRAVEL_VELOCITY, timeoutMS);
+        } else {
+            result = baseMotion.moveToPose(targetPosition, TRAVEL_VELOCITY);
+        }
         lastMoveResult = result;  // Store result for teleop smart shooting logic
 
         // Apply location-specific behaviors after movement
@@ -615,11 +650,6 @@ public class RobotOperations {
 
     // ========== UTILITY METHODS ==========
 
-    /**
-     * Gets the target AprilTag pose based on current alliance configuration
-     *
-     * @return FieldPose of the target AprilTag (blue Tag 20 or red Tag 24)
-     */
     private FieldPose getTargetAprilTagPose() {
         // Return appropriate AprilTag position based on targetTagId
         if (targetTagId == 24) {
@@ -631,28 +661,19 @@ public class RobotOperations {
         }
     }
 
-    /**
-     * Calculates distance between two field poses
-     */
     private double calculateDistance(FieldPose pose1, FieldPose pose2) {
         double deltaX = pose2.x - pose1.x;
         double deltaY = pose2.y - pose1.y;
         return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     }
-
-    /**
-     * Calculates angle from pose1 to pose2 in degrees
-     */
+   
     private double calculateAngle(FieldPose from, FieldPose to) {
         double deltaX = to.x - from.x;
         double deltaY = to.y - from.y;
         return Math.toDegrees(Math.atan2(deltaY, deltaX));
     }
 
-    /**
-     * Normalizes angle to [-180, 180] range
-     */
-    private double normalizeAngle(double angle) {
+   private double normalizeAngle(double angle) {
         while (angle > 180.0) angle -= 360.0;
         while (angle <= -180.0) angle += 360.0;
         return angle;
@@ -680,9 +701,10 @@ public class RobotOperations {
         }
     }
 
-    /**
-     * Gets current target flywheel velocity
-     */
+    public void setVisionCorrection(boolean visioncorrectionON) {
+        this.visioncorrectionON = visioncorrectionON;
+    }
+
     public double getCurrentTargetVelocity() {
         synchronized (flywheelLock) {
             return currentTargetVelocity;
@@ -748,26 +770,10 @@ public class RobotOperations {
         // This triangle represents the near shooting area for both alliances bounced by y = +/-x
 
         boolean inNearZone = robotY >= robotX && robotY <= -robotX;
+        boolean inFarZone = robotY >= (48-robotX) && robotY <= (robotX-48);
 
-        if (inNearZone) {
-            return true;
-        }
-
-        // Check FAR shooting zone - 12" tolerance around SHOOTING_FAR position
-        FieldPose robotCenterFieldPose = new FieldPose(robotX, robotY,
-                robotCenterPose.getHeading(AngleUnit.DEGREES));
-
-        FieldPose shootingFar;
-        if (targetTagId == 24) {
-            // Red alliance - mirror blue position across x-axis
-            shootingFar = FieldPositions.getRedPosition(FieldPositions.SHOOTING_FAR);
-        } else {
-            // Blue alliance - use original position
-            shootingFar = FieldPositions.SHOOTING_FAR;  // (54.7, -24.0, 25)
-        }
-
-        double distanceToFar = calculateDistance(robotCenterFieldPose, shootingFar);
-        return distanceToFar <= SHOOTING_ZONE_TOLERANCE;  // 12" tolerance
+        return inNearZone || inFarZone;
+        
     }
 
     /**
@@ -811,15 +817,27 @@ public class RobotOperations {
      * @return String describing the result of the smart shooting operation
      */
     public String executeSmartShooting(String shootingLocation) {
+        return executeSmartShooting(shootingLocation, false, 0);
+    }
+
+    public String executeSmartShooting(String shootingLocation, boolean useCameraServo) {
+        return executeSmartShooting(shootingLocation, useCameraServo, 0);
+    }
+
+    public String executeSmartShooting(String shootingLocation, int timeoutMS) {
+        return executeSmartShooting(shootingLocation, false, timeoutMS);
+     }
+
+    public String executeSmartShooting(String shootingLocation, boolean useCameraServo, int timeoutMS) {
         try {
             // Move to shooting location
-            MotionExecutor.MotionResult result = moveToLocation(shootingLocation);
+            MotionExecutor.MotionResult result = (timeoutMS > 0)? moveToLocation(shootingLocation, timeoutMS) : moveToLocation(shootingLocation);
 
             // Smart shooting logic
             if (result.success) {
                 // Movement successful → auto shoot
                 try {
-                    shoot();  // shoot() already includes alignment
+                    shoot(useCameraServo);  // shoot() already includes alignment
                     return "Smart shooting completed successfully";
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -835,7 +853,7 @@ public class RobotOperations {
                 if (inZone) {
                     // In zone → auto shoot
                     try {
-                        shoot();  // shoot() already includes alignment
+                        shoot(useCameraServo);  // shoot() already includes alignment
                         return "Movement interrupted but in zone → Shooting completed";
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -874,31 +892,7 @@ public class RobotOperations {
         }
     }
 
-    /**
-     * Saves current robot odometry to persistent storage at the end of autonomous
-     *
-     * @param hardwareMap Hardware map for accessing robot systems
-     * @param baseMotion BaseMotion subsystem to get current position
-     * @return true if save was successful, false otherwise
-     */
-    public static boolean saveOdometryAtAutoEnd(HardwareMap hardwareMap, BaseMotion baseMotion) {
-        try {
-            FieldPose currentPose = baseMotion.getCurrentPose();
-
-            File file = new File(ODOMETRY_FILE_PATH);
-            file.getParentFile().mkdirs(); // Create directories if they don't exist
-
-            try (FileWriter writer = new FileWriter(file)) {
-                writer.write(String.format("%.6f,%.6f,%.6f,%d",
-                        currentPose.x, currentPose.y, currentPose.heading, System.currentTimeMillis()));
-            }
-
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
+  
     /**
      * Saves current robot odometry to persistent storage at the end of autonomous
      *

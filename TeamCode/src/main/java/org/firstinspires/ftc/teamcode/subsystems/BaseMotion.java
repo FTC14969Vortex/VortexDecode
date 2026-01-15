@@ -118,6 +118,10 @@ public class BaseMotion {
         return motionExecutor.moveToPose(targetPose.x, targetPose.y, targetPose.heading, velocity);
     }
 
+    public MotionExecutor.MotionResult moveToPose(FieldPose targetPose, double velocity, int timeoutMS) {
+        return motionExecutor.moveToPose(targetPose.x, targetPose.y, targetPose.heading, velocity, 0.0, timeoutMS);
+    }
+
     /**
      * Moves robot in straight line at specified angle for specified distance
      *
@@ -209,9 +213,7 @@ public class BaseMotion {
     // ========== TELEOP CONTROL ==========
 
     /**
-     * Sets motor powers for teleop control with gamepad inputs
-     * Handles field-centric and robot-centric mode switching
-     *
+     * Sets motor powers for teleop control with gamepad inputs     *
      * @param leftX Left stick X (strafe)
      * @param leftY Left stick Y (forward/backward)
      * @param rightX Right stick X (rotation)
@@ -227,16 +229,27 @@ public class BaseMotion {
         double maxAngularVelocity = RobotConstants.MAX_THEORETICAL_ANGULAR_VELOCITY; // degrees/sec
 
         double vy = -leftX * maxLinearVelocity;
-        double vx = -leftY * maxLinearVelocity; // Invert Y for intuitive control
+        double vx = leftY * maxLinearVelocity; // Invert Y for intuitive control
         double omega = -rightX * maxAngularVelocity;
 
-        // Apply velocity based on drive mode
-        MotionState.CoordinateMode coordinateMode =
-                (driveMode == DriveMode.FIELD_CENTRIC) ?
-                        MotionState.CoordinateMode.FIELD_CENTRIC :
-                        MotionState.CoordinateMode.ROBOT_CENTRIC;
+        double frontLeft = vx - vy - omega;
+        double frontRight = vx + vy + omega;
+        double backLeft = vx + vy - omega;
+        double backRight = vx - vy + omega;
 
-        motionExecutor.setVelocity(vx, vy, omega, coordinateMode);
+        // Normalize powers to ensure no motor exceeds [-1.0, 1.0]
+        double maxPower = Math.max(1.0, Math.max(
+                Math.max(Math.abs(frontLeft), Math.abs(frontRight)),
+                Math.max(Math.abs(backLeft), Math.abs(backRight))
+        ));
+
+        frontLeft /= maxPower;
+        frontRight /= maxPower;
+        backLeft /= maxPower;
+        backRight /= maxPower;
+
+        // update motion state for real-time odometry during manual driving is included.
+        motionExecutor.setMotorPowers(frontLeft, frontRight, backLeft, backRight);
     }
 
     /**
@@ -419,4 +432,7 @@ public class BaseMotion {
     public MotionExecutor getMotionExecutor() {
         return motionExecutor;
     }
+
 }
+
+
