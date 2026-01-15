@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Full Auto Operate Test 0.5x", group = "Debug")
+@Autonomous(name = "Full Auto Operate Test 0.53.1", group = "Debug")
 public class FullAutoOperateTest extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -115,7 +115,7 @@ public class FullAutoOperateTest extends LinearOpMode {
         baseMotion.setReferencePointToPosition(FieldPositions.START_NEAR);
 
         cameraServo.update();
-        cameraServo.startThread(); // start cameraservo background thread
+       // cameraServo.startThread(); // start cameraservo background thread
 
         telemetryCurrentPose("Initializing");
 

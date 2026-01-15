@@ -23,9 +23,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 //Imports LimeLight
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
-
-@Disabled
-@TeleOp(name = "DecodeTeleopBlueV4.24 Alaqmar", group = "TeleOp")
+@TeleOp(name = "BlueV4.24", group = "TeleOp")
 
 public class TeleopBlue extends LinearOpMode {
 
@@ -87,9 +85,12 @@ public class TeleopBlue extends LinearOpMode {
         // Run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            Double robotDistanceFromAprilTag = 45.0;  // Default distance
+
+            /*
             // Calculate robot distance from AprilTag using camera
             Double robotDistanceFromAprilTagUsingCamera = 0.0;
-            Double robotDistanceFromAprilTag = 45.0;  // Default distance
+
             Double bearing = 0.0;  // Bearing angle from camera
             Double yaw = 0.0;      // Yaw angle from camera
             boolean tagDetected = false;
@@ -110,10 +111,11 @@ public class TeleopBlue extends LinearOpMode {
             if(robotDistanceFromAprilTagUsingCamera != null && robotDistanceFromAprilTagUsingCamera < 180){
                 robotDistanceFromAprilTag = robotDistanceFromAprilTagUsingCamera;
             }
-
+*/
             // Calculate required flywheel velocity based on distance
             Integer requiredFlyWheelVelocity = RobotUtil.getRequiredFlyWheelVelocity(robotDistanceFromAprilTag);
 
+            /*
             // Display telemetry with distance, bearing, yaw, and required velocity
             telemetry.addData("AprilTag Detected", tagDetected ? "YES" : "NO");
             telemetry.addData("Distance (in)", String.format("%.1f", robotDistanceFromAprilTag));
@@ -123,6 +125,8 @@ public class TeleopBlue extends LinearOpMode {
             }
             telemetry.addData("Required FlyWheel Velocity (RPM)", requiredFlyWheelVelocity);
             telemetry.update();
+
+             */
 
             /*
             // Kicker
@@ -159,6 +163,7 @@ public class TeleopBlue extends LinearOpMode {
             // Distance is updated from AprilTag before each shot for accuracy
             if (gamepad2.right_bumper) {
                 RobotUtil.shoot(flyWheel, kicker, flipper, intake, robotDistanceFromAprilTag, aprilTag, currentAprilTagName, telemetry);
+
             }
 
             if (gamepad2.a){

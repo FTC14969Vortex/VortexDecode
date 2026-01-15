@@ -251,7 +251,7 @@ public class MotionConfig {
     public static final int MOTION_TIMEOUT_MS = 5000;  // Increased for more reliable motion execution
     
     /** Safety factor for timeout calculations (multiplier for estimated time) */
-    public static final double TIMEOUT_SAFETY_FACTOR = 5.0;  // extra time for acceleration/deceleration
+    public static final double TIMEOUT_SAFETY_FACTOR = 8.0;  // extra time for acceleration/deceleration
     
     /** Stall detection time - no progress for this duration = stalled (milliseconds) */
     public static final int STALL_DETECTION_TIME_MS = 1000;

@@ -59,6 +59,12 @@ public class RobotOperations {
     private static final int KICKER_OPEN_DELAY_MS = 200;
     private static final int BASE_FLIPPER_DELAY_MS = 150;
     private static final int FLIPPER_DELAY_INCREMENT_MS = 50;
+
+    // ========== FLYWHEEL PARAMETERS ==========
+    private static final double FLYWHEEL_VELOCITY_SLOPE = 6.51;      // RPM per inch
+    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 799; // Base RPM
+    private static final double MIN_FLYWHEEL_VELOCITY = 900.0;
+    private static final double MAX_FLYWHEEL_VELOCITY = 2000.0;
     private static final double VELOCITY_TOLERANCE_PERCENT = 2.0;   // 2% tolerance for setVelocity switch
     private static final long FLYWHEEL_SPINUP_TIMEOUT = 2000;      // ms
 
@@ -154,6 +160,37 @@ public class RobotOperations {
         return targetTagId;
     }
 
+    // ========== 1. GET SHOOTING VELOCITY ==========
+
+    /**
+     * Calculates optimal flywheel velocity based on current robot position
+     *
+     * Uses current robot position to calculate distance to AprilTag,
+     * then determines optimal flywheel velocity for accurate shooting.
+     *
+     * @return Optimal flywheel velocity in RPM
+     */
+    public double getShootingVelocity() {
+        // Get current reference point position from BaseMotion
+        FieldPose currentRefPointPose = baseMotion.getCurrentPose();
+
+        // Convert reference point to robot center position
+        Pose2D robotCenterPose = coordinateTransformer.convertReferencePointToRobotCenter(
+                currentRefPointPose.x, currentRefPointPose.y, currentRefPointPose.heading);
+
+        FieldPose robotCenterFieldPose = new FieldPose(
+                robotCenterPose.getX(DistanceUnit.INCH),
+                robotCenterPose.getY(DistanceUnit.INCH),
+                robotCenterPose.getHeading(AngleUnit.DEGREES)
+        );
+
+        // Calculate distance from robot center to AprilTag
+        FieldPose aprilTagPose = getTargetAprilTagPose();
+        double distance = calculateDistance(robotCenterFieldPose, aprilTagPose);
+
+        // Calculate flywheel velocity using same formula as CameraServo
+        return calculateFlywheelVelocity(distance);
+    }
 
     // ========== 2. MOVE TO SHOOTING POSITION ==========
 
@@ -186,17 +223,6 @@ public class RobotOperations {
             // Stop dynamic flywheel control when movement completes or is interrupted
             stopDynamicFlywheelControl();
         }
-    }
-
-    public void prepareForShooting(){
-        if (intake != null) {
-            intake.setIntakePower(INTAKE_SHOOTING_POWER);
-        }
-        startDynamicFlywheelControl();
-    }
-
-    public void prepareForIntake(){
-        stopDynamicFlywheelControl();
     }
 
     /**
@@ -247,7 +273,7 @@ public class RobotOperations {
         while (isDynamicFlywheelActive && !Thread.currentThread().isInterrupted()) {
             try {
                 // Calculate current optimal velocity
-                double optimalVelocity = cameraServo.getFlywheelVelocity();
+                double optimalVelocity = getShootingVelocity();
 
                 synchronized (flywheelLock) {
                     // Check if velocity needs adjustment
@@ -291,20 +317,8 @@ public class RobotOperations {
     // ========== 3. SHOOT ==========
 
     public void shoot() throws InterruptedException {
-        // Enable auto-correction during shooting - CameraServo handles internal logic
-        if (cameraServo != null) {
-            cameraServo.setAutoOdometryCorrection(true);
-        }
-
-        try {
-            // Use default behavior: align to shooting angle and calculate optimal velocity
-            shoot(cameraServo.getFlywheelVelocity(), true);
-        } finally {
-            // Disable auto-correction after shooting
-            if (cameraServo != null) {
-                cameraServo.setAutoOdometryCorrection(false);
-            }
-        }
+        // Use default behavior: align to shooting angle and calculate optimal velocity
+        shoot(getShootingVelocity(), true);
     }
 
     public void shoot(double targetVelocity, boolean alignToShootingAngle) throws InterruptedException {
@@ -357,20 +371,15 @@ public class RobotOperations {
                 flipper.resetFlipper();
                 switch (shotNumber){
                     case 0:
-                        Thread.sleep(flipperWaitTime);
+                        Thread.sleep(flipperWaitTime+100);
                         break;
                     case 1:
                         Thread.sleep(flipperWaitTime + 100);
                         break;
                     case 2:
-                        Thread.sleep(flipperWaitTime);
                         break; // no delay for last shot
-                    case 3:
-                        break;
                 }
             }
-            // Cleanup - close gate
-            kicker.setGatePosition(Kicker.GATE_CLOSE);
 
 
         } finally {
@@ -384,6 +393,8 @@ public class RobotOperations {
                 Thread.currentThread().interrupt();
             }
 
+            // Cleanup - close gate
+            kicker.setGatePosition(Kicker.GATE_CLOSE);
 
             // NON-BLOCKING flywheel stop - robot can move immediately
             Thread flywheelStopThread = new Thread(() -> {
@@ -405,23 +416,55 @@ public class RobotOperations {
         }
     }
 
+    public static void manualShoot(){
+
+    }
     // ========== 4. ALIGN TO SHOOTING ANGLE ==========
 
     /**
-     * Aligns robot to optimal shooting angle from CameraServo
-     * CameraServo automatically uses vision when AprilTag detected, falls back to odometry otherwise
+     * Aligns robot to optimal shooting angle for AprilTag targeting
+     *
+     * Calculates the angle from robot center to AprilTag and rotates robot
+     * so that the back of the robot faces the tag (optimal shooting position).
+     * Only performs alignment if the angle difference is greater than 10 degrees.
+     *
+     * Uses MotionExecutor's built-in timeout mechanism for reliable rotation control.
      *
      * @return true if alignment was performed, false if already aligned
      */
     public boolean alignToShootingAngle() {
-        // Get rotation angle needed from CameraServo (handles vision/odometry automatically)
-        // CameraServo.getShootingAngle() returns the rotation angle needed, not absolute heading
-        double angleDifference = cameraServo.getShootingAngle();
+
+        // Get current robot center position
+        FieldPose currentRefPointPose = baseMotion.getCurrentPose();
+
+        Pose2D robotCenterPose = coordinateTransformer.convertReferencePointToRobotCenter(
+                currentRefPointPose.x,
+                currentRefPointPose.y,
+                currentRefPointPose.heading);
+
+        FieldPose robotCenterFieldPose = new FieldPose(
+                robotCenterPose.getX(DistanceUnit.INCH),
+                robotCenterPose.getY(DistanceUnit.INCH),
+                robotCenterPose.getHeading(AngleUnit.DEGREES)
+        );
+
+        // Calculate angle from robot center to AprilTag
+        FieldPose aprilTagPose = getTargetAprilTagPose();
+        double angleToTag = calculateAngle(robotCenterFieldPose, aprilTagPose);
+
+        // Calculate required robot heading (robot back should face tag)
+        // Robot back faces opposite direction of robot front
+        double requiredHeading = normalizeAngle(angleToTag + 180.0);
+
+        // Calculate angle difference
+        double currentHeading = robotCenterFieldPose.heading;
+        double angleDifference = normalizeAngle(requiredHeading - currentHeading);
 
         // Only align if difference is significant
         if (Math.abs(angleDifference) > MIN_ALIGNMENT_ANGLE) {
             if (opMode != null) {
-                opMode.telemetry.addData("Aligning", "Rotating %.1f degrees for shooting alignment", angleDifference);
+                opMode.telemetry.addData("Aligning", "Current: %.1f deg, Target: %.1f deg, Diff: %.1f deg",
+                        currentHeading, requiredHeading, angleDifference);
                 opMode.telemetry.update();
             }
 
@@ -467,8 +510,7 @@ public class RobotOperations {
 
         if (targetPosition == null) {
             throw new IllegalArgumentException("Unknown location: " + locationName +
-                    ". Supported: parking_near, parking_end, open_gate, loading, shooting_near, " +
-                    "shooting_far, intake_loading_start");
+                    ". Supported: parking_near, parking_end, open_gate, loading, shooting_near, shooting_far");
         }
 
         // Check if this is a shooting location - delegate to moveToShootingPosition
@@ -535,9 +577,6 @@ public class RobotOperations {
                 break;
             case "shooting_far":
                 bluePosition = FieldPositions.SHOOTING_FAR;
-                break;
-            case "intake_loading_start": //start far intake loading
-                bluePosition = FieldPositions.INTAKE_LOADING_START;
                 break;
             default:
                 return null; // Unknown location
@@ -619,7 +658,20 @@ public class RobotOperations {
         return angle;
     }
 
-       /**
+    /**
+     * Calculates flywheel velocity based on distance (same formula as CameraServo)
+     */
+    private double calculateFlywheelVelocity(double distance) {
+        if (distance <= 0) {
+            return MIN_FLYWHEEL_VELOCITY;
+        }
+
+        double velocity = FLYWHEEL_VELOCITY_SLOPE * distance + FLYWHEEL_VELOCITY_INTERCEPT;
+        return Math.max(MIN_FLYWHEEL_VELOCITY, Math.min(MAX_FLYWHEEL_VELOCITY, velocity));
+
+    }
+
+    /**
      * Checks if dynamic flywheel control is currently active
      */
     public boolean isDynamicFlywheelActive() {
