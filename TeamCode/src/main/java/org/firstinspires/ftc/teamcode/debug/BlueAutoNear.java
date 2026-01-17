@@ -98,6 +98,7 @@ public class BlueAutoNear extends LinearOpMode {
             baseMotion.getMotionExecutor()
         );
         cameraServo.moveToCenter(); // Keep servo at center position for this auto
+        cameraServo.update();
         cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for pure odometry-based calculation
         cameraServo.setServoMovementEnabled(false); // Disable servo movement - keep stationary
         cameraServo.startThread(); // start cameraservo background thread

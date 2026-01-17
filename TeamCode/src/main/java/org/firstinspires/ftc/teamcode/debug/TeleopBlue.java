@@ -147,7 +147,7 @@ public class TeleopBlue extends LinearOpMode {
         // Initialize Intake
         intake = new Intake();
         intake.init(this);
-        intake.stopIntake();
+        intake.startIntake();
 
         // Initialize Kicker
         kicker = new Kicker();
@@ -169,6 +169,7 @@ public class TeleopBlue extends LinearOpMode {
                 baseMotion.getMotionExecutor()
         );
         cameraServo.moveToCenter(); // Keep servo at center position
+        cameraServo.update();
         cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for teleop
         cameraServo.setServoMovementEnabled(false); // Disable servo movement - keep stationary for teleop
         cameraServo.startThread(); // start cameraservo background thread
