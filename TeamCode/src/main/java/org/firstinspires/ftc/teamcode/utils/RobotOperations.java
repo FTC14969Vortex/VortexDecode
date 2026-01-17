@@ -54,7 +54,7 @@ public class RobotOperations {
 
     // ========== SHOOTING PARAMETERS ==========
     private static final int NUM_SHOTS = 3;
-    private static final double INITIAL_FLIPPER_ANGLE = 90; //was 120. reduced to avoid jam at 2nd
+    private static final double INITIAL_FLIPPER_ANGLE = 150; //was 120. reduced to avoid jam at 2nd
     private static final double ANGLE_INCREMENT = 30.0;
     private static final int KICKER_OPEN_DELAY_MS = 300; //was 200, need a little more to avoid run against flipper
     private static final int BASE_FLIPPER_DELAY_MS = 100; // 60deg/55ms, for super speed gobuilda servo
@@ -385,8 +385,8 @@ public class RobotOperations {
 
                 // Calculate flipper angle for this shot (120, 150, 180 degrees)
                 double currentFlipperAngle = INITIAL_FLIPPER_ANGLE + (shotNumber * ANGLE_INCREMENT);
-               // int flipperWaitTime = BASE_FLIPPER_DELAY_MS + (shotNumber * FLIPPER_DELAY_INCREMENT_MS);
-                int flipperWaitTime = BASE_FLIPPER_DELAY_MS;
+                int flipperWaitTime = BASE_FLIPPER_DELAY_MS + (shotNumber * FLIPPER_DELAY_INCREMENT_MS);
+              //  int flipperWaitTime = BASE_FLIPPER_DELAY_MS;
 
                 // Turn flipper
                 flipper.turnFlipper(currentFlipperAngle);
@@ -396,12 +396,13 @@ public class RobotOperations {
                 flipper.resetFlipper();
                 switch (shotNumber){
                     case 0:
-                        Thread.sleep(flipperWaitTime+100);
+                        Thread.sleep(flipperWaitTime+200);
                         break;
                     case 1:
                         Thread.sleep(flipperWaitTime+200); // was 100
                         break;
                     case 2:
+                       // Thread.sleep(flipperWaitTime+300);
                         break; // no delay for last shot
                 }
             }
@@ -612,6 +613,9 @@ public class RobotOperations {
                 break;
             case "shooting_far":
                 bluePosition = FieldPositions.SHOOTING_FAR;
+                break;
+            case "intake_loading_start":
+                bluePosition = FieldPositions.INTAKE_LOADING_START;
                 break;
             default:
                 return null; // Unknown location

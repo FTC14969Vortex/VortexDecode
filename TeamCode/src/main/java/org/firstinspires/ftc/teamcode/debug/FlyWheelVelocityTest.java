@@ -74,7 +74,7 @@ public class FlyWheelVelocityTest extends OpMode {
         telemetry.update();
         
         // Initialize vision system
-        initVisionSystem();
+     //   initVisionSystem();
         
         // Initialize camera servo system
         cameraServo = new CameraServo();

@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses RobotOperations for all smart movement (shooting_far, intake_loading_start)
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Far 0.1", group = "Debug")
+@Autonomous(name = "Blue Auto Far 0.2", group = "Debug")
 public class BlueAutoFar extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -107,7 +107,7 @@ public class BlueAutoFar extends LinearOpMode {
         robotOperations.setAlliance(true); // Blue alliance
 
         // Set reference point to START_FAR position
-        baseMotion.setControlMode(MotionExecutor.ControlMode.HYBRID);
+        baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
         baseMotion.setReferencePointToPosition(FieldPositions.START_FAR);
 

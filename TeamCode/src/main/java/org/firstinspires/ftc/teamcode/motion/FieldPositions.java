@@ -57,7 +57,7 @@ public class FieldPositions {
     // Shooting positions  far
 
     public static final FieldPose START_FAR = new FieldPose(54.7, -24, 0.0);
-    public static final FieldPose SHOOTING_FAR = new FieldPose(54.7, -24.0, 25);
+    public static final FieldPose SHOOTING_FAR = new FieldPose(44, -18.0, 27.3);
     public static final FieldPose INTAKE_LOADING_START = new FieldPose(31, -71,0); //was 32
     public static final FieldPose INTAKE_LOADING_FINISH = INTAKE_LOADING_START.offset(INTAKE_OFFSET_X, 0, 0);
 
