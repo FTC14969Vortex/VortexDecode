@@ -53,23 +53,21 @@ public class CameraServo {
     /** Camera servo hardware name in configuration */
     private static final String CAMERA_SERVO_NAME = "cameraServo";
 
-    /** Total servo range in degrees (GoBilda 5-turn servo: 4.5 turns = 1620°) */
-    private static final double SERVO_RANGE_DEGREES = 1620.0;
+    /** Total servo range in degrees (GoBilda 1-turn servo: 1 turns = 300°) */
+    private static final double SERVO_RANGE_DEGREES = 300.0;
 
     /** Maximum servo angle from center (+810 degrees) - HARDWARE LIMIT */
-    private static final double SERVO_MAX_ANGLE = 810.0;
+    private static final double SERVO_MAX_ANGLE = SERVO_RANGE_DEGREES/2;
 
     /** Minimum servo angle from center (-810 degrees) - HARDWARE LIMIT */
-    private static final double SERVO_MIN_ANGLE = -810.0;
+    private static final double SERVO_MIN_ANGLE = -SERVO_MAX_ANGLE;
 
     /** Maximum USAGE angle from center (+180 degrees) - PRACTICAL LIMIT */
-    private static final double SERVO_USAGE_MAX_ANGLE = 180.0;
+    private static final double SERVO_USAGE_MAX_ANGLE = 130;
 
     /** Minimum USAGE angle from center (-180 degrees) - PRACTICAL LIMIT */
-    private static final double SERVO_USAGE_MIN_ANGLE = -180.0;
+    private static final double SERVO_USAGE_MIN_ANGLE = -130;
 
-    /** Servo center position (0.5 = center) */
-    private static final double SERVO_CENTER_POSITION = 0.5;
 
     /** Minimum servo position (0.0) */
     private static final double SERVO_MIN_POSITION = 0.0;
@@ -239,9 +237,10 @@ public class CameraServo {
             this.motionExecutor = motionExecutor;
             timer = new ElapsedTime();
             searchTimer = new ElapsedTime();
+            timer.reset();
 
             // Set to center position on init
-            setTargetAngle(0.0);
+            moveToCenter();
             update();
 
             isInitialized = true;

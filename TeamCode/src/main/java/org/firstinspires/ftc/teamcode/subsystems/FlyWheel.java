@@ -133,6 +133,7 @@ public class FlyWheel {
         
         // Calculate tolerance thresholds
         double lowerThreshold = (1.0 - VELOCITY_TOLERANCE_PERCENT / 100.0) * targetVelocity;  // 98% of target
+        double upperThreshold = (1.0 + VELOCITY_TOLERANCE_PERCENT / 100.0) * targetVelocity;  // 102% of target
         double jamThreshold = JAM_DETECTION_THRESHOLD * targetVelocity;  // 75% of target
         
         // Phase 1: Ramp up to target velocity at maximum power
@@ -148,6 +149,25 @@ public class FlyWheel {
                 break;
             }
             
+            durationInMillis = System.currentTimeMillis() - startTime;
+            if (durationInMillis > maxWaitTimeMs) {
+                // Timeout during ramp-up
+                double achievedVelocity = flyWheel.getVelocity();
+                boolean success = achievedVelocity >= jamThreshold;
+                return new FlyWheelSpinUpResult(success, durationInMillis, achievedVelocity, targetVelocity);
+            }
+        }
+
+        while (flyWheel.getVelocity() > upperThreshold) {
+            flyWheel.setPower(-1.0);
+            // Small delay to prevent excessive CPU usage
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+
             durationInMillis = System.currentTimeMillis() - startTime;
             if (durationInMillis > maxWaitTimeMs) {
                 // Timeout during ramp-up

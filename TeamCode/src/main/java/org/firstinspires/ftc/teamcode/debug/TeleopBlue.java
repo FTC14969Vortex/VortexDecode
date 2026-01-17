@@ -36,6 +36,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * GAMEPAD 1 (Driver):
  * - Left Stick: Robot translation (strafe)
  * - Right Stick X: Robot rotation
+ * - Right Bumper: Toggle flywheel preparation/shoot (1st press: prepare flywheel, 2nd press: shoot)
  * - A: Move to open_gate
  * - B: Move to loading
  * - Y: Move to parking_end
@@ -45,9 +46,8 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - B: Move to shooting_far (with smart shooting)
  * - Right Bumper: Manual shoot (always available)
  * - X: Toggle intake on/off
- * - Y: Emergency stop all operations
  */
-@TeleOp(name = "A-TeleopBlue -0.47x", group = "Debug")
+@TeleOp(name = "A-TeleopBlue -0.50x", group = "Debug")
 public class TeleopBlue extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -71,6 +71,7 @@ public class TeleopBlue extends LinearOpMode {
     private boolean intakeOn = false;
     private String lastOperation = "None";
     private boolean isMovingToShoot = false;  // Track if we're in a shooting movement
+    private boolean isFlywheelPrepared = false; // Track if flywheel is prepared for manual shooting
 
     // ========== BUTTON DEBOUNCING ==========
     private boolean lastGamepad1A = false;
@@ -80,7 +81,6 @@ public class TeleopBlue extends LinearOpMode {
     private boolean lastGamepad2A = false;
     private boolean lastGamepad2B = false;
     private boolean lastGamepad2X = false;
-    private boolean lastGamepad2Y = false;
     private boolean lastGamepad2RightBumper = false;
 
     @Override
@@ -105,7 +105,7 @@ public class TeleopBlue extends LinearOpMode {
         telemetry.addLine("GAMEPAD 2 (Shooter):");
         telemetry.addLine("  A: Shoot Near  B: Shoot Far");
         telemetry.addLine("  Right Bumper: Manual Shoot");
-        telemetry.addLine("  X: Toggle Intake  Y: Emergency Stop");
+        telemetry.addLine("  X: Toggle Intake");
         telemetry.update();
 
         waitForStart();
@@ -168,7 +168,7 @@ public class TeleopBlue extends LinearOpMode {
                 baseMotion.getMotionExecutor().getCoordinateTransformer(),
                 baseMotion.getMotionExecutor()
         );
-        cameraServo.moveToCenter(); // Keep servo at center position
+        cameraServo.moveToCenter();
         cameraServo.update();
         cameraServo.setAutoOdometryCorrection(false); // Disable autocorrection for teleop
         cameraServo.setServoMovementEnabled(false); // Disable servo movement - keep stationary for teleop
@@ -255,6 +255,10 @@ public class TeleopBlue extends LinearOpMode {
 
         // Y Button: Move to parking_end
         if (gamepad1.y && !lastGamepad1Y && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            if (isFlywheelPrepared) {
+                robotOperations.stopDynamicFlywheelControl();
+                isFlywheelPrepared = false;
+            }
             lastOperation = "Moving to parking_end";
             try {
                 MotionExecutor.MotionResult result = robotOperations.moveToLocation("parking_end", 2000); //2 s, if needed press button again
@@ -265,12 +269,31 @@ public class TeleopBlue extends LinearOpMode {
             buttonTimer.reset();
         }
 
-        // right bumper: move to shooting near and ramp up flywheel
-        // after that shooter need to manual shoot
-         if (gamepad1.right_bumper && !lastGamepad1RightBumper && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {            
-             MotionExecutor.MotionResult result = robotOperations.moveToLocation("shooting_near", 2000); //2s timeout,
-             lastOperation = result.success ? "Reached shooting_near" : "Failed to reach shooting_end: " + result.failureReason;
-             buttonTimer.reset();
+        // Right Bumper: Toggle flywheel preparation/shoot
+        // First press: Start dynamic flywheel control for manual positioning
+        // Second press: Execute shoot
+        if (gamepad1.right_bumper && !lastGamepad1RightBumper && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            if (!isFlywheelPrepared) {
+                // First press: Start flywheel preparation
+                try {
+                    robotOperations.startManualFlywheelPreparation();
+                    isFlywheelPrepared = true;
+                    lastOperation = "Flywheel prepared - Manual positioning enabled";
+                } catch (Exception e) {
+                    lastOperation = "Error starting flywheel prep: " + e.getMessage();
+                }
+            } else {
+                // Second press: Execute shoot
+                try {
+                    robotOperations.executeManualShoot();
+                    isFlywheelPrepared = false; // Reset state after shooting
+                    lastOperation = "Manual shoot executed";
+                } catch (Exception e) {
+                    lastOperation = "Error during manual shoot: " + e.getMessage();
+                    isFlywheelPrepared = false; // Reset state on error
+                }
+            }
+            buttonTimer.reset();
         }
     }
 
@@ -281,14 +304,26 @@ public class TeleopBlue extends LinearOpMode {
         // ========== SMART SHOOTING MOVEMENTS ==========
 
         // A Button: Move to shooting_near with smart shooting
-        if (gamepad2.a && !lastGamepad2A && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {            
-            lastOperation = robotOperations.executeSmartShooting("shooting_near", true, 3000); //2.5s timeout, then check if in shooting zone -> shoot                         
+        if (gamepad2.a && !lastGamepad2A && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            // Reset manual preparation state since we're switching to autonomous
+            if (isFlywheelPrepared) {
+                robotOperations.stopDynamicFlywheelControl();
+                isFlywheelPrepared = false;
+                lastOperation = "Manual prep cancelled - Switching to autonomous near";
+            }
+            lastOperation = robotOperations.executeSmartShooting("shooting_near", true, 4000);
             buttonTimer.reset();
         }
 
         // B Button: Move to shooting_far with smart shooting
-        if (gamepad2.b && !lastGamepad2B && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {            
-            lastOperation = robotOperations.executeSmartShooting("shooting_far", true, 2000);            
+        if (gamepad2.b && !lastGamepad2B && buttonTimer.seconds() > BUTTON_DEBOUNCE_TIME) {
+            // Reset manual preparation state since we're switching to autonomous
+            if (isFlywheelPrepared) {
+                robotOperations.stopDynamicFlywheelControl();
+                isFlywheelPrepared = false;
+                lastOperation = "Manual prep cancelled - Switching to autonomous far";
+            }
+            lastOperation = robotOperations.executeSmartShooting("shooting_far", true, 2000);
             buttonTimer.reset();
         }
 
@@ -351,13 +386,25 @@ public class TeleopBlue extends LinearOpMode {
         // Intake status
         telemetry.addData("🔄 Intake", intakeOn ? "ON" : "OFF");
 
+        // Manual shooting state
+        if (isFlywheelPrepared) {
+            telemetry.addData("🎯 Manual Shooting", "✅ READY TO SHOOT (GP1 RB to shoot)");
+            telemetry.addLine("⚠️  GP2 A/B will cancel manual prep and start autonomous");
+        } else {
+            telemetry.addData("🎯 Manual Shooting", "❌ NOT PREPARED (GP1 RB to prepare)");
+        }
+
         // Dynamic flywheel status
         telemetry.addData("🌪️ Flywheel", robotOperations.isDynamicFlywheelActive() ?
                 String.format("Dynamic (%.0f RPM)", robotOperations.getCurrentTargetVelocity()) : "Idle");
 
         // Control hints
         telemetry.addLine("");
-        telemetry.addLine("🎮 GP1: A=Gate B=Load Y=Park | GP2: A=Near B=Far RB=Shoot X=Intake Y=Stop");
+        if (isFlywheelPrepared) {
+            telemetry.addLine("🎮 Manual Mode: GP1 RB=Shoot | GP2 A/B=Cancel&Auto X=Intake");
+        } else {
+            telemetry.addLine("🎮 GP1: RB=Prep/Shoot A=Gate B=Load Y=Park | GP2: A=Near B=Far RB=Shoot X=Intake");
+        }
 
         telemetry.update();
     }
@@ -374,7 +421,6 @@ public class TeleopBlue extends LinearOpMode {
         lastGamepad2A = gamepad2.a;
         lastGamepad2B = gamepad2.b;
         lastGamepad2X = gamepad2.x;
-        lastGamepad2Y = gamepad2.y;
         lastGamepad2RightBumper = gamepad2.right_bumper;
     }
 

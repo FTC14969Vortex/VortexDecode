@@ -71,7 +71,7 @@ public class RobotOperations {
     // ========== ALIGNMENT PARAMETERS ==========
     private static final double MIN_ALIGNMENT_ANGLE = 5.0;        // degrees - only align if > 5 degrees
     private static final double TRAVEL_VELOCITY = 50.0;            // inches/sec for movement
-    private static final double ALIGNMENT_ANGULAR_VELOCITY = 20;      // inch/s
+    private static final double ALIGNMENT_ANGULAR_VELOCITY = 30;      // inch/s
     private static final int ALIGNMENT_TIMEOUT = 500;              // ms
 
 
@@ -233,8 +233,9 @@ public class RobotOperations {
     /**
      * Starts background thread for dynamic flywheel velocity control
      * Continuously monitors robot position and adjusts flywheel velocity
+     * Public method for teleop manual shooting preparation
      */
-    private void startDynamicFlywheelControl() {
+    public void startDynamicFlywheelControl() {
         synchronized (flywheelLock) {
             if (isDynamicFlywheelActive) {
                 return; // Already running
@@ -249,8 +250,9 @@ public class RobotOperations {
 
     /**
      * Stops dynamic flywheel control thread
+     * Public method for teleop control
      */
-    private void stopDynamicFlywheelControl() {
+    public void stopDynamicFlywheelControl() {
         synchronized (flywheelLock) {
             if (!isDynamicFlywheelActive) {
                 return; // Already stopped
@@ -696,12 +698,53 @@ public class RobotOperations {
 
     }
 
-    /**
-     * Checks if dynamic flywheel control is currently active
-     */
     public boolean isDynamicFlywheelActive() {
         synchronized (flywheelLock) {
             return isDynamicFlywheelActive;
+        }
+    }
+
+    // ========== MANUAL SHOOTING CONTROL FOR TELEOP ==========
+
+    /**
+     * Starts manual flywheel preparation for teleop
+     * Begins dynamic flywheel control and sets intake power
+     */
+    public void startManualFlywheelPreparation() {
+        // Set intake power for shooting
+        if (intake != null) {
+            intake.setIntakePower(INTAKE_SHOOTING_POWER);
+        }
+        
+        // Start dynamic flywheel control for position-based velocity
+        startDynamicFlywheelControl();
+        
+        if (opMode != null) {
+            opMode.telemetry.addLine("🎯 Flywheel prepared - Manual positioning enabled");
+            opMode.telemetry.addLine("📍 Move robot to desired position and press right bumper again to shoot");
+            opMode.telemetry.update();
+        }
+    }
+
+    /**
+     * Executes manual shoot after flywheel preparation
+     * Aligns robot and shoots, then stops dynamic flywheel control
+     */
+    public void executeManualShoot() throws InterruptedException {
+        try {
+            // Get current flywheel velocity (should be optimized by dynamic control)
+            double currentVelocity = getShootingVelocity();
+            
+            // Execute shoot with current velocity and alignment
+            shoot(currentVelocity, true, true); // velocity, align, use camera servo
+            
+            if (opMode != null) {
+                opMode.telemetry.addLine("✅ Manual shoot completed!");
+                opMode.telemetry.update();
+            }
+        } finally {
+            // Always stop dynamic flywheel control after shooting
+            stopDynamicFlywheelControl();
         }
     }
 
