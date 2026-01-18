@@ -383,7 +383,7 @@ public class RobotOperations {
             // Execute flipper shots
             for (int shotNumber = 0; shotNumber < NUM_SHOTS; shotNumber++) {
 
-                //   if (alignToShootingAngle) { alignToShootingAngle(); } // always align
+                if (alignToShootingAngle) { alignToShootingAngle(useCameraServo); } // always align
 
                 // Calculate flipper angle for this shot (120, 150, 180 degrees)
                 double currentFlipperAngle = INITIAL_FLIPPER_ANGLE + (shotNumber * ANGLE_INCREMENT);

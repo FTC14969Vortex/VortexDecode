@@ -68,6 +68,9 @@ public class CameraServo {
     /** Minimum USAGE angle from center (-180 degrees) - PRACTICAL LIMIT */
     private static final double SERVO_USAGE_MIN_ANGLE = -130;
 
+    // adjust so that camera is facing backward - what is desired!!
+    private static final double SERVO_OFFSET_ANGLE = -5;  //due to mechanical limitation, this is the offset
+
 
     /** Minimum servo position (0.0) */
     private static final double SERVO_MIN_POSITION = 0.0;
@@ -281,7 +284,6 @@ public class CameraServo {
     }
 
     // ========== TARGET TAG SELECTION ==========
-
     /**
      * Sets the target AprilTag for detection
      *
@@ -947,6 +949,7 @@ public class CameraServo {
             return; // Already at target
         }
 
+        /* DON't PREDICT SERVO
         // Calculate maximum angle change this update - by prediction
         double deltaTime = timer.seconds();
         timer.reset();
@@ -957,10 +960,11 @@ public class CameraServo {
         double angleChange = Math.signum(angleError) * Math.min(Math.abs(angleError), maxAngleChange);
 
         currentAngle += angleChange;
+         */
         currentAngle = clampServoAngle(currentAngle);
 
         // Set servo position
-        double servoPosition = angleToServoPosition(currentAngle);
+        double servoPosition = angleToServoPosition(currentAngle + SERVO_OFFSET_ANGLE);
         panServo.setPosition(servoPosition);
     }
 
@@ -970,7 +974,7 @@ public class CameraServo {
      * Centers the servo (0 degree position)
      */
     public void moveToCenter() {
-        setTargetAngle(-15.0);
+        setTargetAngle(0);
         stopSearch();
     }
 

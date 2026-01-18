@@ -75,6 +75,8 @@ public class CameraServoTest extends OpMode {
                 motionExecutor.getCoordinateTransformer(),
                 motionExecutor
         );
+        cameraServo.moveToCenter(); // Keep servo at center position for this auto
+        cameraServo.update();
         cameraServo.setTargetTag(20); // Set target to blue GOAL (tag 20)
         cameraServo.setAutoOdometryCorrection(false);
         cameraServo.setServoMovementEnabled(false);
