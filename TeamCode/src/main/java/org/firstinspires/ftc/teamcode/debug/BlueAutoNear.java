@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Near 0.67.3", group = "Debug")
+@Autonomous(name = "Blue Auto Near 0.67.4", group = "Debug")
 public class BlueAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
