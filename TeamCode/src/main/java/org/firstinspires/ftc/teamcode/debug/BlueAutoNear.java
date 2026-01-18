@@ -129,7 +129,7 @@ public class BlueAutoNear extends LinearOpMode {
         try {
 
             // Initial shooting with preloaded balls
-            MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near", 2000);
+            MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near", 1700);
             // Display motion results for debugging
             telemetry.addData("Motion Success", result1.success);
             telemetry.addData("Position Error", "%.2f inches", result1.finalPositionError);

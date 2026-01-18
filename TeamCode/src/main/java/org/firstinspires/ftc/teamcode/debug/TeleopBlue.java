@@ -47,7 +47,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Right Bumper: Manual shoot (always available)
  * - X: Toggle intake on/off
  */
-@TeleOp(name = "A-TeleopBlue -0.50x", group = "Debug")
+@TeleOp(name = "A-TeleopBlue -0.63", group = "Debug")
 public class TeleopBlue extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========

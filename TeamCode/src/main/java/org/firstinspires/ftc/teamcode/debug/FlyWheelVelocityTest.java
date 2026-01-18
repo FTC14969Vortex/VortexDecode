@@ -38,7 +38,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
  * - Flywheel status
  * - Manual data recording prompts
  */
-//@Disabled
+@Disabled
 @TeleOp(name = "FlyWheel Velocity Test", group = "Debug")
 public class FlyWheelVelocityTest extends OpMode {
     

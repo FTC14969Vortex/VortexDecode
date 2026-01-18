@@ -52,14 +52,6 @@ public class RobotOperations {
     private CoordinateTransformer coordinateTransformer;
     private OpMode opMode;
 
-    // ========== SHOOTING PARAMETERS ==========
-    private static final int NUM_SHOTS = 3;
-    private static final double INITIAL_FLIPPER_ANGLE = 150; //was 120. reduced to avoid jam at 2nd
-    private static final double ANGLE_INCREMENT = 30.0;
-    private static final int KICKER_OPEN_DELAY_MS = 300; //was 200, need a little more to avoid run against flipper
-    private static final int BASE_FLIPPER_DELAY_MS = 100; // 60deg/55ms, for super speed gobuilda servo
-    private static final int FLIPPER_DELAY_INCREMENT_MS = 50;
-
     // ========== FLYWHEEL PARAMETERS ==========
     private static final double FLYWHEEL_VELOCITY_SLOPE = 6.17;      // RPM per inch
     private static final double FLYWHEEL_VELOCITY_INTERCEPT = 867; // Base RPM
@@ -376,39 +368,26 @@ public class RobotOperations {
         flywheelMaintenanceThread.start();
 
         try {
-            // Open gate for shooting
             kicker.setGatePosition(Kicker.GATE_SHOOT);
-            Thread.sleep(KICKER_OPEN_DELAY_MS); // Wait for gate to open, otherwise flipper will run against
+            Thread.sleep(300); // Wait for gate to open, otherwise flipper will run against
 
-            // Execute flipper shots
-            for (int shotNumber = 0; shotNumber < NUM_SHOTS; shotNumber++) {
+            // 1st - kicker 2 ballers
+            flipper.turnFlipper(120);
+            Thread.sleep(150);
+            flipper.resetFlipper();
+            Thread.sleep(300);
 
-                if (alignToShootingAngle) { alignToShootingAngle(useCameraServo); } // always align
+            // 2nd
+            flipper.turnFlipper(150);
+            Thread.sleep(150);
+            flipper.resetFlipper();
+            Thread.sleep(300);
 
-                // Calculate flipper angle for this shot (120, 150, 180 degrees)
-                double currentFlipperAngle = INITIAL_FLIPPER_ANGLE + (shotNumber * ANGLE_INCREMENT);
-                int flipperWaitTime = BASE_FLIPPER_DELAY_MS + (shotNumber * FLIPPER_DELAY_INCREMENT_MS);
-              //  int flipperWaitTime = BASE_FLIPPER_DELAY_MS;
-
-                // Turn flipper
-                flipper.turnFlipper(currentFlipperAngle);
-                Thread.sleep(flipperWaitTime);
-
-                // Reset flipper to starting position
-                flipper.resetFlipper();
-                switch (shotNumber){
-                    case 0:
-                        Thread.sleep(flipperWaitTime+200);
-                        break;
-                    case 1:
-                        Thread.sleep(flipperWaitTime+200); // was 100
-                        break;
-                    case 2:
-                       // Thread.sleep(flipperWaitTime+300);
-                        break; // no delay for last shot
-                }
-            }
-
+            // 3rd
+            flipper.turnFlipper(150);
+            Thread.sleep(150);
+            flipper.resetFlipper();
+            Thread.sleep(150); // give time for the ball to get out
 
         } finally {
             // Stop flywheel maintenance thread
@@ -732,11 +711,9 @@ public class RobotOperations {
      */
     public void executeManualShoot() throws InterruptedException {
         try {
-            // Get current flywheel velocity (should be optimized by dynamic control)
-            double currentVelocity = getShootingVelocity();
-            
+
             // Execute shoot with current velocity and alignment
-            shoot(currentVelocity, true, true); // velocity, align, use camera servo
+            shoot(true, true); // velocity, align, use camera servo
             
             if (opMode != null) {
                 opMode.telemetry.addLine("✅ Manual shoot completed!");
