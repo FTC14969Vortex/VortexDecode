@@ -269,7 +269,7 @@ public class RobotConstants {
    // public static final ComponentPosition ODOMETRY_SENSOR_REF = BACK_RIGHT_WHEEL_REF.translate(-1.5, 7.87, 0);  // -24/25.4, 200/25.4
 
     //deltax: y-pod x direction, deltay:x-pod y direction
-    public static final ComponentPosition ODOMETRY_SENSOR_REF = BACK_RIGHT_WHEEL_REF.translate(-1., 4.5, 0);  //
+    public static final ComponentPosition ODOMETRY_SENSOR_REF = BACK_RIGHT_WHEEL_REF.translate(-1., 4.0, 0);  //
 
 
     public static final ComponentPosition BACK_RIGHT_CORNER_REF = BACK_RIGHT_WHEEL_REF.translate(-3.75, -1,0); //
