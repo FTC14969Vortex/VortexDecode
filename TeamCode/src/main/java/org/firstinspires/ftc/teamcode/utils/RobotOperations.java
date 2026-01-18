@@ -61,8 +61,8 @@ public class RobotOperations {
     private static final int FLIPPER_DELAY_INCREMENT_MS = 50;
 
     // ========== FLYWHEEL PARAMETERS ==========
-    private static final double FLYWHEEL_VELOCITY_SLOPE = 6.51;      // RPM per inch
-    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 799; // Base RPM
+    private static final double FLYWHEEL_VELOCITY_SLOPE = 6.17;      // RPM per inch
+    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 867; // Base RPM
     private static final double MIN_FLYWHEEL_VELOCITY = 900.0;
     private static final double MAX_FLYWHEEL_VELOCITY = 2000.0;
     private static final double VELOCITY_TOLERANCE_PERCENT = 2.0;   // 2% tolerance for setVelocity switch

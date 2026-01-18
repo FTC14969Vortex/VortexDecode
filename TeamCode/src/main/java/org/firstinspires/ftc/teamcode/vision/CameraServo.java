@@ -130,8 +130,8 @@ public class CameraServo {
     // ========== FLYWHEEL VELOCITY PARAMETERS ==========
 
     /** Linear flywheel velocity dependence on distance */
-    private static final double FLYWHEEL_VELOCITY_SLOPE = 6.51;      // RPM per inch
-    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 800.0; // Base RPM
+    private static final double FLYWHEEL_VELOCITY_SLOPE = 6.17;      // RPM per inch
+    private static final double FLYWHEEL_VELOCITY_INTERCEPT = 867; // Base RPM
 
     /** Minimum flywheel velocity (RPM) */
     private static final double MIN_FLYWHEEL_VELOCITY = 799;
@@ -970,7 +970,7 @@ public class CameraServo {
      * Centers the servo (0 degree position)
      */
     public void moveToCenter() {
-        setTargetAngle(0.0);
+        setTargetAngle(-15.0);
         stopSearch();
     }
 

@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Near 0.66x", group = "Debug")
+@Autonomous(name = "Blue Auto Near 0.67.3", group = "Debug")
 public class BlueAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -129,7 +129,7 @@ public class BlueAutoNear extends LinearOpMode {
         try {
 
             // Initial shooting with preloaded balls
-            MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near", 1600);
+            MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near", 2000);
             // Display motion results for debugging
             telemetry.addData("Motion Success", result1.success);
             telemetry.addData("Position Error", "%.2f inches", result1.finalPositionError);
