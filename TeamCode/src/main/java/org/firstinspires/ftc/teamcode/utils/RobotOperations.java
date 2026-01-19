@@ -74,6 +74,7 @@ public class RobotOperations {
     // ========== ALLIANCE CONFIGURATION ==========
     private boolean isBlueAlliance = true;  // Default to blue alliance
     private boolean visioncorrectionON = false; // turn on auto correction
+    private boolean shooting_4th = false;
     private int targetTagId = 20;  // Default to blue alliance (Tag 20), red alliance uses Tag 24
 
     // ========== DYNAMIC FLYWHEEL CONTROL ==========
@@ -389,6 +390,13 @@ public class RobotOperations {
             flipper.resetFlipper();
             Thread.sleep(150); // give time for the ball to get out
 
+            if (shooting_4th) {
+                flipper.turnFlipper(150);
+                Thread.sleep(150);
+                flipper.resetFlipper();
+                Thread.sleep(150);
+            }
+
         } finally {
             // Stop flywheel maintenance thread
             maintainFlywheel[0] = false;
@@ -569,11 +577,17 @@ public class RobotOperations {
      * @param locationName Name of the location
      * @return FieldPose for the location, or null if not found
      */
-    private FieldPose getLocationPosition(String locationName) {
+    public FieldPose getLocationPosition(String locationName) {
         FieldPose bluePosition;
 
         // Map location names to blue alliance positions
         switch (locationName.toLowerCase()) {
+            case "start_near":
+                bluePosition = FieldPositions.START_NEAR;
+                break;
+            case "start_far":
+                bluePosition = FieldPositions.START_FAR;
+                break;
             case "parking_near":
                 bluePosition = FieldPositions.PARKING_NEAR;
                 break;
@@ -597,6 +611,15 @@ public class RobotOperations {
                 break;
             case "intake_loading_start":
                 bluePosition = FieldPositions.INTAKE_LOADING_START;
+                break;
+            case "intake_1_start":
+                bluePosition = FieldPositions.INTAKE_1_START;
+                break;
+            case "intake_2_start":
+                bluePosition = FieldPositions.INTAKE_2_START;
+                break;
+            case "intake_3_start":
+                bluePosition = FieldPositions.INTAKE_3_START;
                 break;
             default:
                 return null; // Unknown location
@@ -728,6 +751,11 @@ public class RobotOperations {
     public void setVisionCorrection(boolean visioncorrectionON) {
         this.visioncorrectionON = visioncorrectionON;
     }
+
+    public void setShooting4th(boolean shooting_4th) {
+        this.shooting_4th = shooting_4th;
+    }
+
 
     public double getCurrentTargetVelocity() {
         synchronized (flywheelLock) {

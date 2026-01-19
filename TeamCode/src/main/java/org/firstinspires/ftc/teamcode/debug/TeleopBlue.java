@@ -47,7 +47,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Right Bumper: Manual shoot (always available)
  * - X: Toggle intake on/off
  */
-@TeleOp(name = "Teleop Smart -0.63", group = "Teleop")
+@TeleOp(name = "A-TeleopBlue -0.65", group = "Debug")
 public class TeleopBlue extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -65,6 +65,10 @@ public class TeleopBlue extends LinearOpMode {
     private static final double DRIVE_SPEED_MULTIPLIER = 1.0;  // Full speed for translation
     private static final double ROTATION_SPEED_MULTIPLIER = 0.6;  // Reduced speed for rotation precision
     private static final double BUTTON_DEBOUNCE_TIME = 0.3;    // seconds
+
+    // alliance setup
+    private static final boolean isBlueAlliance = true;
+
 
     // ========== STATE TRACKING ==========
     private ElapsedTime buttonTimer = new ElapsedTime();
@@ -182,17 +186,18 @@ public class TeleopBlue extends LinearOpMode {
         robotOperations = new RobotOperations();
         robotOperations.init(baseMotion, flyWheel, intake, kicker, flipper, cameraServo,
                 baseMotion.getMotionExecutor().getCoordinateTransformer(), this);
-        robotOperations.setAlliance(true); // Blue alliance
+        robotOperations.setAlliance(isBlueAlliance); // true fore Blue alliance
 
         // Set reference point to match autonomous setup
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
-        baseMotion.setReferencePointToPosition(FieldPositions.PARKING_NEAR);
+        baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("parking_near"));
 
         // Try to restore odometry from autonomous
         RobotOperations.OdometryRestoreResult restoreResult =
                 RobotOperations.loadOdometryFromAuto(hardwareMap, baseMotion);
 
         robotOperations.setVisionCorrection(true); //turn on vision correction
+        robotOperations.setShooting4th(true); //shooting 4th
 
         if (restoreResult.success) {
             telemetry.addLine("✅ Odometry Restored from Auto!");

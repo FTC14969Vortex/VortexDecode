@@ -8,12 +8,12 @@ import org.firstinspires.ftc.teamcode.motion.FieldPose;
 import org.firstinspires.ftc.teamcode.motion.FieldPositions;
 import org.firstinspires.ftc.teamcode.motion.MotionExecutor;
 import org.firstinspires.ftc.teamcode.subsystems.BaseMotion;
+import org.firstinspires.ftc.teamcode.subsystems.Flipper;
 import org.firstinspires.ftc.teamcode.subsystems.FlyWheel;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Kicker;
-import org.firstinspires.ftc.teamcode.subsystems.Flipper;
-import org.firstinspires.ftc.teamcode.vision.CameraServo;
 import org.firstinspires.ftc.teamcode.utils.RobotOperations;
+import org.firstinspires.ftc.teamcode.vision.CameraServo;
 
 
 /**
@@ -44,8 +44,8 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Near 0.70", group = "Debug")
-public class BlueAutoNear extends LinearOpMode {
+@Autonomous(name = "Red Auto Near 0.3", group = "Debug")
+public class RedAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
     private BaseMotion baseMotion;
@@ -57,7 +57,7 @@ public class BlueAutoNear extends LinearOpMode {
     private RobotOperations robotOperations;
 
     // alliance setup
-    private static final boolean isBlueAlliance = true;
+    private static final boolean isBlueAlliance = false;
 
     // ========== MOTION PARAMETERS ==========
     private static final double TRAVEL_VELOCITY = 50.0; // inches/sec for movement
@@ -116,7 +116,6 @@ public class BlueAutoNear extends LinearOpMode {
         baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
         baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("start_near"));
-
 
         telemetryCurrentPose("Initializing");
 
@@ -201,7 +200,7 @@ public class BlueAutoNear extends LinearOpMode {
                 intakeTime = 1.0;
                 moveTointake_timeoutMS = 3500;
                 moveToshoot_timeoutMS = 3500;
-               intakeStart = robotOperations.getLocationPosition("intake_3_start");
+                intakeStart = robotOperations.getLocationPosition("intake_3_start");
                 break;
             default:
                 telemetry.addLine("❌ Invalid intake number: " + intakeNumber);

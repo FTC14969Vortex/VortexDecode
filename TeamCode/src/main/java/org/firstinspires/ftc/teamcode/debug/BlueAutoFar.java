@@ -55,6 +55,10 @@ public class BlueAutoFar extends LinearOpMode {
     private Flipper flipper;
     private CameraServo cameraServo;
     private RobotOperations robotOperations;
+
+    // alliance setup
+    private static final boolean isBlueAlliance = true;
+
     private static final double INTAKE_VELOCITY = 35.0; // inches/sec during intake
 
     // ========== INTAKE PARAMETERS ==========
@@ -104,12 +108,12 @@ public class BlueAutoFar extends LinearOpMode {
                 baseMotion.getMotionExecutor().getCoordinateTransformer(), this);
 
         // Set blue alliance
-        robotOperations.setAlliance(true); // Blue alliance
+        robotOperations.setAlliance(isBlueAlliance); // Blue alliance
 
         // Set reference point to START_FAR position
         baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
         baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
-        baseMotion.setReferencePointToPosition(FieldPositions.START_FAR);
+        baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("start_far"));
 
         telemetryCurrentPose("Initializing at START_FAR");
 
@@ -129,12 +133,12 @@ public class BlueAutoFar extends LinearOpMode {
             telemetryCurrentPose("After Initial Shooting");
 
             // Step 2-3: First intake and shoot cycle
-            intakeAndShoot();
-            telemetryCurrentPose("After First Intake and Shoot");
+   //         intakeAndShoot();
+   //         telemetryCurrentPose("After First Intake and Shoot");
 
             // Step 4-5: Second intake and shoot cycle
-            intakeAndShoot();
-            telemetryCurrentPose("After Second Intake and Shoot");
+   //         intakeAndShoot();
+   //         telemetryCurrentPose("After Second Intake and Shoot");
 
             // If we reach here, autonomous completed successfully
             autoCompletedSuccessfully = true;
