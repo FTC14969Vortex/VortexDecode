@@ -145,7 +145,7 @@ public class CameraServo {
     // ========== POSE FUSION PARAMETERS ==========
 
     /** Vision weight for pose fusion (0.0 = odometry only, 1.0 = vision only) */
-    private static final double VISION_FUSION_WEIGHT = 0.1;
+    private static final double VISION_FUSION_WEIGHT = 0.15;
 
     /** Maximum distance for pose correction (inches) */
     private static final double MAX_CORRECTION_DISTANCE = 80.0;

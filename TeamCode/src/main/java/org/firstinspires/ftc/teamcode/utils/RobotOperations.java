@@ -336,7 +336,7 @@ public class RobotOperations {
     }
 
     public void shoot(double targetVelocity, boolean alignToShootingAngle, boolean useCameraServo) throws InterruptedException {
-        // 1. Optionally align to shooting angle first
+
         if (alignToShootingAngle) { alignToShootingAngle(useCameraServo); }
 
         if (visioncorrectionON) {
@@ -373,18 +373,21 @@ public class RobotOperations {
             Thread.sleep(300); // Wait for gate to open, otherwise flipper will run against
 
             // 1st - kicker 2 ballers
-            flipper.turnFlipper(120);
-            Thread.sleep(150);
+            if (alignToShootingAngle) { alignToShootingAngle(useCameraServo); }
+            flipper.turnFlipper(30); //was 120
+            Thread.sleep(50);         //
             flipper.resetFlipper();
             Thread.sleep(300);
 
             // 2nd
+            if (alignToShootingAngle) { alignToShootingAngle(useCameraServo); }
             flipper.turnFlipper(150);
             Thread.sleep(150);
             flipper.resetFlipper();
-            Thread.sleep(300);
+            Thread.sleep(450);
 
             // 3rd
+            if (alignToShootingAngle) { alignToShootingAngle(useCameraServo); }
             flipper.turnFlipper(150);
             Thread.sleep(150);
             flipper.resetFlipper();

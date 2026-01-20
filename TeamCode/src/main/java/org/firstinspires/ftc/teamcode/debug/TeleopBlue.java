@@ -47,7 +47,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Right Bumper: Manual shoot (always available)
  * - X: Toggle intake on/off
  */
-@TeleOp(name = "A-TeleopBlue -0.65", group = "Debug")
+@TeleOp(name = "A-TeleopBlue -0.67", group = "Debug")
 public class TeleopBlue extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -197,7 +197,7 @@ public class TeleopBlue extends LinearOpMode {
                 RobotOperations.loadOdometryFromAuto(hardwareMap, baseMotion);
 
         robotOperations.setVisionCorrection(true); //turn on vision correction
-        robotOperations.setShooting4th(true); //shooting 4th
+        robotOperations.setShooting4th(false); //shooting 4th
 
         if (restoreResult.success) {
             telemetry.addLine("✅ Odometry Restored from Auto!");
