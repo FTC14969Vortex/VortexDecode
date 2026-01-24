@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Near 0.70", group = "Debug")
+@Autonomous(name = "Blue Auto Near 0.75", group = "Debug")
 public class BlueAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -227,7 +227,13 @@ public class BlueAutoNear extends LinearOpMode {
 
         // Move forward while intaking for specified time
         baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
+/*
+        if(intakeNumber==1){    //open gate
+            baseMotion.timeMotion(BaseMotion.Direction.BACKWARD, INTAKE_VELOCITY, 0.3);
+            baseMotion.timeMotion(INTAKE_VELOCITY, INTAKE_VELOCITY*0.3, 0.4);
+        }
 
+*/
         // Move to shooting position and shoot
 
         MotionExecutor.MotionResult result1 = robotOperations.moveToLocation("shooting_near", moveToshoot_timeoutMS);

@@ -5,15 +5,14 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.calibration.RobotConstants;
 import org.firstinspires.ftc.teamcode.motion.FieldPose;
-import org.firstinspires.ftc.teamcode.motion.FieldPositions;
 import org.firstinspires.ftc.teamcode.motion.MotionExecutor;
 import org.firstinspires.ftc.teamcode.subsystems.BaseMotion;
+import org.firstinspires.ftc.teamcode.subsystems.Flipper;
 import org.firstinspires.ftc.teamcode.subsystems.FlyWheel;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Kicker;
-import org.firstinspires.ftc.teamcode.subsystems.Flipper;
-import org.firstinspires.ftc.teamcode.vision.CameraServo;
 import org.firstinspires.ftc.teamcode.utils.RobotOperations;
+import org.firstinspires.ftc.teamcode.vision.CameraServo;
 
 
 /**
@@ -44,8 +43,8 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses RobotOperations for all smart movement (shooting_far, intake_loading_start)
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Far 0.22", group = "Debug")
-public class BlueAutoFar extends LinearOpMode {
+@Autonomous(name = "Red Auto Far 0.01", group = "Debug")
+public class RedAutoFar extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
     private BaseMotion baseMotion;
@@ -57,7 +56,7 @@ public class BlueAutoFar extends LinearOpMode {
     private RobotOperations robotOperations;
 
     // alliance setup
-    private static final boolean isBlueAlliance = true;
+    private static final boolean isBlueAlliance = false;
 
     private static final double INTAKE_VELOCITY = 35.0; // inches/sec during intake
 

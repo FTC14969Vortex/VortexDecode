@@ -4,16 +4,14 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-
 import org.firstinspires.ftc.teamcode.calibration.RobotConstants;
 import org.firstinspires.ftc.teamcode.motion.FieldPose;
-import org.firstinspires.ftc.teamcode.motion.FieldPositions;
 import org.firstinspires.ftc.teamcode.motion.MotionExecutor;
 import org.firstinspires.ftc.teamcode.subsystems.BaseMotion;
+import org.firstinspires.ftc.teamcode.subsystems.Flipper;
 import org.firstinspires.ftc.teamcode.subsystems.FlyWheel;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Kicker;
-import org.firstinspires.ftc.teamcode.subsystems.Flipper;
 import org.firstinspires.ftc.teamcode.utils.RobotOperations;
 import org.firstinspires.ftc.teamcode.vision.CameraServo;
 
@@ -47,8 +45,8 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Right Bumper: Manual shoot (always available)
  * - X: Toggle intake on/off
  */
-@TeleOp(name = "TeleopBlue -0.67", group = "Debug")
-public class TeleopBlue extends LinearOpMode {
+@TeleOp(name = "TeleopRed -0.01", group = "Debug")
+public class TeleopRed extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
     private BaseMotion baseMotion;
@@ -67,7 +65,7 @@ public class TeleopBlue extends LinearOpMode {
     private static final double BUTTON_DEBOUNCE_TIME = 0.3;    // seconds
 
     // alliance setup
-    private static final boolean isBlueAlliance = true;
+    private static final boolean isBlueAlliance = false;
 
 
     // ========== STATE TRACKING ==========
