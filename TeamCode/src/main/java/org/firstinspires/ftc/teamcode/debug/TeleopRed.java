@@ -45,7 +45,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Right Bumper: Manual shoot (always available)
  * - X: Toggle intake on/off
  */
-@TeleOp(name = "TeleopRed -0.01", group = "Debug")
+@TeleOp(name = "TeleopRed -0.02", group = "Debug")
 public class TeleopRed extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -187,7 +187,7 @@ public class TeleopRed extends LinearOpMode {
         robotOperations.setAlliance(isBlueAlliance); // true fore Blue alliance
 
         // Set reference point to match autonomous setup
-        baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
+        baseMotion.setReferencePoint(RobotConstants.BACK_LEFT_CORNER);
         baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("parking_near"));
 
         // Try to restore odometry from autonomous

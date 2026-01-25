@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Red Auto Near 0.3", group = "Debug")
+@Autonomous(name = "Red Auto Near 0.31", group = "Debug")
 public class RedAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -114,7 +114,7 @@ public class RedAutoNear extends LinearOpMode {
 
         // Set reference point to START_NEAR position
         baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
-        baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
+        baseMotion.setReferencePoint(RobotConstants.BACK_LEFT_CORNER);
         baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("start_near"));
 
         telemetryCurrentPose("Initializing");

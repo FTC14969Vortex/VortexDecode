@@ -273,6 +273,7 @@ public class RobotConstants {
 
 
     public static final ComponentPosition BACK_RIGHT_CORNER_REF = BACK_RIGHT_WHEEL_REF.translate(-3.75, -1,0); //
+    public static final ComponentPosition BACK_LEFT_CORNER_REF = BACK_RIGHT_CORNER_REF.translate(0, ROBOT_WIDTH,0); //
 
     public static final ComponentPosition BACK_CAMERA_REF = new ComponentPosition (0, 5.98,0, 0, 0, 180);  // looking back initially
     public static final ComponentPosition BACK_CAMERA_SERVO_REF = BACK_CAMERA_REF.translate(2, 0, 0); // servo offset
@@ -346,6 +347,8 @@ public class RobotConstants {
 
     public static final ComponentPosition BACK_RIGHT_CORNER =
         convertToRobotCenter(BACK_RIGHT_CORNER_REF);
+
+    public static final ComponentPosition BACK_LEFT_CORNER = convertToRobotCenter(BACK_LEFT_CORNER_REF);
 
     public static final ComponentPosition Robot_CENTER =
         convertToRobotCenter(ROBOT_CENTER_FROM_REF);

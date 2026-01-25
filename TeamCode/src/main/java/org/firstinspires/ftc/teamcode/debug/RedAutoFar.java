@@ -43,7 +43,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Uses RobotOperations for all smart movement (shooting_far, intake_loading_start)
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Red Auto Far 0.01", group = "Debug")
+@Autonomous(name = "Red Auto Far 0.02", group = "Debug")
 public class RedAutoFar extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -111,7 +111,7 @@ public class RedAutoFar extends LinearOpMode {
 
         // Set reference point to START_FAR position
         baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
-        baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
+        baseMotion.setReferencePoint(RobotConstants.BACK_LEFT_CORNER);
         baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("start_far"));
 
         telemetryCurrentPose("Initializing at START_FAR");
