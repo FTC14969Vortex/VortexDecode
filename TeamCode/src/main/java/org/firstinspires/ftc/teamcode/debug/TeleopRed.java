@@ -187,8 +187,8 @@ public class TeleopRed extends LinearOpMode {
         robotOperations.setAlliance(isBlueAlliance); // true fore Blue alliance
 
         // Set reference point to match autonomous setup
-        baseMotion.setReferencePoint(RobotConstants.BACK_LEFT_CORNER);
-        baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("parking_near"));
+        baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
+        baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("parking_near").offset(0,-14.2,0));
 
         // Try to restore odometry from autonomous
         RobotOperations.OdometryRestoreResult restoreResult =

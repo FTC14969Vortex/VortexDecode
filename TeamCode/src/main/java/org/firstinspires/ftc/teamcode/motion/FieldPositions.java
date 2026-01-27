@@ -35,6 +35,7 @@ public class FieldPositions {
 
     // Start positions - near
     public static final FieldPose START_NEAR = new FieldPose(-48, -62.3, 55.7);  // along blue goal wall
+    public static final FieldPose START_NEAR_RED = new FieldPose(-70, 48, -55.7);  // along red goal wall
     public static final FieldPose SHOOTING_NEAR = new FieldPose(-31.5, -24, 55.7);
 
     public static final double INTAKE_OFFSET_X = 24;

@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Near 0.75", group = "Debug")
+@Autonomous(name = "Blue Auto Near 0.8", group = "Debug")
 public class BlueAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -192,7 +192,6 @@ public class BlueAutoNear extends LinearOpMode {
                 intakeStart = robotOperations.getLocationPosition("intake_1_start");
                 break;
             case 2:
-                intakeTime = 1.0;
                 moveTointake_timeoutMS = 3200;
                 moveToshoot_timeoutMS = 3200;
                 intakeStart = robotOperations.getLocationPosition("intake_2_start");
@@ -225,8 +224,14 @@ public class BlueAutoNear extends LinearOpMode {
         kicker.setGatePosition(Kicker.GATE_INTAKE);
         intake.setIntakePower(INTAKE_FULL_POWER);
 
-        // Move forward while intaking for specified time
-        baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
+//        // Move forward while intaking for specified time
+//        if(intakeNumber == 2) {
+//            baseMotion.timeMotion(INTAKE_VELOCITY, -INTAKE_VELOCITY*0.5, intakeTime);
+//        } else {
+//            baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
+//        }
+          baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
+       // baseMotion.timeMotion(INTAKE_VELOCITY, INTAKE_VELOCITY*0.3, intakeTime);
 /*
         if(intakeNumber==1){    //open gate
             baseMotion.timeMotion(BaseMotion.Direction.BACKWARD, INTAKE_VELOCITY, 0.3);

@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.utils.RobotOperations;
  * - Uses RobotOperations for all smart movement (shooting_far, intake_loading_start)
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Blue Auto Far 0.22", group = "Debug")
+@Autonomous(name = "Blue Auto Far 0.25", group = "Debug")
 public class BlueAutoFar extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -131,6 +131,8 @@ public class BlueAutoFar extends LinearOpMode {
             robotOperations.moveToLocation("shooting_far", 2000);
             robotOperations.shoot(true);
             telemetryCurrentPose("After Initial Shooting");
+            baseMotion.moveToPose(robotOperations.getLocationPosition("start_far"), 50);
+            baseMotion.timeMotion(BaseMotion.Direction.RIGHT, 12, 1);
 
             // Step 2-3: First intake and shoot cycle
    //         intakeAndShoot();

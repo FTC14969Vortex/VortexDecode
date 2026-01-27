@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.vision.CameraServo;
  * - Uses BaseMotion for all movements
  * - Uses FieldPositions for all coordinates
  */
-@Autonomous(name = "Red Auto Near 0.31", group = "Debug")
+@Autonomous(name = "Red Auto Near 0.6X", group = "Debug")
 public class RedAutoNear extends LinearOpMode {
 
     // ========== SUBSYSTEMS ==========
@@ -114,8 +114,8 @@ public class RedAutoNear extends LinearOpMode {
 
         // Set reference point to START_NEAR position
         baseMotion.setControlMode(MotionExecutor.ControlMode.PURE_FEEDBACK);
-        baseMotion.setReferencePoint(RobotConstants.BACK_LEFT_CORNER);
-        baseMotion.setReferencePointInitialPosition(robotOperations.getLocationPosition("start_near"));
+        baseMotion.setReferencePoint(RobotConstants.BACK_RIGHT_CORNER);
+        baseMotion.setReferencePointInitialPosition(FieldPositions.START_NEAR_RED);
 
         telemetryCurrentPose("Initializing");
 
@@ -148,7 +148,9 @@ public class RedAutoNear extends LinearOpMode {
             }
 
             // Park at end position
-            robotOperations.moveToLocation("parking_near");
+//            robotOperations.moveToLocation("parking_near");
+            baseMotion.moveToPose(FieldPositions.getRedPosition(FieldPositions.PARKING_NEAR).offset(0,-14.2, 0), TRAVEL_VELOCITY);
+
 
             // If we reach here, autonomous completed successfully
             autoCompletedSuccessfully = true;
@@ -189,6 +191,7 @@ public class RedAutoNear extends LinearOpMode {
                 moveTointake_timeoutMS = 3000;
                 moveToshoot_timeoutMS = 3000;
                 intakeStart = robotOperations.getLocationPosition("intake_1_start");
+
                 break;
             case 2:
                 intakeTime = 1.0;
@@ -207,7 +210,7 @@ public class RedAutoNear extends LinearOpMode {
                 telemetry.update();
                 return;
         }
-
+        intakeStart = intakeStart.offset(14.2-4, -8, 0);
         // Move to intake start position
         MotionExecutor.MotionResult result = baseMotion.moveToPose(intakeStart, TRAVEL_VELOCITY, moveTointake_timeoutMS);
 
@@ -225,6 +228,12 @@ public class RedAutoNear extends LinearOpMode {
         intake.setIntakePower(INTAKE_FULL_POWER);
 
         // Move forward while intaking for specified time
+        // Move forward while intaking for specified time
+//        if(intakeNumber == 2) {
+//            baseMotion.timeMotion(INTAKE_VELOCITY, INTAKE_VELOCITY*0.5, intakeTime);
+//        } else {
+//            baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
+//        }
         baseMotion.timeMotion(BaseMotion.Direction.FORWARD, INTAKE_VELOCITY, intakeTime);
 
         // Move to shooting position and shoot
@@ -238,7 +247,7 @@ public class RedAutoNear extends LinearOpMode {
         telemetry.addData("Motion Status", result1.failureReason);
         telemetry.update();
 
-        robotOperations.shoot(); // use distance based velocity + alignment
+        robotOperations.shoot(true); // use distance based velocity + alignment
 
     }
 
